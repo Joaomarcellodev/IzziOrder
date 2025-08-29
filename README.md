@@ -46,7 +46,7 @@ Sinta-se à vontade para abrir uma **issue** ou enviar um **pull request**.
 ## 👨‍💻 Autores & Equipe
 
 - 👨‍💻 **Lead Developer**: [João Marcello](https://github.com/Joaomarcellodev)  
-- 📌 **PO (Product Owner)**:[Franscisco Thiago](https://github.com/tiagohue)  
+- 📌 **PO (Product Owner)**:[Franscisco Tiago](https://github.com/tiagohue)  
 - 👨‍💻 **Developer**: [Wellyson dos Santos Silva](https://github.com/wss124)
 - 👨‍💻 **Developer**: [Olimpio Carvalho](https://github.com/Olimpio7)  
 
