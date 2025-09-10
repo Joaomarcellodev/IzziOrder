@@ -1,17 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Bell, BarChart3, Calendar, Settings, Users, ChefHat, LogOut } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
+import type React from "react";
+import {
+  Bell,
+  BarChart3,
+  Calendar,
+  Settings,
+  Users,
+  ChefHat,
+  LogOut,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
+import { Button } from "@/components/atoms/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface AppShellProps {
-  children: React.ReactNode
-  currentPage: string
-  breadcrumb: string
-  hasNewNotifications?: boolean
+  children: React.ReactNode;
+  currentPage: string;
+  breadcrumb: string;
+  hasNewNotifications?: boolean;
 }
 
 const navigationItems = [
@@ -20,15 +28,20 @@ const navigationItems = [
   { id: "tables", label: "Table Map", icon: Users, href: "/tables" },
   { id: "reports", label: "Reports", icon: BarChart3, href: "/reports" },
   { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
-]
+];
 
-export function AppShell({ children, currentPage, breadcrumb, hasNewNotifications = false }: AppShellProps) {
+export function AppShell({
+  children,
+  currentPage,
+  breadcrumb,
+  hasNewNotifications = false,
+}: AppShellProps) {
   const getActiveItem = () => {
-    const item = navigationItems.find((item) => item.label === currentPage)
-    return item?.id || "orders"
-  }
+    const item = navigationItems.find((item) => item.label === currentPage);
+    return item?.id || "orders";
+  };
 
-  const activeItem = getActiveItem()
+  const activeItem = getActiveItem();
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -45,15 +58,17 @@ export function AppShell({ children, currentPage, breadcrumb, hasNewNotification
         {/* Navigation Menu */}
         <nav className="flex-1 p-4 space-y-2">
           {navigationItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeItem === item.id
+            const Icon = item.icon;
+            const isActive = activeItem === item.id;
 
             return (
               <Link key={item.id} href={item.href}>
                 <button
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 relative",
-                    isActive ? "text-white shadow-sm" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+                    isActive
+                      ? "text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   )}
                   style={isActive ? { backgroundColor: "#007BFF" } : {}}
                 >
@@ -67,7 +82,7 @@ export function AppShell({ children, currentPage, breadcrumb, hasNewNotification
                   <span className="font-medium">{item.label}</span>
                 </button>
               </Link>
-            )
+            );
           })}
         </nav>
 
@@ -79,9 +94,15 @@ export function AppShell({ children, currentPage, breadcrumb, hasNewNotification
               <AvatarFallback>CM</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900">Carlos - Manager</div>
+              <div className="text-sm font-medium text-gray-900">
+                Carlos - Manager
+              </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-700"
+            >
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -94,7 +115,9 @@ export function AppShell({ children, currentPage, breadcrumb, hasNewNotification
         <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{currentPage}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {currentPage}
+              </h1>
               <div className="text-sm text-gray-500 mt-1">{breadcrumb}</div>
             </div>
 
@@ -118,5 +141,5 @@ export function AppShell({ children, currentPage, breadcrumb, hasNewNotification
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
-  )
+  );
 }

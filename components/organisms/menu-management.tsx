@@ -1,33 +1,46 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { GripVertical, Edit, Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import { GripVertical, Edit, Upload } from "lucide-react";
+import { Button } from "@/components/atoms/button";
+import { Card, CardContent } from "@/components/molecules/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/molecules/dialog";
+import { Input } from "@/components/atoms/input";
+import { Label } from "@/components/atoms/label";
+import { Textarea } from "@/components/atoms/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/organisms/select";
+import { Switch } from "@/components/atoms/switch";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface MenuItem {
-  id: string
-  name: string
-  description: string
-  price: number
-  category: string
-  image: string
-  available: boolean
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  available: boolean;
 }
 
 const mockMenuItems: MenuItem[] = [
   {
     id: "1",
     name: "izziBurger Duplo",
-    description: "Double beef patty with cheese, lettuce, tomato and special sauce",
+    description:
+      "Double beef patty with cheese, lettuce, tomato and special sauce",
     price: 42.5,
     category: "Burgers",
     image: "/classic-beef-burger.png",
@@ -51,58 +64,64 @@ const mockMenuItems: MenuItem[] = [
     image: "/vibrant-mixed-salad.png",
     available: false,
   },
-]
+];
 
-const categories = ["Burgers", "Pizzas", "Salads", "Drinks", "Desserts"]
+const categories = ["Burgers", "Pizzas", "Salads", "Drinks", "Desserts"];
 
 export function MenuManagement() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems)
-  const [selectedCategory, setSelectedCategory] = useState<string>("All")
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const { toast } = useToast()
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
 
   const filteredItems =
-    selectedCategory === "All" ? menuItems : menuItems.filter((item) => item.category === selectedCategory)
+    selectedCategory === "All"
+      ? menuItems
+      : menuItems.filter((item) => item.category === selectedCategory);
 
   const toggleAvailability = (itemId: string) => {
     setMenuItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
-          const newAvailability = !item.available
+          const newAvailability = !item.available;
           toast({
-            title: `${item.name} ${newAvailability ? "now available" : "now unavailable"}`,
+            title: `${item.name} ${
+              newAvailability ? "now available" : "now unavailable"
+            }`,
             duration: 3000,
-          })
-          return { ...item, available: newAvailability }
+          });
+          return { ...item, available: newAvailability };
         }
-        return item
-      }),
-    )
-  }
+        return item;
+      })
+    );
+  };
 
   const openEditModal = (item: MenuItem) => {
-    setEditingItem({ ...item })
-    setIsModalOpen(true)
-  }
+    setEditingItem({ ...item });
+    setIsModalOpen(true);
+  };
 
   const closeEditModal = () => {
-    setEditingItem(null)
-    setIsModalOpen(false)
-  }
+    setEditingItem(null);
+    setIsModalOpen(false);
+  };
 
   const saveItem = () => {
-    if (!editingItem) return
+    if (!editingItem) return;
 
-    setMenuItems((prev) => prev.map((item) => (item.id === editingItem.id ? editingItem : item)))
+    setMenuItems((prev) =>
+      prev.map((item) => (item.id === editingItem.id ? editingItem : item))
+    );
 
     toast({
       title: "Item updated successfully",
       duration: 3000,
-    })
+    });
 
-    closeEditModal()
-  }
+    closeEditModal();
+  };
 
   const addNewItem = () => {
     const newItem: MenuItem = {
@@ -113,10 +132,10 @@ export function MenuManagement() {
       category: categories[0],
       image: "/diverse-food-spread.png",
       available: true,
-    }
-    setEditingItem(newItem)
-    setIsModalOpen(true)
-  }
+    };
+    setEditingItem(newItem);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="p-6">
@@ -138,7 +157,11 @@ export function MenuManagement() {
           </Select>
         </div>
 
-        <Button onClick={addNewItem} className="text-white font-semibold" style={{ backgroundColor: "#FD7E14" }}>
+        <Button
+          onClick={addNewItem}
+          className="text-white font-semibold"
+          style={{ backgroundColor: "#FD7E14" }}
+        >
           + Add New Item
         </Button>
       </div>
@@ -150,8 +173,14 @@ export function MenuManagement() {
           <Card className="p-12 text-center">
             <div className="space-y-4">
               <div className="text-6xl">👨‍🍳</div>
-              <div className="text-lg text-gray-600">This category is empty.</div>
-              <Button onClick={addNewItem} className="text-white font-semibold" style={{ backgroundColor: "#FD7E14" }}>
+              <div className="text-lg text-gray-600">
+                This category is empty.
+              </div>
+              <Button
+                onClick={addNewItem}
+                className="text-white font-semibold"
+                style={{ backgroundColor: "#FD7E14" }}
+              >
                 + Add first item
               </Button>
             </div>
@@ -175,9 +204,15 @@ export function MenuManagement() {
 
                   {/* Item Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{item.name}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">{item.description}</p>
-                    <div className="text-lg font-semibold text-gray-900 mt-2">R$ {item.price.toFixed(2)}</div>
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                      {item.description}
+                    </p>
+                    <div className="text-lg font-semibold text-gray-900 mt-2">
+                      R$ {item.price.toFixed(2)}
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -189,7 +224,12 @@ export function MenuManagement() {
                         onCheckedChange={() => toggleAvailability(item.id)}
                         className="data-[state=checked]:bg-blue-600"
                       />
-                      <span className={cn("text-sm font-medium", item.available ? "text-blue-600" : "text-gray-400")}>
+                      <span
+                        className={cn(
+                          "text-sm font-medium",
+                          item.available ? "text-blue-600" : "text-gray-400"
+                        )}
+                      >
                         {item.available ? "Available" : "Unavailable"}
                       </span>
                     </div>
@@ -215,7 +255,11 @@ export function MenuManagement() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingItem?.name ? `Editing: ${editingItem.name}` : "Add New Item"}</DialogTitle>
+            <DialogTitle>
+              {editingItem?.name
+                ? `Editing: ${editingItem.name}`
+                : "Add New Item"}
+            </DialogTitle>
           </DialogHeader>
 
           {editingItem && (
@@ -226,7 +270,11 @@ export function MenuManagement() {
                 <Input
                   id="name"
                   value={editingItem.name}
-                  onChange={(e) => setEditingItem((prev) => (prev ? { ...prev, name: e.target.value } : null))}
+                  onChange={(e) =>
+                    setEditingItem((prev) =>
+                      prev ? { ...prev, name: e.target.value } : null
+                    )
+                  }
                   placeholder="Enter item name"
                 />
               </div>
@@ -237,7 +285,11 @@ export function MenuManagement() {
                 <Textarea
                   id="description"
                   value={editingItem.description}
-                  onChange={(e) => setEditingItem((prev) => (prev ? { ...prev, description: e.target.value } : null))}
+                  onChange={(e) =>
+                    setEditingItem((prev) =>
+                      prev ? { ...prev, description: e.target.value } : null
+                    )
+                  }
                   placeholder="Enter item description"
                   rows={3}
                 />
@@ -254,7 +306,12 @@ export function MenuManagement() {
                     value={editingItem.price}
                     onChange={(e) =>
                       setEditingItem((prev) =>
-                        prev ? { ...prev, price: Number.parseFloat(e.target.value) || 0 } : null,
+                        prev
+                          ? {
+                              ...prev,
+                              price: Number.parseFloat(e.target.value) || 0,
+                            }
+                          : null
                       )
                     }
                     placeholder="0.00"
@@ -265,7 +322,11 @@ export function MenuManagement() {
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={editingItem.category}
-                    onValueChange={(value) => setEditingItem((prev) => (prev ? { ...prev, category: value } : null))}
+                    onValueChange={(value) =>
+                      setEditingItem((prev) =>
+                        prev ? { ...prev, category: value } : null
+                      )
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -286,8 +347,14 @@ export function MenuManagement() {
                 <Label>Image</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <div className="text-sm text-gray-600">Drag and drop an image here, or click to select</div>
-                  <Button variant="outline" size="sm" className="mt-2 bg-transparent">
+                  <div className="text-sm text-gray-600">
+                    Drag and drop an image here, or click to select
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 bg-transparent"
+                  >
                     Choose File
                   </Button>
                 </div>
@@ -299,12 +366,16 @@ export function MenuManagement() {
             <Button variant="outline" onClick={closeEditModal}>
               Cancel
             </Button>
-            <Button onClick={saveItem} className="text-white font-semibold" style={{ backgroundColor: "#FD7E14" }}>
+            <Button
+              onClick={saveItem}
+              className="text-white font-semibold"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
               Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -1,11 +1,29 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, Users, Clock } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  ShoppingBag,
+  Users,
+  Clock,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/molecules/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/organisms/select";
 import {
   Bar,
   BarChart,
@@ -19,14 +37,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-} from "recharts"
+} from "recharts";
 
 interface KPIData {
-  title: string
-  value: string
-  trend: number
-  icon: React.ElementType
-  borderColor: string
+  title: string;
+  value: string;
+  trend: number;
+  icon: React.ElementType;
+  borderColor: string;
 }
 
 const kpiData: KPIData[] = [
@@ -58,7 +76,7 @@ const kpiData: KPIData[] = [
     icon: Clock,
     borderColor: "#DC3545",
   },
-]
+];
 
 const revenueData = [
   { name: "Mon", revenue: 2400, orders: 24 },
@@ -68,7 +86,7 @@ const revenueData = [
   { name: "Fri", revenue: 4800, orders: 38 },
   { name: "Sat", revenue: 3800, orders: 41 },
   { name: "Sun", revenue: 4300, orders: 35 },
-]
+];
 
 const topItemsData = [
   { name: "izziBurger Duplo", sales: 45, revenue: 1912.5 },
@@ -76,13 +94,13 @@ const topItemsData = [
   { name: "Salada Caesar", sales: 28, revenue: 784.0 },
   { name: "Batata Frita", sales: 52, revenue: 780.0 },
   { name: "Coca-Cola", sales: 67, revenue: 536.0 },
-]
+];
 
 const orderDistributionData = [
   { name: "Dine-in", value: 45, color: "#007BFF" },
   { name: "Delivery", value: 35, color: "#FD7E14" },
   { name: "Takeout", value: 20, color: "#28A745" },
-]
+];
 
 const hourlyOrdersData = [
   { hour: "09:00", orders: 5 },
@@ -99,18 +117,22 @@ const hourlyOrdersData = [
   { hour: "20:00", orders: 42 },
   { hour: "21:00", orders: 38 },
   { hour: "22:00", orders: 22 },
-]
+];
 
 export function ReportsAnalytics() {
-  const [timeRange, setTimeRange] = useState("today")
+  const [timeRange, setTimeRange] = useState("today");
 
   return (
     <div className="p-6 space-y-6">
       {/* Header with Time Range Selector */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-          <p className="text-gray-600">Track your restaurant's performance and insights</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Analytics Dashboard
+          </h2>
+          <p className="text-gray-600">
+            Track your restaurant's performance and insights
+          </p>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="w-48">
@@ -128,28 +150,39 @@ export function ReportsAnalytics() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpiData.map((kpi, index) => {
-          const Icon = kpi.icon
-          const isPositive = kpi.trend > 0
+          const Icon = kpi.icon;
+          const isPositive = kpi.trend > 0;
 
           return (
             <Card key={index} className="relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: kpi.borderColor }} />
+              <div
+                className="absolute top-0 left-0 right-0 h-1"
+                style={{ backgroundColor: kpi.borderColor }}
+              />
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-gray-600">{kpi.title}</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    {kpi.title}
+                  </CardTitle>
                   <Icon className="w-5 h-5 text-gray-400" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {kpi.value}
+                  </div>
                   <div className="flex items-center gap-1">
                     {isPositive ? (
                       <TrendingUp className="w-4 h-4 text-green-600" />
                     ) : (
                       <TrendingDown className="w-4 h-4 text-red-600" />
                     )}
-                    <span className={`text-sm font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                    <span
+                      className={`text-sm font-medium ${
+                        isPositive ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
                       {Math.abs(kpi.trend)}%
                     </span>
                     <span className="text-sm text-gray-500">vs yesterday</span>
@@ -157,7 +190,7 @@ export function ReportsAnalytics() {
                 </div>
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
 
@@ -175,7 +208,12 @@ export function ReportsAnalytics() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => [`R$ ${value}`, "Revenue"]} />
-                <Line type="monotone" dataKey="revenue" stroke="#007BFF" strokeWidth={3} />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#007BFF"
+                  strokeWidth={3}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -195,7 +233,9 @@ export function ReportsAnalytics() {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {orderDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -254,10 +294,18 @@ export function ReportsAnalytics() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Item</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-900">Sales</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-900">Revenue</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-900">Avg. Price</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                    Item
+                  </th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                    Sales
+                  </th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                    Revenue
+                  </th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                    Avg. Price
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -265,8 +313,12 @@ export function ReportsAnalytics() {
                   <tr key={index} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4 font-medium">{item.name}</td>
                     <td className="py-3 px-4 text-right">{item.sales}</td>
-                    <td className="py-3 px-4 text-right">R$ {item.revenue.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-right">R$ {(item.revenue / item.sales).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right">
+                      R$ {item.revenue.toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      R$ {(item.revenue / item.sales).toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -275,5 +327,5 @@ export function ReportsAnalytics() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,36 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Plus, Minus, X, Printer, Split, CreditCard, Send } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import { Plus, Minus, X, Printer, Split, CreditCard, Send } from "lucide-react";
+import { Button } from "@/components/atoms/button";
+import { Card, CardContent } from "@/components/molecules/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/molecules/dialog";
+import { ScrollArea } from "@/components/molecules/scroll-area";
+import { Separator } from "@/components/atoms/separator";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Table {
-  id: number
-  status: "free" | "occupied" | "closing"
-  partySize?: number
-  tabId?: string
-  total?: number
-  items?: Array<{ name: string; quantity: number; price: number }>
+  id: number;
+  status: "free" | "occupied" | "closing";
+  partySize?: number;
+  tabId?: string;
+  total?: number;
+  items?: Array<{ name: string; quantity: number; price: number }>;
 }
 
 interface MenuItem {
-  id: string
-  name: string
-  price: number
-  category: string
+  id: string;
+  name: string;
+  price: number;
+  category: string;
 }
 
 interface OrderItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
 const mockTables: Table[] = [
@@ -66,7 +71,7 @@ const mockTables: Table[] = [
   },
   { id: 7, status: "free" },
   { id: 8, status: "free" },
-]
+];
 
 const mockMenuItems: MenuItem[] = [
   { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Burgers" },
@@ -75,23 +80,25 @@ const mockMenuItems: MenuItem[] = [
   { id: "4", name: "Batata Frita", price: 15.0, category: "Sides" },
   { id: "5", name: "Coca-Cola", price: 8.0, category: "Drinks" },
   { id: "6", name: "Água", price: 5.0, category: "Drinks" },
-]
+];
 
 export function TableMap() {
-  const [tables, setTables] = useState<Table[]>(mockTables)
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>("All")
-  const { toast } = useToast()
+  const [tables, setTables] = useState<Table[]>(mockTables);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const { toast } = useToast();
 
-  const categories = ["All", "Burgers", "Pizzas", "Salads", "Sides", "Drinks"]
+  const categories = ["All", "Burgers", "Pizzas", "Salads", "Sides", "Drinks"];
 
   const filteredMenuItems =
-    selectedCategory === "All" ? mockMenuItems : mockMenuItems.filter((item) => item.category === selectedCategory)
+    selectedCategory === "All"
+      ? mockMenuItems
+      : mockMenuItems.filter((item) => item.category === selectedCategory);
 
   const openTableModal = (table: Table) => {
-    setSelectedTable(table)
+    setSelectedTable(table);
     if (table.status === "occupied" && table.items) {
       setCurrentOrder(
         table.items.map((item, index) => ({
@@ -99,141 +106,191 @@ export function TableMap() {
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-        })),
-      )
+        }))
+      );
     } else {
-      setCurrentOrder([])
+      setCurrentOrder([]);
     }
-    setIsModalOpen(true)
-  }
+    setIsModalOpen(true);
+  };
 
   const closeModal = () => {
-    setSelectedTable(null)
-    setIsModalOpen(false)
-    setCurrentOrder([])
-  }
+    setSelectedTable(null);
+    setIsModalOpen(false);
+    setCurrentOrder([]);
+  };
 
   const addItemToOrder = (menuItem: MenuItem) => {
     setCurrentOrder((prev) => {
-      const existingItem = prev.find((item) => item.name === menuItem.name)
+      const existingItem = prev.find((item) => item.name === menuItem.name);
       if (existingItem) {
-        return prev.map((item) => (item.name === menuItem.name ? { ...item, quantity: item.quantity + 1 } : item))
+        return prev.map((item) =>
+          item.name === menuItem.name
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
-      return [...prev, { id: menuItem.id, name: menuItem.name, price: menuItem.price, quantity: 1 }]
-    })
-  }
+      return [
+        ...prev,
+        {
+          id: menuItem.id,
+          name: menuItem.name,
+          price: menuItem.price,
+          quantity: 1,
+        },
+      ];
+    });
+  };
 
   const updateQuantity = (itemId: string, change: number) => {
     setCurrentOrder((prev) =>
       prev
-        .map((item) => (item.id === itemId ? { ...item, quantity: Math.max(0, item.quantity + change) } : item))
-        .filter((item) => item.quantity > 0),
-    )
-  }
+        .map((item) =>
+          item.id === itemId
+            ? { ...item, quantity: Math.max(0, item.quantity + change) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
 
   const removeItem = (itemId: string) => {
-    setCurrentOrder((prev) => prev.filter((item) => item.id !== itemId))
-  }
+    setCurrentOrder((prev) => prev.filter((item) => item.id !== itemId));
+  };
 
   const calculateTotal = () => {
-    return currentOrder.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
+    return currentOrder.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+  };
 
   const sendToKitchen = () => {
     toast({
       title: "Order sent to kitchen",
       description: `Table ${selectedTable?.id} order has been sent to the kitchen.`,
-    })
-  }
+    });
+  };
 
   const printBill = () => {
     toast({
       title: "Bill printed",
       description: `Bill for Table ${selectedTable?.id} has been sent to printer.`,
-    })
-  }
+    });
+  };
 
   const splitBill = () => {
     toast({
       title: "Bill split",
       description: `Bill for Table ${selectedTable?.id} has been split.`,
-    })
-  }
+    });
+  };
 
   const closeAndPay = () => {
     if (selectedTable) {
       setTables((prev) =>
-        prev.map((table) => (table.id === selectedTable.id ? { ...table, status: "free" as const } : table)),
-      )
+        prev.map((table) =>
+          table.id === selectedTable.id
+            ? { ...table, status: "free" as const }
+            : table
+        )
+      );
       toast({
         title: "Payment completed",
         description: `Table ${selectedTable.id} has been closed and payment processed.`,
-      })
-      closeModal()
+      });
+      closeModal();
     }
-  }
+  };
 
   const getTableStyle = (table: Table) => {
     switch (table.status) {
       case "free":
-        return "border-green-500 bg-green-50 hover:border-green-600 hover:shadow-lg cursor-pointer"
+        return "border-green-500 bg-green-50 hover:border-green-600 hover:shadow-lg cursor-pointer";
       case "occupied":
-        return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg"
+        return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg";
       case "closing":
-        return "border-orange-500 bg-orange-50 cursor-pointer hover:shadow-lg animate-pulse"
+        return "border-orange-500 bg-orange-50 cursor-pointer hover:shadow-lg animate-pulse";
       default:
-        return ""
+        return "";
     }
-  }
+  };
 
   const getTooltipText = (table: Table) => {
     switch (table.status) {
       case "free":
-        return "Click to open new tab"
+        return "Click to open new tab";
       case "occupied":
-        return `Party: ${table.partySize} | Tab: ${table.tabId} | Total: R$ ${table.total?.toFixed(2)}`
+        return `Party: ${table.partySize} | Tab: ${
+          table.tabId
+        } | Total: R$ ${table.total?.toFixed(2)}`;
       case "closing":
-        return "Awaiting payment"
+        return "Awaiting payment";
       default:
-        return ""
+        return "";
     }
-  }
+  };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Restaurant Floor Plan</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Restaurant Floor Plan
+        </h2>
 
         {/* Tables Grid */}
         <div className="grid grid-cols-4 gap-6 max-w-4xl">
           {tables.map((table) => (
             <div
               key={table.id}
-              className={cn("relative p-4 rounded-lg border-2 transition-all duration-200", getTableStyle(table))}
+              className={cn(
+                "relative p-4 rounded-lg border-2 transition-all duration-200",
+                getTableStyle(table)
+              )}
               onClick={() => openTableModal(table)}
               title={getTooltipText(table)}
             >
               <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">Table {table.id}</div>
+                <div className="text-lg font-bold text-gray-900">
+                  Table {table.id}
+                </div>
 
                 {table.status === "occupied" && (
                   <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">Party: {table.partySize}</div>
-                    <div className="text-sm font-medium text-blue-600">{table.tabId}</div>
-                    <div className="text-sm font-semibold">R$ {table.total?.toFixed(2)}</div>
+                    <div className="text-sm text-gray-600">
+                      Party: {table.partySize}
+                    </div>
+                    <div className="text-sm font-medium text-blue-600">
+                      {table.tabId}
+                    </div>
+                    <div className="text-sm font-semibold">
+                      R$ {table.total?.toFixed(2)}
+                    </div>
                   </div>
                 )}
 
                 {table.status === "closing" && (
                   <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">Party: {table.partySize}</div>
-                    <div className="text-sm font-medium text-orange-600">{table.tabId}</div>
-                    <div className="text-sm font-semibold">R$ {table.total?.toFixed(2)}</div>
-                    <div className="text-xs text-orange-600 font-medium">Awaiting Payment</div>
+                    <div className="text-sm text-gray-600">
+                      Party: {table.partySize}
+                    </div>
+                    <div className="text-sm font-medium text-orange-600">
+                      {table.tabId}
+                    </div>
+                    <div className="text-sm font-semibold">
+                      R$ {table.total?.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-orange-600 font-medium">
+                      Awaiting Payment
+                    </div>
                   </div>
                 )}
 
-                {table.status === "free" && <div className="mt-2 text-sm text-green-600 font-medium">Available</div>}
+                {table.status === "free" && (
+                  <div className="mt-2 text-sm text-green-600 font-medium">
+                    Available
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -246,7 +303,9 @@ export function TableMap() {
           <DialogHeader>
             <DialogTitle>
               Table {selectedTable?.id} -{" "}
-              {selectedTable?.status === "free" ? "New Order" : `Tab ${selectedTable?.tabId}`}
+              {selectedTable?.status === "free"
+                ? "New Order"
+                : `Tab ${selectedTable?.tabId}`}
             </DialogTitle>
           </DialogHeader>
 
@@ -259,11 +318,19 @@ export function TableMap() {
                   {categories.map((category) => (
                     <Button
                       key={category}
-                      variant={selectedCategory === category ? "default" : "outline"}
+                      variant={
+                        selectedCategory === category ? "default" : "outline"
+                      }
                       size="sm"
                       onClick={() => setSelectedCategory(category)}
-                      className={selectedCategory === category ? "text-white" : ""}
-                      style={selectedCategory === category ? { backgroundColor: "#007BFF" } : {}}
+                      className={
+                        selectedCategory === category ? "text-white" : ""
+                      }
+                      style={
+                        selectedCategory === category
+                          ? { backgroundColor: "#007BFF" }
+                          : {}
+                      }
                     >
                       {category}
                     </Button>
@@ -274,14 +341,24 @@ export function TableMap() {
               <ScrollArea className="h-[50vh]">
                 <div className="space-y-2">
                   {filteredMenuItems.map((item) => (
-                    <Card key={item.id} className="cursor-pointer hover:shadow-sm" onClick={() => addItemToOrder(item)}>
+                    <Card
+                      key={item.id}
+                      className="cursor-pointer hover:shadow-sm"
+                      onClick={() => addItemToOrder(item)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <div>
-                            <div className="font-medium text-sm">{item.name}</div>
-                            <div className="text-xs text-gray-500">{item.category}</div>
+                            <div className="font-medium text-sm">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {item.category}
+                            </div>
                           </div>
-                          <div className="text-sm font-semibold">R$ {item.price.toFixed(2)}</div>
+                          <div className="text-sm font-semibold">
+                            R$ {item.price.toFixed(2)}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -305,8 +382,12 @@ export function TableMap() {
                         <CardContent className="p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <div className="font-medium text-sm">{item.name}</div>
-                              <div className="text-xs text-gray-500">R$ {item.price.toFixed(2)} each</div>
+                              <div className="font-medium text-sm">
+                                {item.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                R$ {item.price.toFixed(2)} each
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
@@ -317,7 +398,9 @@ export function TableMap() {
                               >
                                 <Minus className="w-3 h-3" />
                               </Button>
-                              <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                              <span className="w-8 text-center text-sm font-medium">
+                                {item.quantity}
+                              </span>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -352,11 +435,16 @@ export function TableMap() {
                 <CardContent className="p-4 space-y-3">
                   <div className="space-y-2">
                     {currentOrder.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
+                      <div
+                        key={item.id}
+                        className="flex justify-between text-sm"
+                      >
                         <span>
                           {item.quantity}x {item.name}
                         </span>
-                        <span>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                        <span>
+                          R$ {(item.price * item.quantity).toFixed(2)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -416,5 +504,5 @@ export function TableMap() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
