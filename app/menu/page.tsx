@@ -1,10 +1,13 @@
-import { AppShell } from "@/components/app-shell"
-import { MenuManagement } from "@/components/menu-management"
+import { AppShell } from "@/components/organisms/app-shell";
+import { MenuManagement } from "@/components/organisms/menu-management";
 
 export default function MenuPage() {
   return (
-    <AppShell currentPage="Menu Management" breadcrumb="Dashboard > Menu Management">
+    <AppShell
+      currentPage="Gerenciamento de cardápio"
+      breadcrumb="Painel > Gerenciamento de Cardápio"
+    >
       <MenuManagement />
     </AppShell>
-  )
+  );
 }
