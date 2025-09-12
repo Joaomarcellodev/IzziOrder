@@ -116,7 +116,7 @@ export function MenuManagement() {
     );
 
     toast({
-      title: "Item updated successfully",
+      title: "Item atualizado com sucesso",
       duration: 3000,
     });
 

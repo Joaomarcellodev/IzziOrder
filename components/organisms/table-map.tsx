@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface Table {
   id: number;
-  status: "free" | "occupied" | "closing";
+  status: "aberto" | "ocupado" | "fechado";
   partySize?: number;
   tabId?: string;
   total?: number;
@@ -39,10 +39,10 @@ interface OrderItem {
 }
 
 const mockTables: Table[] = [
-  { id: 1, status: "free" },
+  { id: 1, status: "aberto" },
   {
     id: 2,
-    status: "occupied",
+    status: "ocupado",
     partySize: 4,
     tabId: "#T002",
     total: 125.5,
@@ -51,35 +51,35 @@ const mockTables: Table[] = [
       { name: "Pizza Margherita", quantity: 1, price: 38.0 },
     ],
   },
-  { id: 3, status: "free" },
+  { id: 3, status: "aberto" },
   {
     id: 4,
-    status: "closing",
+    status: "fechado",
     partySize: 2,
     tabId: "#T004",
     total: 67.0,
     items: [{ name: "Salada Caesar", quantity: 2, price: 28.0 }],
   },
-  { id: 5, status: "free" },
+  { id: 5, status: "aberto" },
   {
     id: 6,
-    status: "occupied",
+    status: "ocupado",
     partySize: 3,
     tabId: "#T006",
     total: 89.5,
     items: [{ name: "izziBurger Duplo", quantity: 1, price: 42.5 }],
   },
-  { id: 7, status: "free" },
-  { id: 8, status: "free" },
+  { id: 7, status: "aberto" },
+  { id: 8, status: "aberto" },
 ];
 
 const mockMenuItems: MenuItem[] = [
-  { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Burgers" },
+  { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Hambúrgueres" },
   { id: "2", name: "Pizza Margherita", price: 38.0, category: "Pizzas" },
-  { id: "3", name: "Salada Caesar", price: 28.0, category: "Salads" },
-  { id: "4", name: "Batata Frita", price: 15.0, category: "Sides" },
-  { id: "5", name: "Coca-Cola", price: 8.0, category: "Drinks" },
-  { id: "6", name: "Água", price: 5.0, category: "Drinks" },
+  { id: "3", name: "Salada Caesar", price: 28.0, category: "Saladas" },
+  { id: "4", name: "Batata Frita", price: 15.0, category: "Petiscos" },
+  { id: "5", name: "Coca-Cola", price: 8.0, category: "Bebidas" },
+  { id: "6", name: "Água", price: 5.0, category: "Bebidas" },
 ];
 
 export function TableMap() {
@@ -90,16 +90,16 @@ export function TableMap() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const { toast } = useToast();
 
-  const categories = ["All", "Burgers", "Pizzas", "Salads", "Sides", "Drinks"];
+  const categories = ["Todos", "Hambúrgueres", "Pizzas", "Saladas", "Petiscos", "Bebidas"];
 
   const filteredMenuItems =
-    selectedCategory === "All"
+    selectedCategory === "Todos"
       ? mockMenuItems
       : mockMenuItems.filter((item) => item.category === selectedCategory);
 
   const openTableModal = (table: Table) => {
     setSelectedTable(table);
-    if (table.status === "occupied" && table.items) {
+    if (table.status === "ocupado" && table.items) {
       setCurrentOrder(
         table.items.map((item, index) => ({
           id: `${table.id}-${index}`,
@@ -167,22 +167,22 @@ export function TableMap() {
 
   const sendToKitchen = () => {
     toast({
-      title: "Order sent to kitchen",
-      description: `Table ${selectedTable?.id} order has been sent to the kitchen.`,
+      title: "Encomenda enviada para cozinha",
+      description: `Mesa ${selectedTable?.id} enviou o pedido para a cozinha.`,
     });
   };
 
   const printBill = () => {
     toast({
-      title: "Bill printed",
-      description: `Bill for Table ${selectedTable?.id} has been sent to printer.`,
+      title: "Conta impressa",
+      description: `A conta da mesa ${selectedTable?.id} foi impressa.`,
     });
   };
 
   const splitBill = () => {
     toast({
-      title: "Bill split",
-      description: `Bill for Table ${selectedTable?.id} has been split.`,
+      title: "Conta Dividida",
+      description: `A conta da mesa ${selectedTable?.id} foi dividida.`,
     });
   };
 
@@ -191,13 +191,13 @@ export function TableMap() {
       setTables((prev) =>
         prev.map((table) =>
           table.id === selectedTable.id
-            ? { ...table, status: "free" as const }
+            ? { ...table, status: "aberto" as const }
             : table
         )
       );
       toast({
-        title: "Payment completed",
-        description: `Table ${selectedTable.id} has been closed and payment processed.`,
+        title: "Pagamento concluído",
+        description: `Table ${selectedTable.id} foi fechado e o pagamento processado.`,
       });
       closeModal();
     }
@@ -205,11 +205,11 @@ export function TableMap() {
 
   const getTableStyle = (table: Table) => {
     switch (table.status) {
-      case "free":
+      case "aberto":
         return "border-green-500 bg-green-50 hover:border-green-600 hover:shadow-lg cursor-pointer";
-      case "occupied":
+      case "ocupado":
         return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg";
-      case "closing":
+      case "fechado":
         return "border-orange-500 bg-orange-50 cursor-pointer hover:shadow-lg animate-pulse";
       default:
         return "";
@@ -218,14 +218,14 @@ export function TableMap() {
 
   const getTooltipText = (table: Table) => {
     switch (table.status) {
-      case "free":
-        return "Click to open new tab";
-      case "occupied":
-        return `Party: ${table.partySize} | Tab: ${
+      case "aberto":
+        return "Clique para abrir uma nova aba";
+      case "ocupado":
+        return `Festa: ${table.partySize} | Tab: ${
           table.tabId
         } | Total: R$ ${table.total?.toFixed(2)}`;
-      case "closing":
-        return "Awaiting payment";
+      case "fechado":
+        return "Aguardando Pagamento";
       default:
         return "";
     }
@@ -235,7 +235,7 @@ export function TableMap() {
     <div className="p-6">
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Restaurant Floor Plan
+          Planta das mesas do estabelecimento
         </h2>
 
         {/* Tables Grid */}
@@ -255,10 +255,10 @@ export function TableMap() {
                   Table {table.id}
                 </div>
 
-                {table.status === "occupied" && (
+                {table.status === "ocupado" && (
                   <div className="mt-2 space-y-1">
                     <div className="text-sm text-gray-600">
-                      Party: {table.partySize}
+                      Festa: {table.partySize}
                     </div>
                     <div className="text-sm font-medium text-blue-600">
                       {table.tabId}
@@ -269,10 +269,10 @@ export function TableMap() {
                   </div>
                 )}
 
-                {table.status === "closing" && (
+                {table.status === "fechado" && (
                   <div className="mt-2 space-y-1">
                     <div className="text-sm text-gray-600">
-                      Party: {table.partySize}
+                      Festa: {table.partySize}
                     </div>
                     <div className="text-sm font-medium text-orange-600">
                       {table.tabId}
@@ -281,14 +281,14 @@ export function TableMap() {
                       R$ {table.total?.toFixed(2)}
                     </div>
                     <div className="text-xs text-orange-600 font-medium">
-                      Awaiting Payment
+                      Aguardando Pagamento
                     </div>
                   </div>
                 )}
 
-                {table.status === "free" && (
+                {table.status === "aberto" && (
                   <div className="mt-2 text-sm text-green-600 font-medium">
-                    Available
+                    Disponível
                   </div>
                 )}
               </div>
@@ -303,7 +303,7 @@ export function TableMap() {
           <DialogHeader>
             <DialogTitle>
               Table {selectedTable?.id} -{" "}
-              {selectedTable?.status === "free"
+              {selectedTable?.status === "aberto"
                 ? "New Order"
                 : `Tab ${selectedTable?.tabId}`}
             </DialogTitle>
@@ -369,12 +369,12 @@ export function TableMap() {
 
             {/* Center Column - Current Order */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Current Order</h3>
+              <h3 className="font-semibold text-gray-900">Pedido Atual</h3>
               <ScrollArea className="h-[50vh]">
                 <div className="space-y-2">
                   {currentOrder.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <div className="text-sm">No items in order</div>
+                      <div className="text-sm">Nenhum item em ordem</div>
                     </div>
                   ) : (
                     currentOrder.map((item) => (
@@ -429,7 +429,7 @@ export function TableMap() {
 
             {/* Right Column - Totals & Actions */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Order Summary</h3>
+              <h3 className="font-semibold text-gray-900">Resumo do pedido</h3>
 
               <Card>
                 <CardContent className="p-4 space-y-3">
@@ -466,7 +466,7 @@ export function TableMap() {
                   disabled={currentOrder.length === 0}
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Send new items to kitchen
+                  Enviar 
                 </Button>
 
                 <Button
@@ -476,7 +476,7 @@ export function TableMap() {
                   style={{ borderColor: "#007BFF", color: "#007BFF" }}
                 >
                   <Printer className="w-4 h-4 mr-2" />
-                  Print bill
+                  Imprimir nota
                 </Button>
 
                 <Button
@@ -486,7 +486,7 @@ export function TableMap() {
                   style={{ borderColor: "#007BFF", color: "#007BFF" }}
                 >
                   <Split className="w-4 h-4 mr-2" />
-                  Split bill
+                  Dividir conta
                 </Button>
 
                 <Button
@@ -496,7 +496,7 @@ export function TableMap() {
                   disabled={currentOrder.length === 0}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Close & Pay
+                  Pagar
                 </Button>
               </div>
             </div>

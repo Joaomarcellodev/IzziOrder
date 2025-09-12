@@ -4,7 +4,7 @@ import { MenuManagement } from "@/components/organisms/menu-management";
 export default function MenuPage() {
   return (
     <AppShell
-      currentPage="Gerenciamento de Cardápio"
+      currentPage="Gerenciamento de cardápio"
       breadcrumb="Painel > Gerenciamento de Cardápio"
     >
       <MenuManagement />
