@@ -4,8 +4,8 @@ import { OrdersDashboard } from "@/components/organisms/orders-dashboard";
 export default function HomePage() {
   return (
     <AppShell
-      currentPage="Orders Dashboard"
-      breadcrumb="Dashboard > Orders Panel"
+      currentPage="Painel de Pedidos"
+      breadcrumb=" Painel > Painel de Pedidos"
     >
       <OrdersDashboard />
     </AppShell>
