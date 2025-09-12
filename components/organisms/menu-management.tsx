@@ -40,7 +40,7 @@ const mockMenuItems: MenuItem[] = [
     id: "1",
     name: "izziBurger Duplo",
     description:
-      "Double beef patty with cheese, lettuce, tomato and special sauce",
+      "Hambúrguer duplo de carne com queijo, alface, tomate e molho especial",
     price: 42.5,
     category: "Burgers",
     image: "/classic-beef-burger.png",
@@ -49,7 +49,7 @@ const mockMenuItems: MenuItem[] = [
   {
     id: "2",
     name: "Pizza Margherita",
-    description: "Classic pizza with tomato sauce, mozzarella and fresh basil",
+    description: "Pizza Clássica com tomate, queijo, cebola e presunto",
     price: 38.0,
     category: "Pizzas",
     image: "/delicious-pizza.png",
@@ -58,7 +58,7 @@ const mockMenuItems: MenuItem[] = [
   {
     id: "3",
     name: "Salada Caesar",
-    description: "Fresh romaine lettuce with caesar dressing and croutons",
+    description: "Alface romana fresca com molho Caesar e croutons",
     price: 28.0,
     category: "Salads",
     image: "/vibrant-mixed-salad.png",
@@ -66,7 +66,7 @@ const mockMenuItems: MenuItem[] = [
   },
 ];
 
-const categories = ["Burgers", "Pizzas", "Salads", "Drinks", "Desserts"];
+const categories = ["Hambúrgueres", "Pizzas", "Saladas", "Bebidas", "Sobremesas"];
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
@@ -116,7 +116,7 @@ export function MenuManagement() {
     );
 
     toast({
-      title: "Item updated successfully",
+      title: "Item atualizado com sucesso",
       duration: 3000,
     });
 
@@ -147,7 +147,7 @@ export function MenuManagement() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All">All Categories</SelectItem>
+              <SelectItem value="All">Categorias</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -162,7 +162,7 @@ export function MenuManagement() {
           className="text-white font-semibold"
           style={{ backgroundColor: "#FD7E14" }}
         >
-          + Add New Item
+          + Adicionar Item
         </Button>
       </div>
 
@@ -173,15 +173,13 @@ export function MenuManagement() {
           <Card className="p-12 text-center">
             <div className="space-y-4">
               <div className="text-6xl">👨‍🍳</div>
-              <div className="text-lg text-gray-600">
-                This category is empty.
-              </div>
+              <div className="text-lg text-gray-600">Categoria Vazia.</div>
               <Button
                 onClick={addNewItem}
                 className="text-white font-semibold"
                 style={{ backgroundColor: "#FD7E14" }}
               >
-                + Add first item
+                + Adicionar o primeiro item
               </Button>
             </div>
           </Card>
@@ -230,7 +228,7 @@ export function MenuManagement() {
                           item.available ? "text-blue-600" : "text-gray-400"
                         )}
                       >
-                        {item.available ? "Available" : "Unavailable"}
+                        {item.available ? "Disponível" : "Indisponível"}
                       </span>
                     </div>
 
@@ -256,9 +254,7 @@ export function MenuManagement() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingItem?.name
-                ? `Editing: ${editingItem.name}`
-                : "Add New Item"}
+              {editingItem?.name ? `Edite: ${editingItem.name}` : "Novo Item"}
             </DialogTitle>
           </DialogHeader>
 
@@ -266,7 +262,7 @@ export function MenuManagement() {
             <div className="space-y-6 py-4">
               {/* Item Name */}
               <div className="space-y-2">
-                <Label htmlFor="name">Item Name</Label>
+                <Label htmlFor="name">Nome do Item</Label>
                 <Input
                   id="name"
                   value={editingItem.name}
@@ -275,13 +271,13 @@ export function MenuManagement() {
                       prev ? { ...prev, name: e.target.value } : null
                     )
                   }
-                  placeholder="Enter item name"
+                  placeholder="Escreva o nome do Item"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Full Description</Label>
+                <Label htmlFor="description">Descrição</Label>
                 <Textarea
                   id="description"
                   value={editingItem.description}
@@ -290,7 +286,7 @@ export function MenuManagement() {
                       prev ? { ...prev, description: e.target.value } : null
                     )
                   }
-                  placeholder="Enter item description"
+                  placeholder="Escreva a descrição do item "
                   rows={3}
                 />
               </div>
@@ -298,7 +294,7 @@ export function MenuManagement() {
               {/* Price and Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (R$)</Label>
+                  <Label htmlFor="price">Preço (R$)</Label>
                   <Input
                     id="price"
                     type="number"
@@ -319,7 +315,7 @@ export function MenuManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">Categoria</Label>
                   <Select
                     value={editingItem.category}
                     onValueChange={(value) =>
@@ -344,18 +340,18 @@ export function MenuManagement() {
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label>Image</Label>
+                <Label>Imagem</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <div className="text-sm text-gray-600">
-                    Drag and drop an image here, or click to select
+                    Arraste e solte uma imagem aqui ou clique para selecionar
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     className="mt-2 bg-transparent"
                   >
-                    Choose File
+                    Escolha arquivo
                   </Button>
                 </div>
               </div>
@@ -364,14 +360,14 @@ export function MenuManagement() {
 
           <DialogFooter>
             <Button variant="outline" onClick={closeEditModal}>
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={saveItem}
               className="text-white font-semibold"
               style={{ backgroundColor: "#FD7E14" }}
             >
-              Save Changes
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

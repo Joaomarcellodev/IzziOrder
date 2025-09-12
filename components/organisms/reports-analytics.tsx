@@ -49,28 +49,28 @@ interface KPIData {
 
 const kpiData: KPIData[] = [
   {
-    title: "Daily Revenue",
+    title: "Receita Diária",
     value: "R$ 2,847.50",
     trend: 12.5,
     icon: DollarSign,
     borderColor: "#007BFF",
   },
   {
-    title: "Orders Today",
+    title: "Pedidos hoje",
     value: "47",
     trend: 8.2,
     icon: ShoppingBag,
     borderColor: "#FD7E14",
   },
   {
-    title: "Active Tables",
+    title: "Tabelas Ativas",
     value: "12/16",
     trend: -5.1,
     icon: Users,
     borderColor: "#28A745",
   },
   {
-    title: "Avg. Order Time",
+    title: "Tempo médio do pedido",
     value: "18 min",
     trend: -3.2,
     icon: Clock,
@@ -79,13 +79,13 @@ const kpiData: KPIData[] = [
 ];
 
 const revenueData = [
-  { name: "Mon", revenue: 2400, orders: 24 },
-  { name: "Tue", revenue: 1398, orders: 18 },
-  { name: "Wed", revenue: 9800, orders: 45 },
-  { name: "Thu", revenue: 3908, orders: 32 },
-  { name: "Fri", revenue: 4800, orders: 38 },
-  { name: "Sat", revenue: 3800, orders: 41 },
-  { name: "Sun", revenue: 4300, orders: 35 },
+  { name: "Seg", revenue: 2400, orders: 24 },
+  { name: "Terç", revenue: 1398, orders: 18 },
+  { name: "Quart", revenue: 9800, orders: 45 },
+  { name: "Quin", revenue: 3908, orders: 32 },
+  { name: "Sex", revenue: 4800, orders: 38 },
+  { name: "Sab", revenue: 3800, orders: 41 },
+  { name: "Dom", revenue: 4300, orders: 35 },
 ];
 
 const topItemsData = [
@@ -97,9 +97,9 @@ const topItemsData = [
 ];
 
 const orderDistributionData = [
-  { name: "Dine-in", value: 45, color: "#007BFF" },
-  { name: "Delivery", value: 35, color: "#FD7E14" },
-  { name: "Takeout", value: 20, color: "#28A745" },
+  { name: "Local", value: 45, color: "#007BFF" }, 
+  { name: "Delivery", value: 35, color: "#FD7E14" }, 
+  { name: "Retirada", value: 20, color: "#28A745" }, 
 ];
 
 const hourlyOrdersData = [
@@ -128,10 +128,10 @@ export function ReportsAnalytics() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Analytics Dashboard
+            Painel de Analíses
           </h2>
           <p className="text-gray-600">
-            Track your restaurant's performance and insights
+            Acompanhe o desempenho e os insights do seu restaurante
           </p>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -139,10 +139,10 @@ export function ReportsAnalytics() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="week">This Week</SelectItem>
-            <SelectItem value="month">This Month</SelectItem>
-            <SelectItem value="year">This Year</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="week">semana</SelectItem>
+            <SelectItem value="month">Mês</SelectItem>
+            <SelectItem value="year">Ano</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -185,7 +185,9 @@ export function ReportsAnalytics() {
                     >
                       {Math.abs(kpi.trend)}%
                     </span>
-                    <span className="text-sm text-gray-500">vs yesterday</span>
+                    <span className="text-sm text-gray-500">
+                      vs dia anterior
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -199,7 +201,7 @@ export function ReportsAnalytics() {
         {/* Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Revenue</CardTitle>
+            <CardTitle>Receita Semanal</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -222,7 +224,7 @@ export function ReportsAnalytics() {
         {/* Order Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Order Distribution</CardTitle>
+            <CardTitle>Distribuição de pedidos</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -233,9 +235,22 @@ export function ReportsAnalytics() {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
+                  label={({ name, value }) => {
+                    // Verifica se o 'value' é um número antes de fazer qualquer cálculo
+                    const numericValue = typeof value === "number" ? value : 0;
+
+                    // Calcula o total de todos os valores no array
+                    const total = orderDistributionData.reduce(
+                      (sum, entry) => sum + entry.value,
+                      0
+                    );
+
+                    // Calcula a porcentagem da fatia atual
+                    const percent = total > 0 ? numericValue / total : 0;
+
+                    // Retorna a string formatada
+                    return `${name} ${(percent * 100).toFixed(0)}%`;
+                  }}
                 >
                   {orderDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -246,11 +261,10 @@ export function ReportsAnalytics() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         {/* Top Selling Items */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Selling Items</CardTitle>
+            <CardTitle>Itens mais vendidos</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -268,7 +282,7 @@ export function ReportsAnalytics() {
         {/* Hourly Orders */}
         <Card>
           <CardHeader>
-            <CardTitle>Orders by Hour</CardTitle>
+            <CardTitle>Pedidos por hora</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -287,7 +301,7 @@ export function ReportsAnalytics() {
       {/* Detailed Analytics Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Top Items Performance</CardTitle>
+          <CardTitle>Desempenho dos principais itens</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -298,13 +312,13 @@ export function ReportsAnalytics() {
                     Item
                   </th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900">
-                    Sales
+                    Vendas
                   </th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900">
-                    Revenue
+                    Receita
                   </th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900">
-                    Avg. Price
+                    Média Preço
                   </th>
                 </tr>
               </thead>

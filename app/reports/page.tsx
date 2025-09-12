@@ -4,8 +4,8 @@ import { ReportsAnalytics } from "@/components/organisms/reports-analytics";
 export default function ReportsPage() {
   return (
     <AppShell
-      currentPage="Reports"
-      breadcrumb="Dashboard > Reports & Analytics"
+      currentPage="Relatório"
+      breadcrumb="Painel > Relatório e Analíses"
     >
       <ReportsAnalytics />
     </AppShell>
