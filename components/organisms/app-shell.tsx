@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type React from "react";
 import {
   Bell,
@@ -36,8 +37,9 @@ export function AppShell({
   breadcrumb,
   hasNewNotifications = false,
 }: AppShellProps) {
+  const pathname = usePathname();
   const getActiveItem = () => {
-    const item = navigationItems.find((item) => item.label === currentPage);
+  const item = navigationItems.find((item) => item.label === currentPage);
     return item?.id || "orders";
   };
 
@@ -59,8 +61,7 @@ export function AppShell({
         <nav className="flex-1 p-4 space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.id;
-
+            const isActive = pathname === item.href;
             return (
               <Link key={item.id} href={item.href}>
                 <button
