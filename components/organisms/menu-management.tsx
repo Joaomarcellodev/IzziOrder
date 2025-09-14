@@ -35,41 +35,14 @@ interface MenuItem {
   available: boolean;
 }
 
-const mockMenuItems: MenuItem[] = [
-  {
-    id: "1",
-    name: "izziBurger Duplo",
-    description:
-      "Hambúrguer duplo de carne com queijo, alface, tomate e molho especial",
-    price: 42.5,
-    category: "Burgers",
-    image: "/classic-beef-burger.png",
-    available: true,
-  },
-  {
-    id: "2",
-    name: "Pizza Margherita",
-    description: "Pizza Clássica com tomate, queijo, cebola e presunto",
-    price: 38.0,
-    category: "Pizzas",
-    image: "/delicious-pizza.png",
-    available: true,
-  },
-  {
-    id: "3",
-    name: "Salada Caesar",
-    description: "Alface romana fresca com molho Caesar e croutons",
-    price: 28.0,
-    category: "Salads",
-    image: "/vibrant-mixed-salad.png",
-    available: false,
-  },
-];
+interface MenuManagementProps {
+  menuItems: MenuItem[];
+}
 
 const categories = ["Hambúrgueres", "Pizzas", "Saladas", "Bebidas", "Sobremesas"];
 
-export function MenuManagement() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
+export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementProps) {
+  const [menuItems, setMenuItems] = useState(initialMenuItems);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,9 +59,7 @@ export function MenuManagement() {
         if (item.id === itemId) {
           const newAvailability = !item.available;
           toast({
-            title: `${item.name} ${
-              newAvailability ? "now available" : "now unavailable"
-            }`,
+            title: `${item.name} ${newAvailability ? "now available" : "now unavailable"}`,
             duration: 3000,
           });
           return { ...item, available: newAvailability };
@@ -304,9 +275,9 @@ export function MenuManagement() {
                       setEditingItem((prev) =>
                         prev
                           ? {
-                              ...prev,
-                              price: Number.parseFloat(e.target.value) || 0,
-                            }
+                            ...prev,
+                            price: Number.parseFloat(e.target.value) || 0,
+                          }
                           : null
                       )
                     }
