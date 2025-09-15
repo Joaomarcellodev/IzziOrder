@@ -24,7 +24,7 @@ import {
 import { Switch } from "@/components/atoms/switch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { createMenuItem, updateMenuItem } from "@/app/actions/menu";
+import { createMenuItem, updateMenuItem, updateMenuItemAvailability } from "@/app/actions/menu";
 
 interface MenuItem {
   id: string | null;
@@ -59,7 +59,7 @@ export function MenuManagement({ menuItems: menuItems }: MenuManagementProps) {
 
     const newAvailability = !itemToUpdate.available;
 
-    const { success, error } = await updateMenuItem(itemId, { available: newAvailability });
+    const { success, error } = await updateMenuItemAvailability(itemId, newAvailability);
     if (success) {
       toast({ title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"}` });
     } else {

@@ -39,3 +39,17 @@ export async function updateMenuItem(id: string, updates: Partial<MenuItemData>)
 
     return { success: true };
 }
+
+export async function updateMenuItemAvailability(id: string, available: boolean) {
+    const supabase = createClient();
+    const { data, error } = await (await supabase).from("menu_items").update({ available: available }).eq("id", id);
+
+    if (error) {
+        console.error("Erro ao atualizar disponibilidade do item:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/menu");
+
+    return { success: true };
+}
