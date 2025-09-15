@@ -24,9 +24,10 @@ import {
 import { Switch } from "@/components/atoms/switch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { createMenuItem, updateMenuItem } from "@/app/actions/menu";
 
 interface MenuItem {
-  id: string;
+  id: string | null;
   name: string;
   description: string;
   price: number;
@@ -41,8 +42,7 @@ interface MenuManagementProps {
 
 const categories = ["Hambúrgueres", "Pizzas", "Saladas", "Bebidas", "Sobremesas"];
 
-export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementProps) {
-  const [menuItems, setMenuItems] = useState(initialMenuItems);
+export function MenuManagement({ menuItems: menuItems }: MenuManagementProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,20 +53,18 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
       ? menuItems
       : menuItems.filter((item) => item.category === selectedCategory);
 
-  const toggleAvailability = (itemId: string) => {
-    setMenuItems((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          const newAvailability = !item.available;
-          toast({
-            title: `${item.name} ${newAvailability ? "now available" : "now unavailable"}`,
-            duration: 3000,
-          });
-          return { ...item, available: newAvailability };
-        }
-        return item;
-      })
-    );
+  const toggleAvailability = async (itemId: string) => {
+    const itemToUpdate = menuItems.find(item => item.id === itemId);
+    if (!itemToUpdate) return;
+
+    const newAvailability = !itemToUpdate.available;
+
+    const { success, error } = await updateMenuItem(itemId, { available: newAvailability });
+    if (success) {
+      toast({ title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"}` });
+    } else {
+      toast({ title: `Erro: ${error}` });
+    }
   };
 
   const openEditModal = (item: MenuItem) => {
@@ -79,24 +77,40 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
     setIsModalOpen(false);
   };
 
-  const saveItem = () => {
+  const saveItem = async () => {
     if (!editingItem) return;
 
-    setMenuItems((prev) =>
-      prev.map((item) => (item.id === editingItem.id ? editingItem : item))
-    );
+    const itemData = {
+      name: editingItem.name,
+      description: editingItem.description,
+      price: editingItem.price,
+      category: editingItem.category,
+      image: editingItem.image,
+      available: editingItem.available,
+    };
 
-    toast({
-      title: "Item atualizado com sucesso",
-      duration: 3000,
-    });
+    if (editingItem.id) {
+      const { success, error } = await updateMenuItem(editingItem.id, itemData);
+      if (success) {
+        toast({ title: "Item atualizado com sucesso" });
+      } else {
+        toast({ title: `Erro: ${error}` })
+      }
+    } else {
+      const { success, error } = await createMenuItem(itemData);
+      if (success) {
+        toast({ title: "Item adicionado com sucesso" });
+      } else {
+        toast({ title: `Erro: ${error}` })
+      }
+    }
 
     closeEditModal();
   };
 
   const addNewItem = () => {
-    const newItem: MenuItem = {
-      id: Date.now().toString(),
+    const newItem = {
+      id: null,
       name: "",
       description: "",
       price: 0,
@@ -190,7 +204,7 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={item.available}
-                        onCheckedChange={() => toggleAvailability(item.id)}
+                        onCheckedChange={() => toggleAvailability(item.id!)}
                         className="data-[state=checked]:bg-blue-600"
                       />
                       <span
