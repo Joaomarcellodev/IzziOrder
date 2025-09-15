@@ -53,3 +53,17 @@ export async function updateMenuItemAvailability(id: string, available: boolean)
 
     return { success: true };
 }
+
+export async function deleteMenuItem(id: string) {
+    const supabase = createClient();
+    const { data, error } = await (await supabase).from("menu_items").delete().eq("id", id);
+
+    if (error) {
+        console.error("Erro ao excluir item:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/menu");
+
+    return { success: true };
+}
