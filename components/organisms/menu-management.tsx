@@ -77,8 +77,29 @@ export function MenuManagement({ menuItems: menuItems }: MenuManagementProps) {
     setIsModalOpen(false);
   };
 
+  const validadeMenuItem = (item: MenuItem) => {
+    const errors: string[] = [];
+
+    if (!item.name || item.name.trim().length < 3) {
+      errors.push("O nome deve ter pelo menos 3 caracteres.");
+    }
+
+    if (item.price <= 0) {
+      errors.push("O preço deve ser maior que zero.");
+    }
+
+    return errors;
+  }
+
   const saveItem = async () => {
     if (!editingItem) return;
+
+    const errors = validadeMenuItem(editingItem);
+
+    if (errors.length > 0) {
+      toast({ title: `Erro: ${errors.join("\n")}` });
+      return;
+    }
 
     const itemData = {
       name: editingItem.name,
