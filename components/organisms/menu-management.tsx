@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { GripVertical, Edit, Trash, Upload } from "lucide-react";
-import { useDrag, useDrop, DndProvider, DropTargetMonitor } from "react-dnd";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/molecules/card";
@@ -57,7 +57,6 @@ interface DragItem {
   index: number;
 }
 
-// Interface para as props coletadas do useDrop
 interface DropCollectedProps {
   handlerId: string | symbol | null;
 }
@@ -88,11 +87,7 @@ const MenuItemCard = ({
 }: MenuItemCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const [{ handlerId }, drop] = useDrop<
-    DragItem,
-    void,
-    DropCollectedProps
-  >({
+  const [{ handlerId }, drop] = useDrop<DragItem, void, DropCollectedProps>({
     accept: ItemTypes.CARD,
     collect(monitor) {
       return {
@@ -212,12 +207,18 @@ const MenuItemCard = ({
   );
 };
 
-export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementProps) {
+export function MenuManagement({
+  menuItems: initialMenuItems,
+}: MenuManagementProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localMenuItems, setLocalMenuItems] = useState<MenuItem[]>(initialMenuItems);
+  const [localMenuItems, setLocalMenuItems] =
+    useState<MenuItem[]>(initialMenuItems);
   const { toast } = useToast();
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredItems =
     selectedCategory === "All"
@@ -270,63 +271,75 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
   const openEditModal = (item: MenuItem) => {
     setEditingItem({ ...item });
     setIsModalOpen(true);
+    setImageFile(null);
   };
 
   const closeEditModal = () => {
     setEditingItem(null);
     setIsModalOpen(false);
+    setImageFile(null);
   };
 
   const validateMenuItem = (item: MenuItem) => {
     const errors: string[] = [];
-
     if (!item.name || item.name.trim().length < 3) {
       errors.push("O nome deve ter pelo menos 3 caracteres.");
     }
-
     if (item.price <= 0) {
       errors.push("O preço deve ser maior que zero.");
     }
-
     return errors;
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setEditingItem((prev) =>
+        prev ? { ...prev, image: URL.createObjectURL(file) } : null
+      );
+    }
   };
 
   const saveItem = async () => {
     if (!editingItem) return;
 
     const errors = validateMenuItem(editingItem);
-
     if (errors.length > 0) {
       toast({ title: `Erro: ${errors.join("\n")}` });
       return;
     }
 
-    const itemData = {
-      name: editingItem.name,
-      description: editingItem.description,
-      price: editingItem.price,
-      category: editingItem.category,
-      image: editingItem.image,
-      available: editingItem.available,
-    };
+    const formData = new FormData();
+    formData.append("name", editingItem.name);
+    formData.append("description", editingItem.description);
+    formData.append("price", editingItem.price.toString());
+    formData.append("category", editingItem.category);
+    formData.append("available", editingItem.available.toString());
+
+    if (imageFile) {
+      formData.append("imageFile", imageFile);
+    } else {
+      formData.append("image", editingItem.image);
+    }
 
     if (editingItem.id) {
-      const { success, error } = await updateMenuItem(editingItem.id, itemData);
-      if (success) {
+      const { success, error, data } = await updateMenuItem(
+        editingItem.id,
+        formData
+      );
+      if (success && data) {
         setLocalMenuItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === editingItem.id ? { ...item, ...itemData } : item
-          )
+          prevItems.map((item) => (item.id === data.id ? data : item))
         );
         toast({ title: "Item atualizado com sucesso" });
       } else {
         toast({ title: `Erro: ${error}` });
       }
     } else {
-      const { success, error } = await createMenuItem(itemData);
-      if (success) {
-        const newItemWithId = { ...editingItem, id: `temp-${Date.now()}` };
-        setLocalMenuItems((prevItems) => [...prevItems, newItemWithId]);
+      const { success, error, data } = await createMenuItem(formData);
+      if (success && data) {
+        setLocalMenuItems((prevItems) => [...prevItems, data]);
         toast({ title: "Item adicionado com sucesso" });
       } else {
         toast({ title: `Erro: ${error}` });
@@ -348,6 +361,7 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
     };
     setEditingItem(newItem);
     setIsModalOpen(true);
+    setImageFile(null);
   };
 
   const moveItem = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -364,7 +378,10 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -511,14 +528,33 @@ export function MenuManagement({ menuItems: initialMenuItems }: MenuManagementPr
                 <div className="space-y-2">
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    {editingItem.image &&
+                    editingItem.image !== "placeholder.svg" ? (
+                      <img
+                        src={editingItem.image}
+                        alt="Pré-visualização da imagem"
+                        className="w-32 h-32 object-cover rounded-lg mx-auto mb-2"
+                      />
+                    ) : (
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    )}
                     <div className="text-sm text-gray-600">
                       Arraste e solte uma imagem aqui ou clique para selecionar
                     </div>
+
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+
                     <Button
                       variant="outline"
                       size="sm"
                       className="mt-2 bg-transparent"
+                      onClick={() => fileInputRef.current?.click()}
                     >
                       Escolha arquivo
                     </Button>
