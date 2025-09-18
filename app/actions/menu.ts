@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 interface UploadResponse {
   success: boolean;
@@ -16,26 +16,39 @@ interface ActionResponse {
   data?: any;
 }
 
+const PLACEHOLDER_IMAGE_URL = "/img-item-place.svg";
+
 /**
  * Função Server Action para fazer upload de um arquivo de imagem.
  * @param file O arquivo de imagem a ser enviado.
+ * @param options Opções para o upload, como permitir sobrescrita.
  * @returns Um objeto com a URL da imagem ou um erro.
  */
-async function uploadImage(file: File): Promise<UploadResponse> {
+async function uploadImage(
+  file: File,
+  options?: { overwrite?: boolean }
+): Promise<UploadResponse> {
   if (!file || file.size === 0) {
     return { success: false, error: "Nenhum arquivo encontrado." };
   }
+
+  const uploadOptions = {
+    access: "public" as const,
+    addRandomSuffix: options?.overwrite !== true,
+    overwrite: options?.overwrite || false,
+  };
+
   try {
-    const blob = await put(file.name, file, { access: "public" });
+    const blob = await put(file.name, file, uploadOptions);
     return {
       success: true,
       url: blob.url,
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error("Erro ao fazer upload da imagem:", err);
     return {
       success: false,
-      error: "Falha no upload da imagem.",
+      error: `Falha no upload da imagem: ${err.message}`,
     };
   }
 }
@@ -44,19 +57,18 @@ async function uploadImage(file: File): Promise<UploadResponse> {
  * Cria um novo item de menu com a imagem.
  * @param formData FormData contendo os dados do item e a imagem.
  */
-export async function createMenuItem(formData: FormData): Promise<ActionResponse> {
-  // Extrai os dados do FormData de forma segura
+export async function createMenuItem(
+  formData: FormData
+): Promise<ActionResponse> {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const price = parseFloat(formData.get("price") as string);
   const category = formData.get("category") as string;
   const available = formData.get("available") === "true";
   const imageFile = formData.get("imageFile") as File | null;
-  const existingImage = formData.get("image") as string;
 
-  let imageUrl = existingImage;
+  let imageUrl: string | null = null;
 
-  // Lógica de upload da imagem (se houver um novo arquivo)
   if (imageFile && imageFile.size > 0) {
     const uploadResult = await uploadImage(imageFile);
     if (uploadResult.success && uploadResult.url) {
@@ -64,9 +76,11 @@ export async function createMenuItem(formData: FormData): Promise<ActionResponse
     } else {
       return { success: false, error: uploadResult.error };
     }
+  } else {
+    // Se não houver arquivo, define a imagem como o placeholder
+    imageUrl = PLACEHOLDER_IMAGE_URL;
   }
 
-  // Monta o objeto para o Supabase
   const newItemData = {
     name,
     description,
@@ -95,7 +109,10 @@ export async function createMenuItem(formData: FormData): Promise<ActionResponse
  * @param id O ID do item a ser atualizado.
  * @param formData FormData contendo os dados a serem atualizados.
  */
-export async function updateMenuItem(id: string, formData: FormData): Promise<ActionResponse> {
+export async function updateMenuItem(
+  id: string,
+  formData: FormData
+): Promise<ActionResponse> {
   const updates: any = {
     name: formData.get("name") as string,
     description: formData.get("description") as string,
@@ -107,14 +124,14 @@ export async function updateMenuItem(id: string, formData: FormData): Promise<Ac
   const existingImage = formData.get("image") as string;
 
   if (imageFile && imageFile.size > 0) {
-    const uploadResult = await uploadImage(imageFile);
+    const uploadResult = await uploadImage(imageFile, { overwrite: true });
     if (uploadResult.success && uploadResult.url) {
       updates.image = uploadResult.url;
     } else {
       return { success: false, error: uploadResult.error };
     }
   } else {
-    updates.image = existingImage;
+    updates.image = existingImage === "" ? null : existingImage;
   }
 
   const supabase = createClient();
@@ -132,7 +149,10 @@ export async function updateMenuItem(id: string, formData: FormData): Promise<Ac
   return { success: true, data: data[0] };
 }
 
-export async function updateMenuItemAvailability(id: string, available: boolean): Promise<ActionResponse> {
+export async function updateMenuItemAvailability(
+  id: string,
+  available: boolean
+): Promise<ActionResponse> {
   const supabase = createClient();
   const { data, error } = await (await supabase)
     .from("menu_items")
@@ -148,16 +168,47 @@ export async function updateMenuItemAvailability(id: string, available: boolean)
   return { success: true };
 }
 
+/**
+ * Deleta um item de menu e sua imagem associada.
+ * @param id O ID do item a ser excluído.
+ */
 export async function deleteMenuItem(id: string): Promise<ActionResponse> {
   const supabase = createClient();
-  const { data, error } = await (await supabase)
+
+  // 1. Busca o item para obter a URL da imagem
+  const { data: item, error: fetchError } = await (await supabase)
+    .from("menu_items")
+    .select("image")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) {
+    console.error("Erro ao buscar item para exclusão:", fetchError);
+    return { success: false, error: fetchError.message };
+  }
+
+  // 2. Tenta excluir a imagem se ela existir e não for a imagem de placeholder
+  if (item?.image && item.image !== PLACEHOLDER_IMAGE_URL) {
+    try {
+      await del(item.image);
+      console.log(`Imagem do item ${id} excluída com sucesso.`);
+    } catch (err: any) {
+      console.error(
+        `Aviso: Falha ao excluir a imagem do item ${id}:`,
+        err.message
+      );
+    }
+  }
+
+  // 3. Deleta o item no Supabase
+  const { error: deleteError } = await (await supabase)
     .from("menu_items")
     .delete()
     .eq("id", id);
 
-  if (error) {
-    console.error("Erro ao excluir item:", error);
-    return { success: false, error: error.message };
+  if (deleteError) {
+    console.error("Erro ao excluir item:", deleteError);
+    return { success: false, error: deleteError.message };
   }
 
   revalidatePath("/menu");

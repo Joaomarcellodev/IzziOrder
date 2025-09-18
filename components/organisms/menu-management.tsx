@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/molecules/dialog";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -49,7 +50,7 @@ interface MenuItemCardProps {
   moveItem: (dragIndex: number, hoverIndex: number) => void;
   toggleAvailability: (itemId: string) => Promise<void>;
   openEditModal: (item: MenuItem) => void;
-  handleDelete: (itemId: string) => Promise<void>;
+  openDeleteModal: (itemId: string) => void;
 }
 
 interface DragItem {
@@ -83,7 +84,7 @@ const MenuItemCard = ({
   moveItem,
   toggleAvailability,
   openEditModal,
-  handleDelete,
+  openDeleteModal,
 }: MenuItemCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -195,7 +196,7 @@ const MenuItemCard = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDelete(item.id!)}
+              onClick={() => openDeleteModal(item.id!)}
               className="hover:bg-red-50"
             >
               <Trash className="w-4 h-4 text-red-600" />
@@ -219,6 +220,9 @@ export function MenuManagement({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
 
   const filteredItems =
     selectedCategory === "All"
@@ -247,25 +251,45 @@ export function MenuManagement({
         }`,
       });
     } else {
-      toast({ title: `Erro: ${error}` });
+      toast({
+        title: `Erro ao atualizar disponibilidade`,
+        description: error,
+      });
     }
   };
 
-  const deleteItem = async (itemId: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este item?")) {
-      return;
+  const openDeleteModal = (itemId: string) => {
+    const item = localMenuItems.find((i) => i.id === itemId);
+    if (item) {
+      setItemToDelete(item);
+      setIsDeleteModalOpen(true);
     }
+  };
 
-    const { success, error } = await serverDeleteMenuItem(itemId);
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete || !itemToDelete.id) return;
+
+    setIsDeleteModalOpen(false);
+
+    const { success, error } = await serverDeleteMenuItem(itemToDelete.id);
 
     if (success) {
       setLocalMenuItems((prevItems) =>
-        prevItems.filter((item) => item.id !== itemId)
+        prevItems.filter((item) => item.id !== itemToDelete.id)
       );
-      toast({ title: "Item excluído com sucesso!" });
+      toast({
+        title: "Item excluído com sucesso!",
+        description: `O item '${itemToDelete.name}' foi removido do menu.`,
+      });
     } else {
-      toast({ title: `Erro ao excluir item: ${error}` });
+      toast({
+        title: "Erro ao excluir item",
+        description: error,
+        variant: "destructive",
+      });
     }
+
+    setItemToDelete(null);
   };
 
   const openEditModal = (item: MenuItem) => {
@@ -364,14 +388,21 @@ export function MenuManagement({
     setImageFile(null);
   };
 
-  const moveItem = useCallback((dragIndex: number, hoverIndex: number) => {
-    setLocalMenuItems((prevItems) => {
-      const newItems = [...prevItems];
-      const [movedItem] = newItems.splice(dragIndex, 1);
-      newItems.splice(hoverIndex, 0, movedItem as MenuItem);
-      return newItems;
-    });
-  }, []);
+  const moveItem = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      setLocalMenuItems((prevItems) => {
+        const newItems = [...prevItems];
+        const [movedItem] = newItems.splice(dragIndex, 1);
+        newItems.splice(hoverIndex, 0, movedItem as MenuItem);
+        toast({
+          title: "Ordem atualizada",
+          description: "Os itens do menu foram reordenados com sucesso.",
+        });
+        return newItems;
+      });
+    },
+    [toast]
+  );
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -440,7 +471,7 @@ export function MenuManagement({
                 moveItem={moveItem}
                 toggleAvailability={toggleAvailability}
                 openEditModal={openEditModal}
-                handleDelete={deleteItem}
+                openDeleteModal={openDeleteModal}
               />
             ))
           )}
@@ -572,6 +603,32 @@ export function MenuManagement({
                 style={{ backgroundColor: "#FD7E14" }}
               >
                 Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Novo Dialog de Confirmação para Exclusão */}
+        <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Tem certeza que deseja excluir este item?
+              </DialogTitle>
+              <DialogDescription>
+                Esta ação não pode ser desfeita. Isso removerá permanentemente o
+                item {itemToDelete?.name} do seu menu.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                Excluir
               </Button>
             </DialogFooter>
           </DialogContent>
