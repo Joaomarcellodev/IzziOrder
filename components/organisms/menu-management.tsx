@@ -1,3 +1,5 @@
+// MenuManagement.tsx
+
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -32,6 +34,7 @@ import {
   updateMenuItem,
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
+  updateMenuOrder,
 } from "@/app/actions/menu";
 
 interface MenuItem {
@@ -51,6 +54,7 @@ interface MenuItemCardProps {
   toggleAvailability: (itemId: string) => Promise<void>;
   openEditModal: (item: MenuItem) => void;
   openDeleteModal: (itemId: string) => void;
+  onDrop: (dragIndex: number) => void;
 }
 
 interface DragItem {
@@ -85,6 +89,7 @@ const MenuItemCard = ({
   toggleAvailability,
   openEditModal,
   openDeleteModal,
+  onDrop,
 }: MenuItemCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -133,6 +138,11 @@ const MenuItemCard = ({
     item: () => {
       return { id: item.id!, index: index };
     },
+    end: (draggedItem, monitor) => {
+      if (monitor.didDrop()) {
+        onDrop(draggedItem.index);
+      }
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -154,9 +164,9 @@ const MenuItemCard = ({
             <GripVertical className="w-5 h-5" />
           </div>
           <img
-            src={item.image || "/placeholder.svg"}
+            src={item.image || "/placeholder-img.svg"}
             alt={item.name}
-            className="w-16 h-16 rounded-lg object-cover"
+            className="w-20 h-20 rounded-lg object-cover bg-gray-100"
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 truncate">
@@ -380,7 +390,7 @@ export function MenuManagement({
       description: "",
       price: 0,
       category: categories[0],
-      image: "placeholder.svg",
+      image: "/placeholder.svg",
       available: true,
     };
     setEditingItem(newItem);
@@ -394,15 +404,29 @@ export function MenuManagement({
         const newItems = [...prevItems];
         const [movedItem] = newItems.splice(dragIndex, 1);
         newItems.splice(hoverIndex, 0, movedItem as MenuItem);
-        toast({
-          title: "Ordem atualizada",
-          description: "Os itens do menu foram reordenados com sucesso.",
-        });
         return newItems;
       });
     },
     [toast]
   );
+
+  const handleDrop = useCallback(async () => {
+    const newOrder = localMenuItems.map((item) => item.id!);
+    const { success, error } = await updateMenuOrder(newOrder);
+
+    if (success) {
+      toast({
+        title: "Ordem atualizada",
+        description: "Os itens do menu foram reordenados com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro ao atualizar a ordem.",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [localMenuItems, toast]);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -472,6 +496,7 @@ export function MenuManagement({
                 toggleAvailability={toggleAvailability}
                 openEditModal={openEditModal}
                 openDeleteModal={openDeleteModal}
+                onDrop={handleDrop}
               />
             ))
           )}
@@ -560,7 +585,8 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                    editingItem.image !== "placeholder.svg" ? (
+                    editingItem.image !== "/placeholder-img.svg" &&
+                    editingItem.image.startsWith("blob:") ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"

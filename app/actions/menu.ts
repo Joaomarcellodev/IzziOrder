@@ -1,3 +1,5 @@
+// menu.ts
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -16,7 +18,7 @@ interface ActionResponse {
   data?: any;
 }
 
-const PLACEHOLDER_IMAGE_URL = "/img-item-place.svg";
+const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
 /**
  * Função Server Action para fazer upload de um arquivo de imagem.
@@ -68,6 +70,21 @@ export async function createMenuItem(
   const imageFile = formData.get("imageFile") as File | null;
 
   let imageUrl: string | null = null;
+  const supabase = createClient();
+  // Obtém o próximo valor de "position"
+  const { data: maxPositionData, error: positionError } = await (
+    await supabase
+  )
+    .from("menu_items")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .single();
+
+  const nextPosition =
+    maxPositionData && maxPositionData.position !== null
+      ? maxPositionData.position + 1
+      : 0;
 
   if (imageFile && imageFile.size > 0) {
     const uploadResult = await uploadImage(imageFile);
@@ -88,9 +105,9 @@ export async function createMenuItem(
     category,
     available,
     image: imageUrl,
+    position: nextPosition, // Adiciona a nova posição
   };
 
-  const supabase = createClient();
   const { data, error } = await (await supabase)
     .from("menu_items")
     .insert([newItemData])
@@ -123,10 +140,34 @@ export async function updateMenuItem(
   const imageFile = formData.get("imageFile") as File | null;
   const existingImage = formData.get("image") as string;
 
+  const supabase = createClient();
+
   if (imageFile && imageFile.size > 0) {
-    const uploadResult = await uploadImage(imageFile, { overwrite: true });
+    const { data: oldItem, error: fetchError } = await (await supabase)
+      .from("menu_items")
+      .select("image")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      return { success: false, error:"Item não encontrado." };
+    }
+
+    const uploadResult = await uploadImage(imageFile);
     if (uploadResult.success && uploadResult.url) {
       updates.image = uploadResult.url;
+
+      // Exclui a imagem antiga se ela existir e não for a de placeholder
+      if (oldItem?.image && oldItem.image !== PLACEHOLDER_IMAGE_URL) {
+        try {
+          await del(oldItem.image);
+        } catch (err) {
+          console.error(
+            "Erro ao excluir a imagem antiga, mas a nova foi salva.",
+            err
+          );
+        }
+      }
     } else {
       return { success: false, error: uploadResult.error };
     }
@@ -134,7 +175,6 @@ export async function updateMenuItem(
     updates.image = existingImage === "" ? null : existingImage;
   }
 
-  const supabase = createClient();
   const { data, error } = await (await supabase)
     .from("menu_items")
     .update(updates)
@@ -147,25 +187,6 @@ export async function updateMenuItem(
   }
   revalidatePath("/menu");
   return { success: true, data: data[0] };
-}
-
-export async function updateMenuItemAvailability(
-  id: string,
-  available: boolean
-): Promise<ActionResponse> {
-  const supabase = createClient();
-  const { data, error } = await (await supabase)
-    .from("menu_items")
-    .update({ available: available })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Erro ao atualizar disponibilidade do item:", error);
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/menu");
-  return { success: true };
 }
 
 /**
@@ -209,6 +230,56 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
   if (deleteError) {
     console.error("Erro ao excluir item:", deleteError);
     return { success: false, error: deleteError.message };
+  }
+
+  revalidatePath("/menu");
+  return { success: true };
+}
+
+/**
+ * Atualiza a ordem dos itens do menu no banco de dados.
+ * @param ids Array de IDs dos itens na nova ordem.
+ */
+export async function updateMenuOrder(ids: string[]): Promise<ActionResponse> {
+  const supabase = createClient();
+  let success = true;
+  let errorMsg = "";
+
+  for (const [index, id] of ids.entries()) {
+    const { error } = await (await supabase)
+      .from("menu_items")
+      .update({ position: index })
+      .eq("id", id);
+
+    if (error) {
+      success = false;
+      errorMsg = `Falha ao atualizar a ordem do item ${id}: ${error.message}`;
+      console.error(errorMsg);
+      break; // Sai do loop em caso de erro
+    }
+  }
+
+  if (success) {
+    revalidatePath("/menu");
+    return { success: true };
+  } else {
+    return { success: false, error: errorMsg };
+  }
+}
+
+export async function updateMenuItemAvailability(
+  id: string,
+  available: boolean
+): Promise<ActionResponse> {
+  const supabase = createClient();
+  const { data, error } = await (await supabase)
+    .from("menu_items")
+    .update({ available: available })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erro ao atualizar disponibilidade do item:", error);
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/menu");
