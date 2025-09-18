@@ -17,7 +17,7 @@ export default async function MenuPage() {
       currentPage="Gerenciamento de cardápio"
       breadcrumb="Painel > Gerenciamento de Cardápio"
     >
-      <MenuManagement menuItems={menuItems} />
+      <MenuManagement menuItems={menuItems} categories={[]} />
     </AppShell>
   );
 }

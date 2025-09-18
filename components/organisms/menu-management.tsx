@@ -68,15 +68,8 @@ interface DropCollectedProps {
 
 interface MenuManagementProps {
   menuItems: MenuItem[];
+  categories: string[];
 }
-
-const categories = [
-  "Hambúrgueres",
-  "Pizzas",
-  "Saladas",
-  "Bebidas",
-  "Sobremesas",
-];
 
 const ItemTypes = {
   CARD: "card",
@@ -220,12 +213,22 @@ const MenuItemCard = ({
 
 export function MenuManagement({
   menuItems: initialMenuItems,
+  categories: initialCategories,
 }: MenuManagementProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryToEdit, setCategoryToEdit] = useState("");
+  const [categoryToDelete, setCategoryToDelete] = useState("");
+
   const [localMenuItems, setLocalMenuItems] =
     useState<MenuItem[]>(initialMenuItems);
+  const [localCategories, setLocalCategories] = useState<string[]>(
+    initialCategories || []
+  );
   const { toast } = useToast();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -304,13 +307,13 @@ export function MenuManagement({
 
   const openEditModal = (item: MenuItem) => {
     setEditingItem({ ...item });
-    setIsModalOpen(true);
+    setIsItemModalOpen(true);
     setImageFile(null);
   };
 
-  const closeEditModal = () => {
+  const closeItemModal = () => {
     setEditingItem(null);
-    setIsModalOpen(false);
+    setIsItemModalOpen(false);
     setImageFile(null);
   };
 
@@ -321,6 +324,9 @@ export function MenuManagement({
     }
     if (item.price <= 0) {
       errors.push("O preço deve ser maior que zero.");
+    }
+    if (!item.category) {
+      errors.push("A categoria é obrigatória.");
     }
     return errors;
   };
@@ -380,7 +386,7 @@ export function MenuManagement({
       }
     }
 
-    closeEditModal();
+    closeItemModal();
   };
 
   const addNewItem = () => {
@@ -389,26 +395,88 @@ export function MenuManagement({
       name: "",
       description: "",
       price: 0,
-      category: categories[0],
-      image: "/placeholder.svg",
+      category: localCategories[0] || "",
+      image: "/placeholder-img.svg",
       available: true,
     };
     setEditingItem(newItem);
-    setIsModalOpen(true);
+    setIsItemModalOpen(true);
     setImageFile(null);
   };
 
-  const moveItem = useCallback(
-    (dragIndex: number, hoverIndex: number) => {
-      setLocalMenuItems((prevItems) => {
-        const newItems = [...prevItems];
-        const [movedItem] = newItems.splice(dragIndex, 1);
-        newItems.splice(hoverIndex, 0, movedItem as MenuItem);
-        return newItems;
+  const addNewCategory = () => {
+    setNewCategoryName("");
+    setIsCategoryModalOpen(true);
+  };
+
+  const saveCategory = () => {
+    const trimmedName = newCategoryName.trim();
+    if (trimmedName && !localCategories.includes(trimmedName)) {
+      setLocalCategories((prev) => [...prev, trimmedName]);
+      toast({ title: `Categoria "${trimmedName}" adicionada!` });
+      // Lógica futura para salvar a categoria no banco de dados aqui.
+    }
+    setIsCategoryModalOpen(false);
+  };
+
+  const openEditCategoryModal = (category: string) => {
+    setCategoryToEdit(category);
+    setNewCategoryName(category);
+    setIsEditCategoryModalOpen(true);
+  };
+
+  const saveEditedCategory = () => {
+    const trimmedName = newCategoryName.trim();
+    if (
+      trimmedName &&
+      trimmedName !== categoryToEdit &&
+      !localCategories.includes(trimmedName)
+    ) {
+      setLocalCategories((prev) =>
+        prev.map((cat) => (cat === categoryToEdit ? trimmedName : cat))
+      );
+      setLocalMenuItems((prevItems) =>
+        prevItems.map((item) =>
+          item.category === categoryToEdit
+            ? { ...item, category: trimmedName }
+            : item
+        )
+      );
+      toast({
+        title: `Categoria "${categoryToEdit}" atualizada para "${trimmedName}"!`,
       });
-    },
-    [toast]
-  );
+    }
+    setIsEditCategoryModalOpen(false);
+    setCategoryToEdit("");
+  };
+
+  const openDeleteCategoryModal = (category: string) => {
+    setCategoryToDelete(category);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteCategory = () => {
+    setLocalCategories((prev) =>
+      prev.filter((cat) => cat !== categoryToDelete)
+    );
+    setLocalMenuItems((prevItems) =>
+      prevItems.filter((item) => item.category !== categoryToDelete)
+    );
+    toast({
+      title: `Categoria "${categoryToDelete}" e seus itens foram excluídos!`,
+    });
+    setIsDeleteModalOpen(false);
+    setCategoryToDelete("");
+  };
+
+  const moveItem = useCallback((dragIndex: number, hoverIndex: number) => {
+    setLocalMenuItems((prevItems) => {
+      const newItems = [...prevItems];
+      const [movedItem] = newItems.splice(dragIndex, 1);
+      newItems.splice(hoverIndex, 0, movedItem as MenuItem);
+      return newItems;
+    });
+  }, []);
 
   const handleDrop = useCallback(async () => {
     const newOrder = localMenuItems.map((item) => item.id!);
@@ -442,7 +510,7 @@ export function MenuManagement({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
-                {categories.map((category) => (
+                {localCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>
@@ -462,7 +530,7 @@ export function MenuManagement({
             </div>
             <div>
               <Button
-                onClick={addNewItem}
+                onClick={addNewCategory}
                 className="text-white font-semibold"
                 style={{ backgroundColor: "#FD7E14" }}
               >
@@ -501,7 +569,36 @@ export function MenuManagement({
             ))
           )}
         </div>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Gerenciar Categorias</h2>
+          <div className="flex flex-wrap gap-2">
+            {localCategories.map((category) => (
+              <div
+                key={category}
+                className="flex items-center p-2 bg-gray-100 rounded-md"
+              >
+                <span className="text-sm font-medium mr-2">{category}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => openEditCategoryModal(category)}
+                >
+                  <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => openDeleteCategoryModal(category)}
+                >
+                  <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Modal de Item (Adicionar/Editar) */}
+        <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -572,7 +669,7 @@ export function MenuManagement({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
+                        {localCategories.map((category) => (
                           <SelectItem key={category} value={category}>
                             {category}
                           </SelectItem>
@@ -585,8 +682,7 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                    editingItem.image !== "/placeholder-img.svg" &&
-                    editingItem.image.startsWith("blob:") ? (
+                    editingItem.image !== "/placeholder-img.svg" ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"
@@ -620,7 +716,7 @@ export function MenuManagement({
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={closeEditModal}>
+              <Button variant="outline" onClick={closeItemModal}>
                 Cancelar
               </Button>
               <Button
@@ -634,16 +730,94 @@ export function MenuManagement({
           </DialogContent>
         </Dialog>
 
-        {/* Novo Dialog de Confirmação para Exclusão */}
+        {/* Modal de Adicionar Categoria */}
+        <Dialog
+          open={isCategoryModalOpen}
+          onOpenChange={setIsCategoryModalOpen}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Adicionar Nova Categoria</DialogTitle>
+              <DialogDescription>
+                Adicione uma nova categoria para organizar seu menu.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <Label htmlFor="newCategory">Nome da Categoria</Label>
+              <Input
+                id="newCategory"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Ex: Pizzas, Bebidas, etc."
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsCategoryModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={saveCategory}
+                className="text-white font-semibold"
+                style={{ backgroundColor: "#FD7E14" }}
+              >
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Editar Categoria */}
+        <Dialog
+          open={isEditCategoryModalOpen}
+          onOpenChange={setIsEditCategoryModalOpen}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Editar Categoria</DialogTitle>
+              <DialogDescription>
+                Altere o nome da categoria selecionada.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <Label htmlFor="editCategoryName">Novo Nome da Categoria</Label>
+              <Input
+                id="editCategoryName"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Escreva o novo nome"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditCategoryModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={saveEditedCategory}
+                className="text-white font-semibold"
+                style={{ backgroundColor: "#FD7E14" }}
+              >
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Confirmação para Exclusão de Categoria */}
         <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Tem certeza que deseja excluir este item?
+                Tem certeza que deseja excluir a categoria "{categoryToDelete}"?
               </DialogTitle>
               <DialogDescription>
-                Esta ação não pode ser desfeita. Isso removerá permanentemente o
-                item {itemToDelete?.name} do seu menu.
+                Esta ação é permanente e removerá a categoria e todos os itens
+                de menu associados a ela.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -653,7 +827,10 @@ export function MenuManagement({
               >
                 Cancelar
               </Button>
-              <Button variant="destructive" onClick={handleConfirmDelete}>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteCategory}
+              >
                 Excluir
               </Button>
             </DialogFooter>
