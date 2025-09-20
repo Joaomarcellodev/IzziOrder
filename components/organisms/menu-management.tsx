@@ -36,7 +36,7 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrder,
 } from "@/app/actions/menu";
-import { createCategory, updateCategory } from "@/app/actions/category";
+import { createCategory, deleteCategory, updateCategory } from "@/app/actions/category";
 
 interface MenuItem {
   id: string | null;
@@ -228,7 +228,8 @@ export function MenuManagement({
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryToEditId, setCategoryToEditId] = useState("");
-  const [categoryToDelete, setCategoryToDelete] = useState("");
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
+  const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
 
   const [localMenuItems, setLocalMenuItems] =
     useState<MenuItem[]>(initialMenuItems);
@@ -467,23 +468,29 @@ export function MenuManagement({
     setCategoryToEditId("");
   };
 
-  const openDeleteCategoryModal = (category: string) => {
-    setCategoryToDelete(category);
+  const openDeleteCategoryModal = (category: Category) => {
+    setCategoryToDeleteId(category.id!);
+    setCategoryToDeleteName(category.name);
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDeleteCategory = () => {
-    setLocalCategories((prev) =>
-      prev.filter((cat) => cat !== categoryToDelete)
-    );
-    setLocalMenuItems((prevItems) =>
-      prevItems.filter((item) => item.category !== categoryToDelete)
-    );
-    toast({
-      title: `Categoria "${categoryToDelete}" e seus itens foram excluídos!`,
-    });
+  const handleConfirmDeleteCategory = async () => {
+    const { success, error } = await deleteCategory(categoryToDeleteId);
+
+    if (success) {
+      setLocalCategories(prev => prev.filter(cat => (cat.id !== categoryToDeleteId)));
+
+      toast({
+        title: `Categoria "${categoryToDeleteName}" foi excluída!`,
+      });
+    } else {
+      toast({
+        title: `Erro: "${error}"`,
+      });
+    }
     setIsDeleteModalOpen(false);
-    setCategoryToDelete("");
+    setCategoryToDeleteId("");
+    setCategoryToDeleteName("");
   };
 
   const moveItem = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -605,7 +612,7 @@ export function MenuManagement({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => openDeleteCategoryModal(category.name)}
+                  onClick={() => openDeleteCategoryModal(category)}
                 >
                   <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
                 </Button>
@@ -830,7 +837,7 @@ export function MenuManagement({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Tem certeza que deseja excluir a categoria "{categoryToDelete}"?
+                Tem certeza que deseja excluir a categoria "{categoryToDeleteName}"?
               </DialogTitle>
               <DialogDescription>
                 Esta ação é permanente e removerá a categoria e todos os itens
