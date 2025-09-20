@@ -36,7 +36,7 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrder,
 } from "@/app/actions/menu";
-import { createCategory } from "@/app/actions/category";
+import { createCategory, updateCategory } from "@/app/actions/category";
 
 interface MenuItem {
   id: string | null;
@@ -227,7 +227,7 @@ export function MenuManagement({
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [categoryToEdit, setCategoryToEdit] = useState("");
+  const [categoryToEditId, setCategoryToEditId] = useState("");
   const [categoryToDelete, setCategoryToDelete] = useState("");
 
   const [localMenuItems, setLocalMenuItems] =
@@ -433,35 +433,38 @@ export function MenuManagement({
     setIsCategoryModalOpen(false);
   };
 
-  const openEditCategoryModal = (category: string) => {
-    setCategoryToEdit(category);
-    setNewCategoryName(category);
+  const openEditCategoryModal = (category: Category) => {
+    setCategoryToEditId(category.id!);
+    setNewCategoryName(category.name);
     setIsEditCategoryModalOpen(true);
   };
 
-  const saveEditedCategory = () => {
+  const saveEditedCategory = async () => {
     const trimmedName = newCategoryName.trim();
-    if (
-      trimmedName &&
-      trimmedName !== categoryToEdit &&
-      !localCategories.includes(trimmedName)
-    ) {
-      setLocalCategories((prev) =>
-        prev.map((cat) => (cat === categoryToEdit ? trimmedName : cat))
-      );
-      setLocalMenuItems((prevItems) =>
-        prevItems.map((item) =>
-          item.category === categoryToEdit
-            ? { ...item, category: trimmedName }
-            : item
-        )
-      );
-      toast({
-        title: `Categoria "${categoryToEdit}" atualizada para "${trimmedName}"!`,
-      });
+    if (!trimmedName) return;
+
+    const category = localCategories.find(cat => cat.id === categoryToEditId);
+    if (!category) return;
+
+    if (trimmedName === category.name) {
+      setIsEditCategoryModalOpen(false);
+      return;
     }
+
+    const { success, data, error } = await updateCategory(category.id!, trimmedName);
+
+    if (success && data) {
+      setLocalCategories((prev) =>
+        prev.map((cat) => (cat.id === data.id ? data : cat))
+      );
+
+      toast({ title: `Categoria atualizada para "${data.name}"!` });
+    } else {
+      toast({ title: `Erro ao atualizar categoria: ${error}` });
+    }
+
     setIsEditCategoryModalOpen(false);
-    setCategoryToEdit("");
+    setCategoryToEditId("");
   };
 
   const openDeleteCategoryModal = (category: string) => {
@@ -595,7 +598,7 @@ export function MenuManagement({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => openEditCategoryModal(category.name)}
+                  onClick={() => openEditCategoryModal(category)}
                 >
                   <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
                 </Button>
@@ -684,7 +687,7 @@ export function MenuManagement({
                       </SelectTrigger>
                       <SelectContent>
                         {localCategories.map((category) => (
-                          <SelectItem key={category.name} value={category.name}>
+                          <SelectItem key={category.id} value={category.name}>
                             {category.name}
                           </SelectItem>
                         ))}
