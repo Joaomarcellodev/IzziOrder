@@ -424,7 +424,7 @@ export function MenuManagement({
     const { success, error, data } = await createCategory(trimmedName);
 
     if (success && data) {
-      setLocalCategories((prev) => [...prev, data.name]);
+      setLocalCategories(prev => [...prev, data]);
       toast({ title: `Categoria "${data.name}" adicionada!` });
     } else {
       toast({ title: `Erro ao adicionar a categoria "${trimmedName}"!` });
@@ -525,7 +525,7 @@ export function MenuManagement({
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
                 {localCategories.map((category) => (
-                  <SelectItem key={category.name} value={category.name}>
+                  <SelectItem key={category.id} value={category.name}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -588,7 +588,7 @@ export function MenuManagement({
           <div className="flex flex-wrap gap-2">
             {localCategories.map((category) => (
               <div
-                key={category.name}
+                key={category.id}
                 className="flex items-center p-2 bg-gray-100 rounded-md"
               >
                 <span className="text-sm font-medium mr-2">{category.name}</span>
