@@ -36,15 +36,21 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrder,
 } from "@/app/actions/menu";
+import { createCategory } from "@/app/actions/category";
 
 interface MenuItem {
   id: string | null;
   name: string;
   description: string;
   price: number;
-  category: string;
+  category_id: string;
   image: string;
   available: boolean;
+}
+
+interface Category {
+  id: string | null;
+  name: string;
 }
 
 interface MenuItemCardProps {
@@ -68,7 +74,7 @@ interface DropCollectedProps {
 
 interface MenuManagementProps {
   menuItems: MenuItem[];
-  categories: string[];
+  categories: Category[];
 }
 
 const ItemTypes = {
@@ -226,7 +232,7 @@ export function MenuManagement({
 
   const [localMenuItems, setLocalMenuItems] =
     useState<MenuItem[]>(initialMenuItems);
-  const [localCategories, setLocalCategories] = useState<string[]>(
+  const [localCategories, setLocalCategories] = useState<Category[]>(
     initialCategories || []
   );
   const { toast } = useToast();
@@ -240,7 +246,7 @@ export function MenuManagement({
   const filteredItems =
     selectedCategory === "All"
       ? localMenuItems
-      : localMenuItems.filter((item) => item.category === selectedCategory);
+      : localMenuItems.filter((item) => item.category_id === selectedCategory);
 
   const toggleAvailability = async (itemId: string) => {
     const itemToUpdate = localMenuItems.find((item) => item.id === itemId);
@@ -259,9 +265,8 @@ export function MenuManagement({
         )
       );
       toast({
-        title: `${itemToUpdate.name} ${
-          newAvailability ? "agora disponível" : "agora indisponível"
-        }`,
+        title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"
+          }`,
       });
     } else {
       toast({
@@ -325,7 +330,7 @@ export function MenuManagement({
     if (item.price <= 0) {
       errors.push("O preço deve ser maior que zero.");
     }
-    if (!item.category) {
+    if (!item.category_id) {
       errors.push("A categoria é obrigatória.");
     }
     return errors;
@@ -354,7 +359,7 @@ export function MenuManagement({
     formData.append("name", editingItem.name);
     formData.append("description", editingItem.description);
     formData.append("price", editingItem.price.toString());
-    formData.append("category", editingItem.category);
+    formData.append("category", editingItem.category_id);
     formData.append("available", editingItem.available.toString());
 
     if (imageFile) {
@@ -395,7 +400,7 @@ export function MenuManagement({
       name: "",
       description: "",
       price: 0,
-      category: localCategories[0] || "",
+      category_id: localCategories[0].id || "",
       image: "/placeholder-img.svg",
       available: true,
     };
@@ -409,13 +414,22 @@ export function MenuManagement({
     setIsCategoryModalOpen(true);
   };
 
-  const saveCategory = () => {
+  const saveCategory = async () => {
     const trimmedName = newCategoryName.trim();
-    if (trimmedName && !localCategories.includes(trimmedName)) {
-      setLocalCategories((prev) => [...prev, trimmedName]);
-      toast({ title: `Categoria "${trimmedName}" adicionada!` });
-      // Lógica futura para salvar a categoria no banco de dados aqui.
+    if (!trimmedName) {
+      toast({ title: `Categoria precisa de nome!` });
+      return;
     }
+
+    const { success, error, data } = await createCategory(trimmedName);
+
+    if (success && data) {
+      setLocalCategories((prev) => [...prev, data.name]);
+      toast({ title: `Categoria "${data.name}" adicionada!` });
+    } else {
+      toast({ title: `Erro ao adicionar a categoria "${trimmedName}"!` });
+    }
+
     setIsCategoryModalOpen(false);
   };
 
@@ -511,8 +525,8 @@ export function MenuManagement({
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
                 {localCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                  <SelectItem key={category.name} value={category.name}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -574,21 +588,21 @@ export function MenuManagement({
           <div className="flex flex-wrap gap-2">
             {localCategories.map((category) => (
               <div
-                key={category}
+                key={category.name}
                 className="flex items-center p-2 bg-gray-100 rounded-md"
               >
-                <span className="text-sm font-medium mr-2">{category}</span>
+                <span className="text-sm font-medium mr-2">{category.name}</span>
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => openEditCategoryModal(category)}
+                  onClick={() => openEditCategoryModal(category.name)}
                 >
                   <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => openDeleteCategoryModal(category)}
+                  onClick={() => openDeleteCategoryModal(category.name)}
                 >
                   <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
                 </Button>
@@ -646,9 +660,9 @@ export function MenuManagement({
                         setEditingItem((prev) =>
                           prev
                             ? {
-                                ...prev,
-                                price: Number.parseFloat(e.target.value) || 0,
-                              }
+                              ...prev,
+                              price: Number.parseFloat(e.target.value) || 0,
+                            }
                             : null
                         )
                       }
@@ -658,7 +672,7 @@ export function MenuManagement({
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
                     <Select
-                      value={editingItem.category}
+                      value={editingItem.category_id}
                       onValueChange={(value) =>
                         setEditingItem((prev) =>
                           prev ? { ...prev, category: value } : null
@@ -670,8 +684,8 @@ export function MenuManagement({
                       </SelectTrigger>
                       <SelectContent>
                         {localCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
+                          <SelectItem key={category.name} value={category.name}>
+                            {category.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -682,7 +696,7 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                    editingItem.image !== "/placeholder-img.svg" ? (
+                      editingItem.image !== "/placeholder-img.svg" ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"
