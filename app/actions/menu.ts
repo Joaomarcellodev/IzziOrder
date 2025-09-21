@@ -69,12 +69,15 @@ export async function createMenuItem(
   const available = formData.get("available") === "true";
   const imageFile = formData.get("imageFile") as File | null;
 
+  // VERIFICAÇÃO DE CATEGORIA OBRIGATÓRIA
+  if (!category || category.trim() === "") {
+    return { success: false, error: "A categoria é obrigatória." };
+  }
+
   let imageUrl: string | null = null;
   const supabase = createClient();
   // Obtém o próximo valor de "position"
-  const { data: maxPositionData, error: positionError } = await (
-    await supabase
-  )
+  const { data: maxPositionData, error: positionError } = await (await supabase)
     .from("menu_items")
     .select("position")
     .order("position", { ascending: false })
@@ -140,6 +143,11 @@ export async function updateMenuItem(
   const imageFile = formData.get("imageFile") as File | null;
   const existingImage = formData.get("image") as string;
 
+  // VERIFICAÇÃO DE CATEGORIA OBRIGATÓRIA TAMBÉM NA ATUALIZAÇÃO
+  if (!updates.category || updates.category.trim() === "") {
+    return { success: false, error: "A categoria é obrigatória." };
+  }
+
   const supabase = createClient();
 
   if (imageFile && imageFile.size > 0) {
@@ -150,7 +158,7 @@ export async function updateMenuItem(
       .single();
 
     if (fetchError) {
-      return { success: false, error:"Item não encontrado." };
+      return { success: false, error: "Item não encontrado." };
     }
 
     const uploadResult = await uploadImage(imageFile);
