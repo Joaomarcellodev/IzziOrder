@@ -65,14 +65,9 @@ export async function createMenuItem(
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const price = parseFloat(formData.get("price") as string);
-  const category = formData.get("category") as string;
+  const category_id = formData.get("category_id") as string;
   const available = formData.get("available") === "true";
   const imageFile = formData.get("imageFile") as File | null;
-
-  // VERIFICAÇÃO DE CATEGORIA OBRIGATÓRIA
-  if (!category || category.trim() === "") {
-    return { success: false, error: "A categoria é obrigatória." };
-  }
 
   let imageUrl: string | null = null;
   const supabase = createClient();
@@ -105,7 +100,7 @@ export async function createMenuItem(
     name,
     description,
     price,
-    category,
+    category_id,
     available,
     image: imageUrl,
     position: nextPosition, // Adiciona a nova posição
@@ -137,16 +132,11 @@ export async function updateMenuItem(
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     price: parseFloat(formData.get("price") as string),
-    category: formData.get("category") as string,
+    category_id: formData.get("category_id") as string,
     available: formData.get("available") === "true",
   };
   const imageFile = formData.get("imageFile") as File | null;
   const existingImage = formData.get("image") as string;
-
-  // VERIFICAÇÃO DE CATEGORIA OBRIGATÓRIA TAMBÉM NA ATUALIZAÇÃO
-  if (!updates.category || updates.category.trim() === "") {
-    return { success: false, error: "A categoria é obrigatória." };
-  }
 
   const supabase = createClient();
 

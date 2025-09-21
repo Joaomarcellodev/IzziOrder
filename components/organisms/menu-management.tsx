@@ -328,6 +328,9 @@ export function MenuManagement({
     if (!item.name || item.name.trim().length < 3) {
       errors.push("O nome deve ter pelo menos 3 caracteres.");
     }
+    if (!item.description || item.description.trim().length < 3) {
+      errors.push("A descrição deve ter pelo menos 3 caracteres.");
+    }
     if (item.price <= 0) {
       errors.push("O preço deve ser maior que zero.");
     }
@@ -360,7 +363,7 @@ export function MenuManagement({
     formData.append("name", editingItem.name);
     formData.append("description", editingItem.description);
     formData.append("price", editingItem.price.toString());
-    formData.append("category", editingItem.category_id);
+    formData.append("category_id", editingItem.category_id);
     formData.append("available", editingItem.available.toString());
 
     if (imageFile) {
@@ -401,7 +404,7 @@ export function MenuManagement({
       name: "",
       description: "",
       price: 0,
-      category_id: localCategories[0].id || "",
+      category_id: "",
       image: "/placeholder-img.svg",
       available: true,
     };
@@ -535,7 +538,7 @@ export function MenuManagement({
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
                 {localCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
+                  <SelectItem key={category.id} value={category.id!}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -664,7 +667,7 @@ export function MenuManagement({
                     <Input
                       id="price"
                       type="number"
-                      step="0.01"
+                      step="1"
                       value={editingItem.price}
                       onChange={(e) =>
                         setEditingItem((prev) =>
@@ -685,16 +688,16 @@ export function MenuManagement({
                       value={editingItem.category_id}
                       onValueChange={(value) =>
                         setEditingItem((prev) =>
-                          prev ? { ...prev, category: value } : null
+                          prev ? { ...prev, category_id: value } : null
                         )
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
                         {localCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
+                          <SelectItem key={category.id!} value={category.id!}>
                             {category.name}
                           </SelectItem>
                         ))}
