@@ -235,10 +235,10 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
 }
 
 /**
- * Atualiza a ordem dos itens do menu no banco de dados.
+ * Atualiza a ordenação dos itens do menu no banco de dados.
  * @param ids Array de IDs dos itens na nova ordem.
  */
-export async function updateMenuOrder(ids: string[]): Promise<ActionResponse> {
+export async function updateMenuOrdernation(ids: string[]): Promise<ActionResponse> {
   const supabase = createClient();
   let success = true;
   let errorMsg = "";

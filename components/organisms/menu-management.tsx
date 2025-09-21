@@ -34,7 +34,7 @@ import {
   updateMenuItem,
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
-  updateMenuOrder,
+  updateMenuOrdernation,
 } from "@/app/actions/menu";
 import { createCategory, deleteCategory, updateCategory } from "@/app/actions/category";
 
@@ -506,8 +506,8 @@ export function MenuManagement({
   }, []);
 
   const handleDrop = useCallback(async () => {
-    const newOrder = localMenuItems.map((item) => item.id!);
-    const { success, error } = await updateMenuOrder(newOrder);
+    const newPosition = localMenuItems.map((item) => item.id!);
+    const { success, error } = await updateMenuOrdernation(newPosition);
 
     if (success) {
       toast({
