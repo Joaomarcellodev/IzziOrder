@@ -11,38 +11,43 @@ interface ActionResponse<T = any> {
 }
 
 // Tipo para a tabela 'category'
-interface Category {
+export interface Category {
   id: string;
   name: string;
 }
 
+/**
+ * Cria uma nova categoria no banco de dados.
+ * @param name O nome da nova categoria.
+ * @returns Um objeto ActionResponse com sucesso ou erro.
+ */
 export async function createCategory(
   name: string
 ): Promise<ActionResponse<Category>> {
   const supabase = createClient();
+  const trimmedName = name?.trim();
 
-  const trimmedName = name.trim();
+  // Validação do nome
   if (!trimmedName) {
     return { success: false, error: "O nome da categoria não pode ser vazio." };
   }
 
-  // Tenta inserir diretamente, confiando na restrição de unicidade do banco de dados
+  // Tenta inserir a categoria
   const { data, error } = await (await supabase)
     .from("category")
     .insert({ name: trimmedName })
-    .select();
+    .select()
+    .single();
 
   if (error) {
-    // Verifica o código de erro para violação de unicidade (código '23505')
     if (error.code === "23505") {
-      console.error("Erro de unicidade ao adicionar categoria:", error);
+      // Violação de unicidade
       return {
         success: false,
         error: `A categoria "${trimmedName}" já existe.`,
       };
     }
-
-    console.error("Erro inesperado ao adicionar categoria:", error);
+    console.error("Erro inesperado ao criar categoria:", error);
     return {
       success: false,
       error: "Erro ao adicionar categoria. Tente novamente.",
@@ -50,29 +55,41 @@ export async function createCategory(
   }
 
   revalidatePath("/menu");
-  return { success: true, data: data[0] as Category };
+  return { success: true, data: data as Category };
 }
 
+/**
+ * Atualiza uma categoria existente.
+ * @param id O ID da categoria a ser atualizada.
+ * @param newName O novo nome da categoria.
+ * @returns Um objeto ActionResponse com sucesso ou erro.
+ */
 export async function updateCategory(
   id: string,
   newName: string
 ): Promise<ActionResponse<Category>> {
   const supabase = createClient();
+  const trimmedName = newName?.trim();
 
-  const trimmedName = newName.trim();
+  // Validação do nome
+  if (!id) {
+    return { success: false, error: "ID da categoria inválido." };
+  }
   if (!trimmedName) {
     return { success: false, error: "O nome da categoria não pode ser vazio." };
   }
 
+  // Tenta atualizar a categoria
   const { data, error } = await (await supabase)
     .from("category")
     .update({ name: trimmedName })
     .eq("id", id)
-    .select();
+    .select()
+    .single();
 
   if (error) {
-    // Melhorando a mensagem de erro para casos de duplicação
     if (error.code === "23505") {
+      // Violação de unicidade
       return {
         success: false,
         error: `A categoria "${trimmedName}" já existe.`,
@@ -83,11 +100,21 @@ export async function updateCategory(
   }
 
   revalidatePath("/menu");
-  return { success: true, data: data[0] as Category };
+  return { success: true, data: data as Category };
 }
 
+/**
+ * Deleta uma categoria.
+ * @param id O ID da categoria a ser deletada.
+ * @returns Um objeto ActionResponse com sucesso ou erro.
+ */
 export async function deleteCategory(id: string): Promise<ActionResponse> {
   const supabase = createClient();
+
+  // Validação do ID
+  if (!id) {
+    return { success: false, error: "ID da categoria inválido." };
+  }
 
   const { error } = await (await supabase)
     .from("category")
@@ -95,20 +122,14 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
     .eq("id", id);
 
   if (error) {
-    // Verifica se o erro é uma violação de chave estrangeira (código '23503')
     if (error.code === "23503") {
-      console.error(
-        "Erro ao excluir categoria. Violação de chave estrangeira.",
-        error
-      );
+      // Violação de chave estrangeira
       return {
         success: false,
         error:
           "Não foi possível excluir a categoria, pois ela está sendo usada por um ou mais itens no menu. Remova os itens da categoria antes de tentar excluí-la.",
       };
     }
-
-    // Para qualquer outro tipo de erro, retorna uma mensagem mais genérica e segura
     console.error("Erro inesperado ao excluir categoria:", error);
     return { success: false, error: "Erro ao excluir categoria." };
   }

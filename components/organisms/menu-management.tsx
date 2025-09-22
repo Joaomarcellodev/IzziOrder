@@ -228,8 +228,6 @@ export function MenuManagement({
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryToEditId, setCategoryToEditId] = useState("");
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
-  const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
 
   const [localMenuItems, setLocalMenuItems] =
     useState<MenuItem[]>(initialMenuItems);
@@ -241,8 +239,14 @@ export function MenuManagement({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // Novos estados para o modal de exclusão de item
+  const [isDeleteItemModalOpen, setIsDeleteItemModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
+
+  // Novos estados para o modal de exclusão de categoria
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
+  const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
 
   const filteredItems =
     selectedCategory === "All"
@@ -281,14 +285,14 @@ export function MenuManagement({
     const item = localMenuItems.find((i) => i.id === itemId);
     if (item) {
       setItemToDelete(item);
-      setIsDeleteModalOpen(true);
+      setIsDeleteItemModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDeleteItem = async () => {
     if (!itemToDelete || !itemToDelete.id) return;
 
-    setIsDeleteModalOpen(false);
+    setIsDeleteItemModalOpen(false);
 
     const { success, error } = await serverDeleteMenuItem(itemToDelete.id);
 
@@ -474,7 +478,7 @@ export function MenuManagement({
   const openDeleteCategoryModal = (category: Category) => {
     setCategoryToDeleteId(category.id!);
     setCategoryToDeleteName(category.name);
-    setIsDeleteModalOpen(true);
+    setIsDeleteCategoryModalOpen(true);
   };
 
   const handleConfirmDeleteCategory = async () => {
@@ -491,7 +495,7 @@ export function MenuManagement({
         title: `Erro: "${error}"`,
       });
     }
-    setIsDeleteModalOpen(false);
+    setIsDeleteCategoryModalOpen(false);
     setCategoryToDeleteId("");
     setCategoryToDeleteName("");
   };
@@ -835,8 +839,36 @@ export function MenuManagement({
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Confirmação para Exclusão de Categoria */}
-        <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        {/* Dialog de Confirmação para Exclusão de ITEM */}
+        <Dialog open={isDeleteItemModalOpen} onOpenChange={setIsDeleteItemModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Tem certeza que deseja excluir o item "{itemToDelete?.name}"?
+              </DialogTitle>
+              <DialogDescription>
+                Esta ação é permanente e removerá o item do seu menu.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteItemModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteItem}
+              >
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Confirmação para Exclusão de CATEGORIA */}
+        <Dialog open={isDeleteCategoryModalOpen} onOpenChange={setIsDeleteCategoryModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -850,7 +882,7 @@ export function MenuManagement({
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsDeleteModalOpen(false)}
+                onClick={() => setIsDeleteCategoryModalOpen(false)}
               >
                 Cancelar
               </Button>
