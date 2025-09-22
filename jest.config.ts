@@ -1,8 +1,14 @@
-module.exports = {
-  preset: 'ts-jest',
+import type { Config } from 'jest';
+
+const config: Config = {
+  preset: 'ts-jest', 
   testEnvironment: 'node',
-  roots: ['<rootDir>'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
-  testPathIgnorePatterns: ['/node_modules/', '/.next/'],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // carrega antes dos testes
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
 };
+
+export default config;
