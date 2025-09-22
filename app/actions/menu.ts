@@ -217,23 +217,31 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
 export async function updateMenuOrdernation(
   ids: string[]
 ): Promise<ActionResponse> {
-  const supabase = createClient();
+  const supabase = await createClient(); // Corrigido: await na linha da criação do cliente
 
   if (!ids || !Array.isArray(ids)) {
     return { success: false, error: "IDs de ordenação inválidos." };
   }
 
-  const updates = ids.map((id, index) => ({
-    id,
-    position: index,
-  }));
+  // Crie um array de promessas de atualização
+  const updatePromises = ids.map((id, index) => {
+    return supabase // Use o cliente Supabase diretamente
+      .from("menu_items")
+      .update({ position: index })
+      .eq("id", id);
+  });
 
-  const { error } = await (await supabase)
-    .from("menu_items")
-    .upsert(updates, { onConflict: "id" });
+  // Execute todas as atualizações em paralelo
+  const results = await Promise.all(updatePromises);
 
-  if (error) {
-    console.error("Erro ao atualizar a ordenação do menu:", error);
+  // Verifique se houve algum erro em qualquer uma das atualizações
+  const hasError = results.some((result) => result.error);
+
+  if (hasError) {
+    console.error(
+      "Erro ao atualizar a ordenação do menu:",
+      results.map((r) => r.error).filter((e) => e)
+    );
     return { success: false, error: "Erro ao atualizar a ordem dos itens." };
   }
 
