@@ -6,7 +6,7 @@ export default async function MenuPage() {
   const supabaseClient = createClient()
 
   const { data: menuItems, error: errorItems } = await (await supabaseClient).from("menu_items").select()
-  const { data: categories, error: errorCategory } = await (await supabaseClient).from("category").select()
+  const { data: categories, error: errorCategory } = await (await supabaseClient).from("categories").select()
 
   if (errorItems) {
     console.error('Error fetching menuItems:', errorItems);

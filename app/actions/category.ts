@@ -34,7 +34,7 @@ export async function createCategory(
 
   // Tenta inserir a categoria
   const { data, error } = await (await supabase)
-    .from("category")
+    .from("categories")
     .insert({ name: trimmedName })
     .select()
     .single();
@@ -81,7 +81,7 @@ export async function updateCategory(
 
   // Tenta atualizar a categoria
   const { data, error } = await (await supabase)
-    .from("category")
+    .from("categories")
     .update({ name: trimmedName })
     .eq("id", id)
     .select()
@@ -117,7 +117,7 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
   }
 
   const { error } = await (await supabase)
-    .from("category")
+    .from("categories")
     .delete()
     .eq("id", id);
 
