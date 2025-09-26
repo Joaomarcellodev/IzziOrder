@@ -1,9 +1,7 @@
-// MenuManagement.tsx
-
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { GripVertical, Edit, Trash, Upload } from "lucide-react";
+import { GripVertical, Edit, Trash, Upload, Plus, CameraOff } from "lucide-react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -36,8 +34,13 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
 } from "@/app/actions/menu";
-import { createCategory, deleteCategory, updateCategory } from "@/app/actions/category";
+import {
+  createCategory,
+  deleteCategory,
+  updateCategory,
+} from "@/app/actions/category";
 
+// Interfaces (Mantidas as originais)
 interface MenuItem {
   id: string | null;
   name: string;
@@ -80,6 +83,10 @@ interface MenuManagementProps {
 const ItemTypes = {
   CARD: "card",
 };
+
+// ---
+// ## Componente MenuItemCard (Layout Compacto e Responsivo Horizontal)
+// ---
 
 const MenuItemCard = ({
   item,
@@ -147,7 +154,13 @@ const MenuItemCard = ({
     }),
   });
 
-  drag(drop(ref));
+  // Aplica o drop no card
+  drop(ref);
+
+  // O drag é aplicado no GripVertical
+  const dragRef = drag(useRef<HTMLDivElement>(null));
+
+  const hasImage = item.image && item.image !== "/placeholder-img.svg";
 
   return (
     <Card
@@ -157,65 +170,92 @@ const MenuItemCard = ({
       })}
       data-handler-id={handlerId}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center gap-4">
-          <div className="cursor-grab text-gray-400 hover:text-gray-600">
+      <CardContent className="p-3 sm:p-4">
+        {/* Container Principal: Horizontal e Alinhado ao Centro */}
+        <div className="flex items-center gap-3 sm:gap-4">
+
+          {/* Coluna 1: Drag Handle (Sempre visível à esquerda) */}
+          <div
+            ref={dragRef as any}
+            className="cursor-grab text-gray-400 hover:text-gray-600 flex-shrink-0"
+            data-handler-id={handlerId}
+          >
             <GripVertical className="w-5 h-5" />
           </div>
-          <img
-            src={item.image || "/placeholder-img.svg"}
-            alt={item.name}
-            className="w-20 h-20 rounded-lg object-cover bg-gray-100"
-          />
+
+          {/* Coluna 2: Imagem/Placeholder (Ajustada para Mobile/Desktop) */}
+          {hasImage ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0"
+            />
+          ) : (
+            // Placeholder compacto 
+            <div
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200"
+            >
+              <CameraOff className="w-6 h-6 text-gray-400" />
+            </div>
+          )}
+
+          {/* Coluna 3: Detalhes do Item (Foco - Expansível) */}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 truncate">
               {item.name}
             </h3>
-            <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+            {/* Descrição: Oculta no mobile para manter a compacidade */}
+            <p className="text-xs text-gray-500 truncate mt-0.5 hidden md:block">
               {item.description}
             </p>
-            <div className="text-lg font-semibold text-gray-900 mt-2">
+            <div className="text-base sm:text-lg font-semibold text-gray-900 mt-1">
               R$ {item.price.toFixed(2)}
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+
+          {/* Coluna 4: Disponibilidade e Ações (AJUSTADO PARA COMPACTO) */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            
+            {/* Disponibilidade: APENAS O SWITCH COM CORREÇÃO DE TAMANHO */}
+            <div className="flex items-center flex-shrink-0">
               <Switch
                 checked={item.available}
                 onCheckedChange={() => toggleAvailability(item.id!)}
-                className="data-[state=checked]:bg-blue-600"
+                // Classes ajustadas para o Switch compacto (w-9 h-5)
+                className="data-[state=checked]:bg-blue-600 w-9 h-5" 
               />
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  item.available ? "text-blue-600" : "text-gray-400"
-                )}
-              >
-                {item.available ? "Disponível" : "Indisponível"}
-              </span>
+              {/* O nome "Disponível" foi removido */}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openEditModal(item)}
-              className="hover:bg-gray-50"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openDeleteModal(item.id!)}
-              className="hover:bg-red-50"
-            >
-              <Trash className="w-4 h-4 text-red-600" />
-            </Button>
+
+            {/* Botões de Ação */}
+            <div className="flex gap-1.5 sm:gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => openEditModal(item)}
+                className="h-7 w-7 sm:h-8 sm:w-8"
+              >
+                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => openDeleteModal(item.id!)}
+                className="h-7 w-7 sm:h-8 sm:w-8"
+              >
+                <Trash className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 };
+
+// ---
+// ## Componente MenuManagement (Sem Alterações na Lógica)
+// ---
 
 export function MenuManagement({
   menuItems: initialMenuItems,
@@ -239,12 +279,11 @@ export function MenuManagement({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Novos estados para o modal de exclusão de item
+  // Estados de Exclusão
   const [isDeleteItemModalOpen, setIsDeleteItemModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
-
-  // Novos estados para o modal de exclusão de categoria
-  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
+    useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
   const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
 
@@ -270,8 +309,9 @@ export function MenuManagement({
         )
       );
       toast({
-        title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"
-          }`,
+        title: `${itemToUpdate.name} ${
+          newAvailability ? "agora disponível" : "agora indisponível"
+        }`,
       });
     } else {
       toast({
@@ -432,7 +472,7 @@ export function MenuManagement({
     const { success, error, data } = await createCategory(trimmedName);
 
     if (success && data) {
-      setLocalCategories(prev => [...prev, data]);
+      setLocalCategories((prev) => [...prev, data]);
       toast({ title: `Categoria "${data.name}" adicionada!` });
     } else {
       toast({ title: `Erro ao adicionar a categoria "${trimmedName}"!` });
@@ -451,7 +491,7 @@ export function MenuManagement({
     const trimmedName = newCategoryName.trim();
     if (!trimmedName) return;
 
-    const category = localCategories.find(cat => cat.id === categoryToEditId);
+    const category = localCategories.find((cat) => cat.id === categoryToEditId);
     if (!category) return;
 
     if (trimmedName === category.name) {
@@ -459,7 +499,10 @@ export function MenuManagement({
       return;
     }
 
-    const { success, data, error } = await updateCategory(category.id!, trimmedName);
+    const { success, data, error } = await updateCategory(
+      category.id!,
+      trimmedName
+    );
 
     if (success && data) {
       setLocalCategories((prev) =>
@@ -485,7 +528,13 @@ export function MenuManagement({
     const { success, error } = await deleteCategory(categoryToDeleteId);
 
     if (success) {
-      setLocalCategories(prev => prev.filter(cat => (cat.id !== categoryToDeleteId)));
+      setLocalCategories((prev) =>
+        prev.filter((cat) => cat.id !== categoryToDeleteId)
+      );
+      // Opcionalmente, selecionar "All" se a categoria excluída era a ativa
+      if (selectedCategory === categoryToDeleteId) {
+        setSelectedCategory("All");
+      }
 
       toast({
         title: `Categoria "${categoryToDeleteName}" foi excluída!`,
@@ -529,15 +578,16 @@ export function MenuManagement({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6">
+        {/* Top Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div className="flex-1 min-w-0">
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-48">
-                <SelectValue />
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Todas as Categorias" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
@@ -549,27 +599,29 @@ export function MenuManagement({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2">
-            <div>
-              <Button
-                onClick={addNewItem}
-                className="text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                + Adicionar Item
-              </Button>
-            </div>
-            <div>
-              <Button
-                onClick={addNewCategory}
-                className="text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                + Adicionar Categoria
-              </Button>
-            </div>
+
+          {/* Botões de Ação */}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={addNewItem}
+              className="w-1/2 sm:w-auto text-white font-semibold"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Adicionar Item
+            </Button>
+            <Button
+              onClick={addNewCategory}
+              className="w-1/2 sm:w-auto text-white font-semibold"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline-block">Adicionar</span>{" "}
+              Categoria
+            </Button>
           </div>
         </div>
+
+        {/* Lista de Itens do Menu */}
         <div className="space-y-4">
           {filteredItems.length === 0 ? (
             <Card className="p-12 text-center">
@@ -600,6 +652,8 @@ export function MenuManagement({
             ))
           )}
         </div>
+
+        {/* Gerenciar Categorias */}
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Gerenciar Categorias</h2>
           <div className="flex flex-wrap gap-2">
@@ -608,18 +662,22 @@ export function MenuManagement({
                 key={category.id}
                 className="flex items-center p-2 bg-gray-100 rounded-md"
               >
-                <span className="text-sm font-medium mr-2">{category.name}</span>
+                <span className="text-sm font-medium mr-2">
+                  {category.name}
+                </span>
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
                   onClick={() => openEditCategoryModal(category)}
+                  className="h-8 w-8"
                 >
                   <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
                 </Button>
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
                   onClick={() => openDeleteCategoryModal(category)}
+                  className="h-8 w-8"
                 >
                   <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
                 </Button>
@@ -628,9 +686,11 @@ export function MenuManagement({
           </div>
         </div>
 
+        {/* --- Modais --- */}
+
         {/* Modal de Item (Adicionar/Editar) */}
         <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-md sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>
                 {editingItem?.name ? `Edite: ${editingItem.name}` : "Novo Item"}
@@ -665,7 +725,7 @@ export function MenuManagement({
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="price">Preço (R$)</Label>
                     <Input
@@ -677,9 +737,9 @@ export function MenuManagement({
                         setEditingItem((prev) =>
                           prev
                             ? {
-                              ...prev,
-                              price: Number.parseFloat(e.target.value) || 0,
-                            }
+                                ...prev,
+                                price: Number.parseFloat(e.target.value) || 0,
+                              }
                             : null
                         )
                       }
@@ -713,7 +773,7 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                      editingItem.image !== "/placeholder-img.svg" ? (
+                    editingItem.image !== "/placeholder-img.svg" ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"
@@ -746,7 +806,7 @@ export function MenuManagement({
                 </div>
               </div>
             )}
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={closeItemModal}>
                 Cancelar
               </Button>
@@ -782,7 +842,7 @@ export function MenuManagement({
                 placeholder="Ex: Pizzas, Bebidas, etc."
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => setIsCategoryModalOpen(false)}
@@ -821,7 +881,7 @@ export function MenuManagement({
                 placeholder="Escreva o novo nome"
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => setIsEditCategoryModalOpen(false)}
@@ -840,8 +900,11 @@ export function MenuManagement({
         </Dialog>
 
         {/* Dialog de Confirmação para Exclusão de ITEM */}
-        <Dialog open={isDeleteItemModalOpen} onOpenChange={setIsDeleteItemModalOpen}>
-          <DialogContent>
+        <Dialog
+          open={isDeleteItemModalOpen}
+          onOpenChange={setIsDeleteItemModalOpen}
+        >
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
                 Tem certeza que deseja excluir o item "{itemToDelete?.name}"?
@@ -850,17 +913,14 @@ export function MenuManagement({
                 Esta ação é permanente e removerá o item do seu menu.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => setIsDeleteItemModalOpen(false)}
               >
                 Cancelar
               </Button>
-              <Button
-                variant="destructive"
-                onClick={handleConfirmDeleteItem}
-              >
+              <Button variant="destructive" onClick={handleConfirmDeleteItem}>
                 Excluir
               </Button>
             </DialogFooter>
@@ -868,18 +928,22 @@ export function MenuManagement({
         </Dialog>
 
         {/* Dialog de Confirmação para Exclusão de CATEGORIA */}
-        <Dialog open={isDeleteCategoryModalOpen} onOpenChange={setIsDeleteCategoryModalOpen}>
-          <DialogContent>
+        <Dialog
+          open={isDeleteCategoryModalOpen}
+          onOpenChange={setIsDeleteCategoryModalOpen}
+        >
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                Tem certeza que deseja excluir a categoria "{categoryToDeleteName}"?
+                Tem certeza que deseja excluir a categoria "
+                {categoryToDeleteName}"?
               </DialogTitle>
               <DialogDescription>
                 Esta ação é permanente e removerá a categoria e todos os itens
                 de menu associados a ela.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => setIsDeleteCategoryModalOpen(false)}
