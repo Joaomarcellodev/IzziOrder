@@ -39,6 +39,7 @@ import {
   deleteCategory,
   updateCategory,
 } from "@/app/actions/category";
+import { validateMenuItem } from "@/lib/validators/menuItem";
 
 // Interfaces (Mantidas as originais)
 interface MenuItem {
@@ -215,14 +216,14 @@ const MenuItemCard = ({
 
           {/* Coluna 4: Disponibilidade e Ações (AJUSTADO PARA COMPACTO) */}
           <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            
+
             {/* Disponibilidade: APENAS O SWITCH COM CORREÇÃO DE TAMANHO */}
             <div className="flex items-center flex-shrink-0">
               <Switch
                 checked={item.available}
                 onCheckedChange={() => toggleAvailability(item.id!)}
                 // Classes ajustadas para o Switch compacto (w-9 h-5)
-                className="data-[state=checked]:bg-blue-600 w-9 h-5" 
+                className="data-[state=checked]:bg-blue-600 w-9 h-5"
               />
               {/* O nome "Disponível" foi removido */}
             </div>
@@ -309,9 +310,8 @@ export function MenuManagement({
         )
       );
       toast({
-        title: `${itemToUpdate.name} ${
-          newAvailability ? "agora disponível" : "agora indisponível"
-        }`,
+        title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"
+          }`,
       });
     } else {
       toast({
@@ -365,23 +365,6 @@ export function MenuManagement({
     setEditingItem(null);
     setIsItemModalOpen(false);
     setImageFile(null);
-  };
-
-  const validateMenuItem = (item: MenuItem) => {
-    const errors: string[] = [];
-    if (!item.name || item.name.trim().length < 3) {
-      errors.push("O nome deve ter pelo menos 3 caracteres.");
-    }
-    if (!item.description || item.description.trim().length < 3) {
-      errors.push("A descrição deve ter pelo menos 3 caracteres.");
-    }
-    if (item.price <= 0) {
-      errors.push("O preço deve ser maior que zero.");
-    }
-    if (!item.category_id) {
-      errors.push("A categoria é obrigatória.");
-    }
-    return errors;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -737,9 +720,9 @@ export function MenuManagement({
                         setEditingItem((prev) =>
                           prev
                             ? {
-                                ...prev,
-                                price: Number.parseFloat(e.target.value) || 0,
-                              }
+                              ...prev,
+                              price: Number.parseFloat(e.target.value) || 0,
+                            }
                             : null
                         )
                       }
@@ -773,7 +756,7 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                    editingItem.image !== "/placeholder-img.svg" ? (
+                      editingItem.image !== "/placeholder-img.svg" ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"

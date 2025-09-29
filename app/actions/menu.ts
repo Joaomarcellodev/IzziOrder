@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { put, del } from "@vercel/blob";
+import { validateMenuItem } from "@/lib/validators/menuItem";
 
 interface ActionResponse {
   success: boolean;
@@ -49,8 +50,15 @@ export async function createMenuItem(
   const imageFile = formData.get("imageFile") as File | null;
 
   // Validação dos dados de entrada
-  if (!name || isNaN(price) || !category_id) {
-    return { success: false, error: "Dados do item de menu inválidos." };
+  const item = {
+    name: formData.get("name") as string,
+    description: formData.get("description") as string,
+    price: parseFloat(formData.get("price") as string),
+    category_id: formData.get("category_id") as string,
+  };
+  const errors = validateMenuItem(item);
+  if (errors.length > 0) {
+    return { success: false, error: errors.join("\n") };
   }
 
   const supabase = createClient();
@@ -125,6 +133,14 @@ export async function updateMenuItem(
     category_id: formData.get("category_id") as string,
     available: formData.get("available") === "true",
   };
+
+  // valida antes de atualizar
+  const errors = validateMenuItem(updates);
+  if (errors.length > 0) {
+    return { success: false, error: errors.join("\n") };
+  }
+
+
   const imageFile = formData.get("imageFile") as File | null;
   const existingImage = formData.get("image") as string;
 
