@@ -13,10 +13,13 @@ interface ActionResponse {
 
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
-export async function getMenuItems() {
+export async function getMenuItems(establishment_id: string) {
   const supabase = createClient();
 
-  const { error, data } = await (await supabase).from("menu_items").select();
+  const { error, data } = await (await supabase)
+    .from("menu_items")
+    .select("*, category:categories(establishment_id)")
+    .eq("category.establishment_id", establishment_id);
 
   if (error) {
     return { success: false, error: "Erro ao recuperar as itens do menu." };

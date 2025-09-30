@@ -16,12 +16,13 @@ export interface Category {
   name: string;
 }
 
-export async function getCategories() {
+export async function getCategories(establishment_id: string) {
   const supabase = createClient();
 
-  const { error, data } = await (await supabase).from("categories").select();
+  const { error, data } = await (await supabase).from("categories").select().eq("establishment_id", establishment_id);
 
   if (error) {
+    console.error("Erro inesperado ao recuperar as categorias:", error);
     return { success: false, error: "Erro ao recuperar as categorias." };
   }
 

@@ -1,0 +1,1 @@
+export const ESTABLISHMENT_ID = "b8bd8c47-d938-4cd2-b6c3-4cc5ad365403";

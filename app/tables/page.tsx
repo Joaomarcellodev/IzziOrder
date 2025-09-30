@@ -3,11 +3,12 @@ import { TableMap } from "@/components/organisms/table-map";
 import { getTables } from "@/app/actions/tables";
 import { getMenuItems } from "../actions/menuItem";
 import { getCategories } from "../actions/category";
+import { ESTABLISHMENT_ID } from "@/utils/config";
 
 export default async function TablesPage() {
-  const { data: initialTables, error: errorTables } = await getTables("b8bd8c47-d938-4cd2-b6c3-4cc5ad365403");
-  const { data: menuItems, error: errorMenuItems } = await getMenuItems();
-  const { data: categories, error: errorCategories } = await getCategories();
+  const { data: initialTables, error: errorTables } = await getTables(ESTABLISHMENT_ID);
+  const { data: categories, error: errorCategories } = await getCategories(ESTABLISHMENT_ID);
+  const { data: menuItems, error: errorMenuItems } = await getMenuItems(ESTABLISHMENT_ID);
 
   if (errorTables) {
     return <div>Erro: {errorTables}</div>;
