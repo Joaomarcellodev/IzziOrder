@@ -20,8 +20,9 @@ interface Order {
 }
 
 interface Table {
+  id: string;
   establishment_id: string;
-  id: number;
+  table_number: number;
 }
 
 interface MenuItem {
@@ -126,21 +127,21 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
   const sendToKitchen = () => {
     toast({
       title: "Encomenda enviada para cozinha",
-      description: `Mesa ${selectedTable?.id} enviou o pedido para a cozinha.`,
+      description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha.`,
     });
   };
 
   const printBill = () => {
     toast({
       title: "Conta impressa",
-      description: `A conta da mesa ${selectedTable?.id} foi impressa.`,
+      description: `A conta da mesa ${selectedTable?.table_number} foi impressa.`,
     });
   };
 
   const splitBill = () => {
     toast({
       title: "Conta Dividida",
-      description: `A conta da mesa ${selectedTable?.id} foi dividida.`,
+      description: `A conta da mesa ${selectedTable?.table_number} foi dividida.`,
     });
   };
 
@@ -155,7 +156,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
       );
       toast({
         title: "Pagamento concluído",
-        description: `Mesa ${selectedTable.id} foi fechado e o pagamento processado.`,
+        description: `Mesa ${selectedTable.table_number} foi fechado e o pagamento processado.`,
       });
       closeModal();
     }
@@ -190,7 +191,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
             >
               <div className="text-center">
                 <div className="text-lg font-bold text-gray-900">
-                  Table {table.id}
+                  Table {table.table_number}
                 </div>
 
 
@@ -213,7 +214,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
         <DialogContent className="max-w-6xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
-              Table {selectedTable?.id}
+              Table {selectedTable?.table_number}
             </DialogTitle>
           </DialogHeader>
 
