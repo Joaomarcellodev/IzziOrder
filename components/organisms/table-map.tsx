@@ -28,7 +28,13 @@ interface MenuItem {
   id: string;
   name: string;
   price: number;
-  category: string;
+  category_id: string;
+  description: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface OrderItem {
@@ -38,33 +44,26 @@ interface OrderItem {
   quantity: number;
 }
 
-const mockMenuItems: MenuItem[] = [
-  { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Hambúrgueres" },
-  { id: "2", name: "Pizza Margherita", price: 38.0, category: "Pizzas" },
-  { id: "3", name: "Salada Caesar", price: 28.0, category: "Saladas" },
-  { id: "4", name: "Batata Frita", price: 15.0, category: "Petiscos" },
-  { id: "5", name: "Coca-Cola", price: 8.0, category: "Bebidas" },
-  { id: "6", name: "Água", price: 5.0, category: "Bebidas" },
-];
-
 interface TableMapProps {
   tables: Table[];
+  menuItems: MenuItem[];
+  categories: Category[];
 }
 
-export function TableMap({ tables: initialTables }: TableMapProps) {
+export function TableMap({ tables: initialTables, menuItems: menuItems, categories: initialCategories }: TableMapProps) {
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const { toast } = useToast();
 
-  const categories = ["Todos", "Hambúrgueres", "Pizzas", "Saladas", "Petiscos", "Bebidas"];
+  const categories = [{ id: "", name: "Todos" }, ...initialCategories];
 
   const filteredMenuItems =
-    selectedCategory === "Todos"
-      ? mockMenuItems
-      : mockMenuItems.filter((item) => item.category === selectedCategory);
+    selectedCategory === ""
+      ? menuItems
+      : menuItems.filter((item) => item.category_id === selectedCategory);
 
   const openTableModal = (table: Table) => {
     setSelectedTable(table);
@@ -76,6 +75,7 @@ export function TableMap({ tables: initialTables }: TableMapProps) {
     setSelectedTable(null);
     setIsModalOpen(false);
     setCurrentOrder([]);
+    setSelectedCategory("");
   };
 
   const addItemToOrder = (menuItem: MenuItem) => {
@@ -201,7 +201,15 @@ export function TableMap({ tables: initialTables }: TableMapProps) {
       </div>
 
       {/* Table Order Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        setIsModalOpen(open);
+        if (!open) {
+          // Quando o modal fechar, resetar seleção e pedido
+          setSelectedTable(null);
+          setCurrentOrder([]);
+          setSelectedCategory(""); // <-- "Todos"
+        }
+      }}>
         <DialogContent className="max-w-6xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
@@ -217,22 +225,22 @@ export function TableMap({ tables: initialTables }: TableMapProps) {
                 <div className="flex flex-wrap gap-2 mb-4">
                   {categories.map((category) => (
                     <Button
-                      key={category}
+                      key={category.id}
                       variant={
-                        selectedCategory === category ? "default" : "outline"
+                        selectedCategory === category.name ? "default" : "outline"
                       }
                       size="sm"
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => setSelectedCategory(category.id)}
                       className={
-                        selectedCategory === category ? "text-white" : ""
+                        selectedCategory === category.id ? "text-white" : ""
                       }
                       style={
-                        selectedCategory === category
+                        selectedCategory === category.id
                           ? { backgroundColor: "#007BFF" }
                           : {}
                       }
                     >
-                      {category}
+                      {category.name}
                     </Button>
                   ))}
                 </div>
@@ -253,7 +261,7 @@ export function TableMap({ tables: initialTables }: TableMapProps) {
                               {item.name}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {item.category}
+                              {item.description}
                             </div>
                           </div>
                           <div className="text-sm font-semibold">
