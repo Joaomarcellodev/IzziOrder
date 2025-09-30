@@ -16,6 +16,18 @@ export interface Category {
   name: string;
 }
 
+export async function getCategories() {
+  const supabase = createClient();
+
+  const { error, data } = await (await supabase).from("categories").select();
+
+  if (error) {
+    return { success: false, error: "Erro ao recuperar as categorias." };
+  }
+
+  return { success: true, data: data as Category[] };
+}
+
 /**
  * Cria uma nova categoria no banco de dados.
  * @param name O nome da nova categoria.
