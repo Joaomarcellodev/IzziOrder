@@ -33,7 +33,7 @@ import {
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
-} from "@/app/actions/menu";
+} from "@/app/actions/menuItem";
 import {
   createCategory,
   deleteCategory,

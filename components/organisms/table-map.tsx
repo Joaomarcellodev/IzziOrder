@@ -15,20 +15,26 @@ import { Separator } from "@/components/atoms/separator";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+interface Order {
+  text: string
+}
+
 interface Table {
+  establishment_id: string;
   id: number;
-  status: "aberto" | "ocupado" | "fechado";
-  partySize?: number;
-  tabId?: string;
-  total?: number;
-  items?: Array<{ name: string; quantity: number; price: number }>;
 }
 
 interface MenuItem {
   id: string;
   name: string;
   price: number;
-  category: string;
+  category_id: string;
+  description: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface OrderItem {
@@ -38,79 +44,30 @@ interface OrderItem {
   quantity: number;
 }
 
-const mockTables: Table[] = [
-  { id: 1, status: "aberto" },
-  {
-    id: 2,
-    status: "ocupado",
-    partySize: 4,
-    tabId: "#T002",
-    total: 125.5,
-    items: [
-      { name: "izziBurger Duplo", quantity: 2, price: 42.5 },
-      { name: "Pizza Margherita", quantity: 1, price: 38.0 },
-    ],
-  },
-  { id: 3, status: "aberto" },
-  {
-    id: 4,
-    status: "fechado",
-    partySize: 2,
-    tabId: "#T004",
-    total: 67.0,
-    items: [{ name: "Salada Caesar", quantity: 2, price: 28.0 }],
-  },
-  { id: 5, status: "aberto" },
-  {
-    id: 6,
-    status: "ocupado",
-    partySize: 3,
-    tabId: "#T006",
-    total: 89.5,
-    items: [{ name: "izziBurger Duplo", quantity: 1, price: 42.5 }],
-  },
-  { id: 7, status: "aberto" },
-  { id: 8, status: "aberto" },
-];
+interface TableMapProps {
+  tables: Table[];
+  menuItems: MenuItem[];
+  categories: Category[];
+}
 
-const mockMenuItems: MenuItem[] = [
-  { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Hambúrgueres" },
-  { id: "2", name: "Pizza Margherita", price: 38.0, category: "Pizzas" },
-  { id: "3", name: "Salada Caesar", price: 28.0, category: "Saladas" },
-  { id: "4", name: "Batata Frita", price: 15.0, category: "Petiscos" },
-  { id: "5", name: "Coca-Cola", price: 8.0, category: "Bebidas" },
-  { id: "6", name: "Água", price: 5.0, category: "Bebidas" },
-];
-
-export function TableMap() {
-  const [tables, setTables] = useState<Table[]>(mockTables);
+export function TableMap({ tables: initialTables, menuItems: menuItems, categories: initialCategories }: TableMapProps) {
+  const [tables, setTables] = useState<Table[]>(initialTables);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const { toast } = useToast();
 
-  const categories = ["Todos", "Hambúrgueres", "Pizzas", "Saladas", "Petiscos", "Bebidas"];
+  const categories = [{ id: "", name: "Todos" }, ...initialCategories];
 
   const filteredMenuItems =
-    selectedCategory === "Todos"
-      ? mockMenuItems
-      : mockMenuItems.filter((item) => item.category === selectedCategory);
+    selectedCategory === ""
+      ? menuItems
+      : menuItems.filter((item) => item.category_id === selectedCategory);
 
   const openTableModal = (table: Table) => {
     setSelectedTable(table);
-    if (table.status === "ocupado" && table.items) {
-      setCurrentOrder(
-        table.items.map((item, index) => ({
-          id: `${table.id}-${index}`,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        }))
-      );
-    } else {
-      setCurrentOrder([]);
-    }
+    setCurrentOrder([]);
     setIsModalOpen(true);
   };
 
@@ -118,6 +75,7 @@ export function TableMap() {
     setSelectedTable(null);
     setIsModalOpen(false);
     setCurrentOrder([]);
+    setSelectedCategory("");
   };
 
   const addItemToOrder = (menuItem: MenuItem) => {
@@ -197,38 +155,18 @@ export function TableMap() {
       );
       toast({
         title: "Pagamento concluído",
-        description: `Table ${selectedTable.id} foi fechado e o pagamento processado.`,
+        description: `Mesa ${selectedTable.id} foi fechado e o pagamento processado.`,
       });
       closeModal();
     }
   };
 
   const getTableStyle = (table: Table) => {
-    switch (table.status) {
-      case "aberto":
-        return "border-green-500 bg-green-50 hover:border-green-600 hover:shadow-lg cursor-pointer";
-      case "ocupado":
-        return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg";
-      case "fechado":
-        return "border-orange-500 bg-orange-50 cursor-pointer hover:shadow-lg animate-pulse";
-      default:
-        return "";
-    }
+    return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg";
   };
 
   const getTooltipText = (table: Table) => {
-    switch (table.status) {
-      case "aberto":
-        return "Clique para abrir uma nova aba";
-      case "ocupado":
-        return `Festa: ${table.partySize} | Tab: ${
-          table.tabId
-        } | Total: R$ ${table.total?.toFixed(2)}`;
-      case "fechado":
-        return "Aguardando Pagamento";
-      default:
-        return "";
-    }
+    return "Clique para abrir uma nova aba";
   };
 
   return (
@@ -255,42 +193,7 @@ export function TableMap() {
                   Table {table.id}
                 </div>
 
-                {table.status === "ocupado" && (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">
-                      Festa: {table.partySize}
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      {table.tabId}
-                    </div>
-                    <div className="text-sm font-semibold">
-                      R$ {table.total?.toFixed(2)}
-                    </div>
-                  </div>
-                )}
 
-                {table.status === "fechado" && (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">
-                      Festa: {table.partySize}
-                    </div>
-                    <div className="text-sm font-medium text-orange-600">
-                      {table.tabId}
-                    </div>
-                    <div className="text-sm font-semibold">
-                      R$ {table.total?.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-orange-600 font-medium">
-                      Aguardando Pagamento
-                    </div>
-                  </div>
-                )}
-
-                {table.status === "aberto" && (
-                  <div className="mt-2 text-sm text-green-600 font-medium">
-                    Disponível
-                  </div>
-                )}
               </div>
             </div>
           ))}
@@ -298,14 +201,19 @@ export function TableMap() {
       </div>
 
       {/* Table Order Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        setIsModalOpen(open);
+        if (!open) {
+          // Quando o modal fechar, resetar seleção e pedido
+          setSelectedTable(null);
+          setCurrentOrder([]);
+          setSelectedCategory(""); // <-- "Todos"
+        }
+      }}>
         <DialogContent className="max-w-6xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
-              Table {selectedTable?.id} -{" "}
-              {selectedTable?.status === "aberto"
-                ? "New Order"
-                : `Tab ${selectedTable?.tabId}`}
+              Table {selectedTable?.id}
             </DialogTitle>
           </DialogHeader>
 
@@ -317,22 +225,22 @@ export function TableMap() {
                 <div className="flex flex-wrap gap-2 mb-4">
                   {categories.map((category) => (
                     <Button
-                      key={category}
+                      key={category.id}
                       variant={
-                        selectedCategory === category ? "default" : "outline"
+                        selectedCategory === category.name ? "default" : "outline"
                       }
                       size="sm"
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => setSelectedCategory(category.id)}
                       className={
-                        selectedCategory === category ? "text-white" : ""
+                        selectedCategory === category.id ? "text-white" : ""
                       }
                       style={
-                        selectedCategory === category
+                        selectedCategory === category.id
                           ? { backgroundColor: "#007BFF" }
                           : {}
                       }
                     >
-                      {category}
+                      {category.name}
                     </Button>
                   ))}
                 </div>
@@ -353,7 +261,7 @@ export function TableMap() {
                               {item.name}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {item.category}
+                              {item.description}
                             </div>
                           </div>
                           <div className="text-sm font-semibold">
@@ -466,7 +374,7 @@ export function TableMap() {
                   disabled={currentOrder.length === 0}
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Enviar 
+                  Enviar
                 </Button>
 
                 <Button

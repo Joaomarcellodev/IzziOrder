@@ -13,6 +13,18 @@ interface ActionResponse {
 
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
+export async function getMenuItems() {
+  const supabase = createClient();
+
+  const { error, data } = await (await supabase).from("menu_items").select();
+
+  if (error) {
+    return { success: false, error: "Erro ao recuperar as itens do menu." };
+  }
+
+  return { success: true, data: data };
+}
+
 /**
  * Função utilitária para fazer upload de um arquivo de imagem.
  * @param file O arquivo de imagem a ser enviado.
