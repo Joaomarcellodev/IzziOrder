@@ -3,12 +3,13 @@ import { MenuManagement } from "@/components/organisms/menu-management";
 import { createClient } from "@/lib/supabase/server";
 import { getCategories } from "../actions/category";
 import { getMenuItems } from "../actions/menuItem";
+import { ESTABLISHMENT_ID } from "@/utils/config";
 
 export default async function MenuPage() {
   const supabaseClient = createClient()
 
-  const { data: menuItems, error: errorItems } = await getMenuItems();
-  const { data: categories, error: errorCategory } = await getCategories();
+  const { data: menuItems, error: errorItems } = await getMenuItems(ESTABLISHMENT_ID);
+  const { data: categories, error: errorCategory } = await getCategories(ESTABLISHMENT_ID);
 
   if (errorItems) {
     console.error('Error fetching menuItems:', errorItems);

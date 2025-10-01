@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
+import { ESTABLISHMENT_ID } from "@/utils/config";
 
 interface ActionResponse {
   success: boolean;
@@ -13,10 +14,13 @@ interface ActionResponse {
 
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
-export async function getMenuItems() {
+export async function getMenuItems(establishment_id: string) {
   const supabase = createClient();
 
-  const { error, data } = await (await supabase).from("menu_items").select();
+  const { data, error } = await (await supabase)
+    .from("menu_items")
+    .select()
+    .eq("establishment_id", establishment_id);
 
   if (error) {
     return { success: false, error: "Erro ao recuperar as itens do menu." };
@@ -68,6 +72,7 @@ export async function createMenuItem(
     price: parseFloat(formData.get("price") as string),
     category_id: formData.get("category_id") as string,
   };
+
   const errors = validateMenuItem(item);
   if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
@@ -98,6 +103,17 @@ export async function createMenuItem(
       ? maxPositionData.position + 1
       : 0;
 
+  // Verifica se a categoria pertence ao estabelecimento
+  const { data: category } = await (await supabase)
+    .from("categories")
+    .select("establishment_id")
+    .eq("id", category_id)
+    .single();
+
+  if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
+    return { success: false, error: "Categoria inválida para este estabelecimento." };
+  }
+
   const { data, error } = await (
     await supabase
   )
@@ -110,6 +126,7 @@ export async function createMenuItem(
       available,
       image: imageUrl,
       position: nextPosition,
+      establishment_id: ESTABLISHMENT_ID
     })
     .select()
     .single();
@@ -152,7 +169,6 @@ export async function updateMenuItem(
     return { success: false, error: errors.join("\n") };
   }
 
-
   const imageFile = formData.get("imageFile") as File | null;
   const existingImage = formData.get("image") as string;
 
@@ -173,6 +189,17 @@ export async function updateMenuItem(
     }
   } else {
     updates.image = existingImage;
+  }
+
+  // Valida categoria
+  const { data: category } = await (await supabase)
+    .from("categories")
+    .select("establishment_id")
+    .eq("id", updates.category_id)
+    .single();
+
+  if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
+    return { success: false, error: "Categoria inválida para este estabelecimento." };
   }
 
   const { data, error } = await (await supabase)
@@ -205,7 +232,7 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
   // 1. Busca o item para obter a URL da imagem
   const { data: item, error: fetchError } = await (await supabase)
     .from("menu_items")
-    .select("image")
+    .select("id, image, category:categories(establishment_id)")
     .eq("id", id)
     .single();
 
