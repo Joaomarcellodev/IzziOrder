@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
 
 // Tipo para a resposta das Server Actions
@@ -14,6 +15,22 @@ interface ActionResponse<T = any> {
 export interface Category {
   id: string;
   name: string;
+}
+
+export async function getCategories(establishment_id: string) {
+  const supabase = createClient();
+
+  const { error, data } = await (await supabase)
+    .from("categories")
+    .select()
+    .eq("establishment_id", establishment_id);
+
+  if (error) {
+    console.error("Erro inesperado ao recuperar as categorias:", error);
+    return { success: false, error: "Erro ao recuperar as categorias." };
+  }
+
+  return { success: true, data: data as Category[] };
 }
 
 /**
@@ -35,7 +52,7 @@ export async function createCategory(
   // Tenta inserir a categoria
   const { data, error } = await (await supabase)
     .from("categories")
-    .insert({ name: trimmedName })
+    .insert({ name: trimmedName, establishment_id: ESTABLISHMENT_ID })
     .select()
     .single();
 
@@ -84,6 +101,7 @@ export async function updateCategory(
     .from("categories")
     .update({ name: trimmedName })
     .eq("id", id)
+    .eq("establishment_id", ESTABLISHMENT_ID)
     .select()
     .single();
 
@@ -119,7 +137,8 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
   const { error } = await (await supabase)
     .from("categories")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("establishment_id", ESTABLISHMENT_ID);
 
   if (error) {
     if (error.code === "23503") {

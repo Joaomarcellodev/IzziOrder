@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Minus, X, Printer, Split, CreditCard, Send } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, Minus, X, Printer, Split, CreditCard, Send, Zap, MoreVertical, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/molecules/card";
 import {
@@ -9,26 +9,35 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/molecules/dialog";
 import { ScrollArea } from "@/components/molecules/scroll-area";
 import { Separator } from "@/components/atoms/separator";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/atoms/input";
+import { Label } from "@/components/atoms/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/molecules/dropdown-menu"; 
 
+// --- Interfaces (Mantidas) ---
 interface Table {
-  id: number;
-  status: "aberto" | "ocupado" | "fechado";
-  partySize?: number;
-  tabId?: string;
-  total?: number;
-  items?: Array<{ name: string; quantity: number; price: number }>;
+  id: string;
+  establishment_id: string;
+  table_number: number;
 }
 
 interface MenuItem {
   id: string;
   name: string;
   price: number;
-  category: string;
+  category_id: string;
+  description: string; 
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface OrderItem {
@@ -38,94 +47,236 @@ interface OrderItem {
   quantity: number;
 }
 
-const mockTables: Table[] = [
-  { id: 1, status: "aberto" },
-  {
-    id: 2,
-    status: "ocupado",
-    partySize: 4,
-    tabId: "#T002",
-    total: 125.5,
-    items: [
-      { name: "izziBurger Duplo", quantity: 2, price: 42.5 },
-      { name: "Pizza Margherita", quantity: 1, price: 38.0 },
-    ],
-  },
-  { id: 3, status: "aberto" },
-  {
-    id: 4,
-    status: "fechado",
-    partySize: 2,
-    tabId: "#T004",
-    total: 67.0,
-    items: [{ name: "Salada Caesar", quantity: 2, price: 28.0 }],
-  },
-  { id: 5, status: "aberto" },
-  {
-    id: 6,
-    status: "ocupado",
-    partySize: 3,
-    tabId: "#T006",
-    total: 89.5,
-    items: [{ name: "izziBurger Duplo", quantity: 1, price: 42.5 }],
-  },
-  { id: 7, status: "aberto" },
-  { id: 8, status: "aberto" },
-];
+interface TableMapProps {
+  tables: Table[];
+  menuItems: MenuItem[];
+  categories: Category[];
+}
+// --- Fim Interfaces ---
 
-const mockMenuItems: MenuItem[] = [
-  { id: "1", name: "izziBurger Duplo", price: 42.5, category: "Hambúrgueres" },
-  { id: "2", name: "Pizza Margherita", price: 38.0, category: "Pizzas" },
-  { id: "3", name: "Salada Caesar", price: 28.0, category: "Saladas" },
-  { id: "4", name: "Batata Frita", price: 15.0, category: "Petiscos" },
-  { id: "5", name: "Coca-Cola", price: 8.0, category: "Bebidas" },
-  { id: "6", name: "Água", price: 5.0, category: "Bebidas" },
-];
 
-export function TableMap() {
-  const [tables, setTables] = useState<Table[]>(mockTables);
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+// --- Componentes Modais de Ação de Mesa (Mantidos) ---
+
+const AddTableModal = ({ isOpen, onClose, onAddTable }: { isOpen: boolean, onClose: () => void, onAddTable: (tableNumber: number) => void }) => {
+  const [tableNumber, setTableNumber] = useState<string>("");
   const { toast } = useToast();
 
-  const categories = ["Todos", "Hambúrgueres", "Pizzas", "Saladas", "Petiscos", "Bebidas"];
+  const handleSave = () => {
+    const num = parseInt(tableNumber, 10);
+    if (isNaN(num) || num <= 0) {
+      toast({
+        title: "Número inválido",
+        description: "Por favor, insira um número de mesa válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onAddTable(num);
+    setTableNumber("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Adicionar Nova Mesa</DialogTitle>
+        </DialogHeader>
+        <div className="py-4 space-y-4">
+          <Label htmlFor="tableNumber">Número da Mesa</Label>
+          <Input
+            id="tableNumber"
+            type="number"
+            value={tableNumber}
+            onChange={(e) => setTableNumber(e.target.value)}
+            placeholder="Ex: 5"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} style={{ backgroundColor: "#FD7E14" }}>
+            Adicionar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const EditTableModal = ({ isOpen, onClose, onEditTable, table }: { isOpen: boolean, onClose: () => void, onEditTable: (id: string, newNumber: number) => void, table: Table | null }) => {
+    const [tableNumber, setTableNumber] = useState(table ? table.table_number.toString() : "");
+    const { toast } = useToast();
+  
+    useEffect(() => {
+        if (table) {
+            setTableNumber(table.table_number.toString());
+        }
+    }, [table]);
+
+    const handleSave = () => {
+      const num = parseInt(tableNumber, 10);
+      if (!table || isNaN(num) || num <= 0) {
+        toast({
+          title: "Número inválido",
+          description: "Por favor, insira um número de mesa válido.",
+          variant: "destructive",
+        });
+        return;
+      }
+      onEditTable(table.id, num);
+      onClose();
+    };
+  
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Mesa {table?.table_number}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <Label htmlFor="editTableNumber">Novo Número da Mesa</Label>
+            <Input
+              id="editTableNumber"
+              type="number"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+              placeholder="Ex: 5"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} style={{ backgroundColor: "#007BFF" }}>
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+};
+
+const TableActionsDropdown = ({ table, onEdit, onDelete }: { table: Table, onEdit: (table: Table) => void, onDelete: (table: Table) => void }) => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-1 right-1 h-8 w-8 text-gray-400 hover:bg-gray-200"
+                onClick={(e) => e.stopPropagation()} 
+            >
+                <MoreVertical className="w-4 h-4" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem 
+                onClick={(e: React.MouseEvent<HTMLDivElement>) => { 
+                    e.stopPropagation(); 
+                    onEdit(table); 
+                }}
+                className="cursor-pointer"
+            >
+                <Edit className="w-4 h-4 mr-2" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+                onClick={(e: React.MouseEvent<HTMLDivElement>) => { 
+                    e.stopPropagation(); 
+                    onDelete(table); 
+                }}
+                className="text-red-600 cursor-pointer"
+            >
+                <Trash className="w-4 h-4 mr-2" /> Excluir
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+);
+
+// --- Componente Principal TableMap ---
+
+export function TableMap({ tables: initialTables, menuItems: menuItems, categories: initialCategories }: TableMapProps) {
+  const [tables, setTables] = useState<Table[]>(initialTables);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
+  const [isEditTableModalOpen, setIsEditTableModalOpen] = useState(false);
+  const [tableToEdit, setTableToEdit] = useState<Table | null>(null);
+  const [isDeleteTableModalOpen, setIsDeleteTableModalOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState<Table | null>(null);
+  
+  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const { toast } = useToast();
+
+  const categories = [{ id: "", name: "Todos" }, ...initialCategories];
 
   const filteredMenuItems =
-    selectedCategory === "Todos"
-      ? mockMenuItems
-      : mockMenuItems.filter((item) => item.category === selectedCategory);
+    selectedCategory === ""
+      ? menuItems
+      : menuItems.filter((item) => item.category_id === selectedCategory);
+
+  // --- Funções de CRUD de Mesa (Mantidas) ---
+  const handleAddTable = (tableNumber: number) => {
+    const newTable: Table = { id: `table-${Date.now()}`, establishment_id: "default", table_number: tableNumber };
+    if (tables.some(t => t.table_number === tableNumber)) {
+        toast({ title: "Mesa já existe", description: `A mesa ${tableNumber} já está no mapa.`, variant: "destructive" });
+        return;
+    }
+    setTables((prev) => [...prev, newTable].sort((a, b) => a.table_number - b.table_number));
+    toast({ title: "Mesa Adicionada", description: `Mesa ${tableNumber} adicionada com sucesso.` });
+  };
+
+  const openEditModal = (table: Table) => {
+    setTableToEdit(table);
+    setIsEditTableModalOpen(true);
+  };
+  
+  const handleEditTable = (id: string, newNumber: number) => {
+    if (tables.some(t => t.table_number === newNumber && t.id !== id)) {
+        toast({ title: "Número de Mesa Duplicado", description: `A mesa ${newNumber} já existe.`, variant: "destructive" });
+        return;
+    }
+    setTables((prev) => prev.map(t => t.id === id ? { ...t, table_number: newNumber } : t).sort((a, b) => a.table_number - b.table_number));
+    toast({ title: "Mesa Editada", description: `Mesa atualizada para ${newNumber}.` });
+    setIsEditTableModalOpen(false);
+    setTableToEdit(null);
+  };
+
+  const openDeleteConfirmation = (table: Table) => {
+    setTableToDelete(table);
+    setIsDeleteTableModalOpen(true);
+  };
+
+  const handleDeleteTable = () => {
+    if (!tableToDelete) return;
+    setTables((prev) => prev.filter(t => t.id !== tableToDelete.id));
+    toast({ title: "Mesa Excluída", description: `Mesa ${tableToDelete.table_number} foi removida.`, variant: "destructive" });
+    setIsDeleteTableModalOpen(false);
+    setTableToDelete(null);
+  };
+
+  // --- Funções de Pedido (Mantidas) ---
 
   const openTableModal = (table: Table) => {
     setSelectedTable(table);
-    if (table.status === "ocupado" && table.items) {
-      setCurrentOrder(
-        table.items.map((item, index) => ({
-          id: `${table.id}-${index}`,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        }))
-      );
-    } else {
-      setCurrentOrder([]);
-    }
-    setIsModalOpen(true);
+    setCurrentOrder([]);
+    setIsOrderModalOpen(true);
   };
 
   const closeModal = () => {
     setSelectedTable(null);
-    setIsModalOpen(false);
+    setIsOrderModalOpen(false);
     setCurrentOrder([]);
+    setSelectedCategory("");
   };
 
   const addItemToOrder = (menuItem: MenuItem) => {
     setCurrentOrder((prev) => {
-      const existingItem = prev.find((item) => item.name === menuItem.name);
+      const existingItem = prev.find((item) => item.id === menuItem.id);
       if (existingItem) {
         return prev.map((item) =>
-          item.name === menuItem.name
+          item.id === menuItem.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -166,338 +317,268 @@ export function TableMap() {
   };
 
   const sendToKitchen = () => {
-    toast({
-      title: "Encomenda enviada para cozinha",
-      description: `Mesa ${selectedTable?.id} enviou o pedido para a cozinha.`,
-    });
+    toast({ title: "Encomenda enviada para cozinha 👩‍🍳", description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha.` });
   };
 
   const printBill = () => {
-    toast({
-      title: "Conta impressa",
-      description: `A conta da mesa ${selectedTable?.id} foi impressa.`,
-    });
+    toast({ title: "Conta impressa 🖨️", description: `A conta da mesa ${selectedTable?.table_number} foi impressa.` });
   };
 
   const splitBill = () => {
-    toast({
-      title: "Conta Dividida",
-      description: `A conta da mesa ${selectedTable?.id} foi dividida.`,
-    });
+    toast({ title: "Conta Dividida ✂️", description: `A conta da mesa ${selectedTable?.table_number} foi dividida.` });
   };
 
   const closeAndPay = () => {
     if (selectedTable) {
-      setTables((prev) =>
-        prev.map((table) =>
-          table.id === selectedTable.id
-            ? { ...table, status: "aberto" as const }
-            : table
-        )
-      );
-      toast({
-        title: "Pagamento concluído",
-        description: `Table ${selectedTable.id} foi fechado e o pagamento processado.`,
-      });
+      toast({ title: "Pagamento concluído ✅", description: `Mesa ${selectedTable.table_number} foi fechada e o pagamento processado.` });
       closeModal();
     }
   };
 
   const getTableStyle = (table: Table) => {
-    switch (table.status) {
-      case "aberto":
-        return "border-green-500 bg-green-50 hover:border-green-600 hover:shadow-lg cursor-pointer";
-      case "ocupado":
-        return "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg";
-      case "fechado":
-        return "border-orange-500 bg-orange-50 cursor-pointer hover:shadow-lg animate-pulse";
-      default:
-        return "";
-    }
-  };
-
-  const getTooltipText = (table: Table) => {
-    switch (table.status) {
-      case "aberto":
-        return "Clique para abrir uma nova aba";
-      case "ocupado":
-        return `Festa: ${table.partySize} | Tab: ${
-          table.tabId
-        } | Total: R$ ${table.total?.toFixed(2)}`;
-      case "fechado":
-        return "Aguardando Pagamento";
-      default:
-        return "";
-    }
+    // Exemplo de estilo para mesa ocupada
+    const isOccupied = currentOrder.length > 0; // Usando o pedido atual como placeholder
+    return isOccupied 
+        ? "border-red-500 bg-red-50 cursor-pointer hover:shadow-lg shadow-md"
+        : "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg shadow-md";
   };
 
   return (
     <div className="p-6">
+      {/* Container de Mesas (Inalterado) */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Planta das mesas do estabelecimento
-        </h2>
-
-        {/* Tables Grid */}
-        <div className="grid grid-cols-4 gap-6 max-w-4xl">
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Planta das Mesas</h2>
+            <Button 
+                onClick={() => setIsAddTableModalOpen(true)}
+                className="text-white font-semibold flex items-center"
+                style={{ backgroundColor: "#007BFF" }}
+            >
+                <Plus className="w-4 h-4 mr-2" /> Adicionar Mesa
+            </Button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-w-full">
           {tables.map((table) => (
             <div
               key={table.id}
-              className={cn(
-                "relative p-4 rounded-lg border-2 transition-all duration-200",
-                getTableStyle(table)
-              )}
+              className={cn("relative p-4 rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", getTableStyle(table))}
               onClick={() => openTableModal(table)}
-              title={getTooltipText(table)}
             >
               <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
-                  Table {table.id}
-                </div>
-
-                {table.status === "ocupado" && (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">
-                      Festa: {table.partySize}
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      {table.tabId}
-                    </div>
-                    <div className="text-sm font-semibold">
-                      R$ {table.total?.toFixed(2)}
-                    </div>
-                  </div>
-                )}
-
-                {table.status === "fechado" && (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-600">
-                      Festa: {table.partySize}
-                    </div>
-                    <div className="text-sm font-medium text-orange-600">
-                      {table.tabId}
-                    </div>
-                    <div className="text-sm font-semibold">
-                      R$ {table.total?.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-orange-600 font-medium">
-                      Aguardando Pagamento
-                    </div>
-                  </div>
-                )}
-
-                {table.status === "aberto" && (
-                  <div className="mt-2 text-sm text-green-600 font-medium">
-                    Disponível
-                  </div>
-                )}
+                <div className="text-3xl font-extrabold text-gray-900 mb-1">{table.table_number}</div>
+                <div className="text-xs text-gray-600 font-medium">Clique para Abrir</div>
               </div>
+              <TableActionsDropdown table={table} onEdit={openEditModal} onDelete={openDeleteConfirmation} />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Table Order Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+      {/* --- Modais de CRUD de Mesa (Mantidos) --- */}
+      <AddTableModal isOpen={isAddTableModalOpen} onClose={() => setIsAddTableModalOpen(false)} onAddTable={handleAddTable} />
+      <EditTableModal isOpen={isEditTableModalOpen} onClose={() => setIsEditTableModalOpen(false)} onEditTable={handleEditTable} table={tableToEdit} />
+      <Dialog open={isDeleteTableModalOpen} onOpenChange={setIsDeleteTableModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>
-              Table {selectedTable?.id} -{" "}
-              {selectedTable?.status === "aberto"
-                ? "New Order"
-                : `Tab ${selectedTable?.tabId}`}
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir a **Mesa {tableToDelete?.table_number}**? Esta ação é irreversível.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteTableModalOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteTable}>Excluir Mesa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* --- Table Order Modal (Layout Otimizado: LARGURA MÁXIMA) --- */}
+      <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
+        {/* *** MUDANÇA AQUI: Aumentando a largura máxima para dar espaço aos cards *** */}
+        <DialogContent className="max-w-[1536px] w-full h-[95vh] flex flex-col p-0"> 
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-2xl font-bold flex items-center text-blue-700">
+              <Zap className="w-6 h-6 mr-2 text-yellow-500" />
+              PDV Mesa {selectedTable?.table_number}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-6 h-[70vh]">
-            {/* Left Column - Menu */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Menu</h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {categories.map((category) => (
-                    <Button
-                      key={category}
-                      variant={
-                        selectedCategory === category ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                      className={
-                        selectedCategory === category ? "text-white" : ""
-                      }
-                      style={
-                        selectedCategory === category
-                          ? { backgroundColor: "#007BFF" }
-                          : {}
-                      }
-                    >
-                      {category}
-                    </Button>
-                  ))}
-                </div>
+          <div className="flex-1 overflow-hidden p-0">
+            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
+            <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] h-full"> 
+              
+              {/* PAINEL ESQUERDO: Menu Principal (75% da largura) */}
+              <div className="flex flex-col p-4">
+                <h3 className="font-bold text-xl text-gray-900 mb-3">
+                    Menu de Produtos
+                </h3>
+                
+                {/* Carrossel de Categorias (Horizontal Scroll) */}
+                <ScrollArea className="flex-shrink-0 h-16 mb-4 whitespace-nowrap">
+                    <div className="flex gap-3 pb-2 w-max">
+                        {categories.map((category) => (
+                            <Button
+                                key={category.id}
+                                variant={
+                                    selectedCategory === category.id ? "default" : "outline"
+                                }
+                                size="lg" 
+                                onClick={() => setSelectedCategory(category.id)}
+                                className={cn("flex-shrink-0 font-semibold text-base", selectedCategory === category.id ? "text-white" : "border-gray-300 text-gray-700 hover:bg-gray-200")}
+                                style={
+                                    selectedCategory === category.id
+                                        ? { backgroundColor: "#007BFF" }
+                                        : {}
+                                }
+                            >
+                                {category.name}
+                            </Button>
+                        ))}
+                    </div>
+                </ScrollArea>
+
+                {/* Lista de Itens do Menu (Grid com Overflow) */}
+                <ScrollArea className="flex-1 h-full">
+                    {/* Mantido o ajuste para xl:grid-cols-4 para cards mais largos */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 pr-4"> 
+                        {filteredMenuItems.map((item) => (
+                        <Card
+                            key={item.id}
+                            className="cursor-pointer hover:shadow-2xl transition-shadow border-2 hover:border-orange-500 transform hover:scale-[1.02]"
+                            onClick={() => addItemToOrder(item)}
+                        >
+                            <CardContent className="p-3 text-center">
+                                {/* Altura mínima maior (min-h-[40px]) para acomodar nomes em 2 linhas sem achatar */}
+                                <div className="font-bold text-md text-gray-900 line-clamp-2 min-h-[40px] mb-1"> 
+                                    {item.name}
+                                </div>
+                                <div className="text-xl font-extrabold text-green-600">
+                                    R$ {item.price.toFixed(2)}
+                                </div>
+                                <Button size="sm" className="w-full mt-2 font-bold" style={{ backgroundColor: "#FD7E14" }}>
+                                    <Plus className="w-4 h-4 mr-1" /> Adicionar
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        ))}
+                    </div>
+                </ScrollArea>
               </div>
 
-              <ScrollArea className="h-[50vh]">
-                <div className="space-y-2">
-                  {filteredMenuItems.map((item) => (
-                    <Card
-                      key={item.id}
-                      className="cursor-pointer hover:shadow-sm"
-                      onClick={() => addItemToOrder(item)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium text-sm">
-                              {item.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.category}
-                            </div>
-                          </div>
-                          <div className="text-sm font-semibold">
-                            R$ {item.price.toFixed(2)}
-                          </div>
+              {/* PAINEL DIREITO: Pedido Atual, Resumo e Ações (25% da largura, Fixo) */}
+              <div className="flex flex-col bg-gray-100 border-l p-4">
+                <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
+                    Pedido
+                </h3>
+                
+                <ScrollArea className="flex-1 h-full max-h-full">
+                    <div className="space-y-3 pr-4 pb-4">
+                    {currentOrder.length === 0 ? (
+                        <div className="text-center py-16 text-gray-500 border border-dashed rounded-lg bg-white">
+                            <Send className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                            <div className="text-sm">Selecione itens no menu.</div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-
-            {/* Center Column - Current Order */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Pedido Atual</h3>
-              <ScrollArea className="h-[50vh]">
-                <div className="space-y-2">
-                  {currentOrder.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="text-sm">Nenhum item em ordem</div>
+                    ) : (
+                        currentOrder.map((item) => (
+                        <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
+                            <CardContent className="p-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex-1 pr-2"> 
+                                    <div className="font-extrabold text-sm text-gray-900 line-clamp-1">
+                                        {item.name}
+                                    </div>
+                                    <div className="text-xs text-gray-600">
+                                        R$ {(item.price * item.quantity).toFixed(2)}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0"> 
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => updateQuantity(item.id, -1)}
+                                        className="w-8 h-8 p-0" 
+                                    >
+                                        <Minus className="w-4 h-4" /> 
+                                    </Button>
+                                    <span className="w-4 text-center text-sm font-bold text-blue-700">
+                                        {item.quantity}
+                                    </span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => updateQuantity(item.id, 1)}
+                                        className="w-8 h-8 p-0" 
+                                    >
+                                        <Plus className="w-4 h-4" /> 
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeItem(item.id)}
+                                        className="w-8 h-8 p-0 text-red-500 hover:bg-red-100" 
+                                    >
+                                        <X className="w-4 h-4" /> 
+                                    </Button>
+                                </div>
+                            </div>
+                            </CardContent>
+                        </Card>
+                        ))
+                    )}
                     </div>
-                  ) : (
-                    currentOrder.map((item) => (
-                      <Card key={item.id}>
+                </ScrollArea>
+
+                {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
+                <div className="flex-shrink-0 pt-4 border-t mt-auto bg-gray-100">
+                    <Card className="shadow-xl mb-3 bg-blue-600 text-white">
                         <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">
-                                {item.name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                R$ {item.price.toFixed(2)} each
-                              </div>
+                            <div className="text-sm font-semibold uppercase opacity-90">
+                                TOTAL
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <span className="w-8 text-center text-sm font-medium">
-                                {item.quantity}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeItem(item.id)}
-                                className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
+                            <div className="flex justify-between font-extrabold text-3xl mt-0.5">
+                                <span>R$</span>
+                                <span>{calculateTotal().toFixed(2)}</span>
                             </div>
-                          </div>
                         </CardContent>
-                      </Card>
-                    ))
-                  )}
+                    </Card>
+
+                    <Button
+                        onClick={sendToKitchen}
+                        className="w-full text-white font-bold h-10 text-base shadow-md mb-2"
+                        style={{ backgroundColor: "#FD7E14" }}
+                        disabled={currentOrder.length === 0}
+                    >
+                        <Send className="w-4 h-4 mr-2" />
+                        ENVIAR COZINHA
+                    </Button>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                        <Button
+                            onClick={printBill}
+                            variant="outline"
+                            className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
+                        >
+                            <Printer className="w-3 h-3 mr-1" />
+                            Imprimir
+                        </Button>
+                        <Button
+                            onClick={splitBill}
+                            variant="outline"
+                            className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
+                        >
+                            <Split className="w-3 h-3 mr-1" />
+                            Dividir
+                        </Button>
+                    </div>
+                    <Button
+                        onClick={closeAndPay}
+                        className="w-full text-white font-bold h-12 text-base shadow-lg"
+                        style={{ backgroundColor: "#28A745" }}
+                        disabled={currentOrder.length === 0}
+                    >
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        PAGAR E FECHAR
+                    </Button>
                 </div>
-              </ScrollArea>
-            </div>
-
-            {/* Right Column - Totals & Actions */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Resumo do pedido</h3>
-
-              <Card>
-                <CardContent className="p-4 space-y-3">
-                  <div className="space-y-2">
-                    {currentOrder.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between text-sm"
-                      >
-                        <span>
-                          {item.quantity}x {item.name}
-                        </span>
-                        <span>
-                          R$ {(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span>R$ {calculateTotal().toFixed(2)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="space-y-3">
-                <Button
-                  onClick={sendToKitchen}
-                  className="w-full text-white font-semibold"
-                  style={{ backgroundColor: "#FD7E14" }}
-                  disabled={currentOrder.length === 0}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar 
-                </Button>
-
-                <Button
-                  onClick={printBill}
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  style={{ borderColor: "#007BFF", color: "#007BFF" }}
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Imprimir nota
-                </Button>
-
-                <Button
-                  onClick={splitBill}
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  style={{ borderColor: "#007BFF", color: "#007BFF" }}
-                >
-                  <Split className="w-4 h-4 mr-2" />
-                  Dividir conta
-                </Button>
-
-                <Button
-                  onClick={closeAndPay}
-                  className="w-full text-white font-semibold"
-                  style={{ backgroundColor: "#28A745" }}
-                  disabled={currentOrder.length === 0}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pagar
-                </Button>
               </div>
             </div>
           </div>
