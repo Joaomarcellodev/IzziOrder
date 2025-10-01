@@ -1,3 +1,4 @@
+// __tests__/menu.integration.test.ts
 import { supabase } from "@/lib/supabase/supabaseClient";
 
 describe("Menu CRUD Integration", () => {
@@ -68,7 +69,7 @@ describe("Menu CRUD Integration", () => {
       .eq("id", createdItemId)
       .single();
 
-    expect(fetchError).not.toBeNull();
+    expect(fetchError).not.toBeNull(); // deve dar erro porque o item não existe
     expect(data).toBeNull();
   });
 });

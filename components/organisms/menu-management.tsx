@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"; // Adicionado useEffect
-import { GripVertical, Edit, Trash, Upload, Plus, CameraOff, MoreVertical } from "lucide-react"; 
+import { useState, useRef, useCallback } from "react";
+import { GripVertical, Edit, Trash, Upload, Plus, CameraOff } from "lucide-react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -33,13 +33,12 @@ import {
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
-} from "@/app/actions/menuItem";
+} from "@/app/actions/menu";
 import {
   createCategory,
   deleteCategory,
   updateCategory,
 } from "@/app/actions/category";
-import { validateMenuItem } from "@/lib/validators/menuItem";
 
 // Interfaces (Mantidas as originais)
 interface MenuItem {
@@ -99,41 +98,6 @@ const MenuItemCard = ({
   onDrop,
 }: MenuItemCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<HTMLDivElement>(null); // Referência para a área de ações
-  
-  // Estado para simular o "abrir" das ações no mobile sem um swipe real
-  const [isActionsOpen, setIsActionsOpen] = useState(false);
-
-  // LÓGICA DE CLICK FORA DO MENU (CLICK OUTSIDE)
-  useEffect(() => {
-    // A função é executada apenas no lado do cliente
-    if (typeof window === 'undefined') return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // 1. Verifica se o menu de ações está aberto E se estamos em uma tela mobile
-      if (isActionsOpen && window.innerWidth < 640) {
-        // 2. Verifica se o clique NÃO foi dentro do card (ref.current)
-        // Isso permite o fechamento ao clicar em outro lugar na tela.
-        if (ref.current && !ref.current.contains(event.target as Node)) {
-          setIsActionsOpen(false);
-        }
-      }
-    };
-
-    // Adiciona o listener quando o menu abre
-    if (isActionsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      // Remove o listener quando o menu fecha
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    // Função de limpeza (cleanup) para remover o listener ao desmontar o componente ou quando isActionsOpen muda para false
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isActionsOpen]);
-
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, DropCollectedProps>({
     accept: ItemTypes.CARD,
@@ -197,28 +161,16 @@ const MenuItemCard = ({
   const dragRef = drag(useRef<HTMLDivElement>(null));
 
   const hasImage = item.image && item.image !== "/placeholder-img.svg";
-  
-  // Função para abrir/fechar ações no clique (alternativa ao swipe)
-  const toggleMobileActions = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Para evitar que o clique no botão abra as ações no desktop
-    if (window.innerWidth < 640) { // 640px é o 'sm' do Tailwind
-      e.stopPropagation(); // Evita que o evento se propague, se necessário
-      setIsActionsOpen(prev => !prev);
-    }
-  };
-
 
   return (
     <Card
       ref={ref}
-      className={cn("hover:shadow-md transition-shadow relative overflow-hidden", {
+      className={cn("hover:shadow-md transition-shadow", {
         "opacity-50": isDragging,
       })}
       data-handler-id={handlerId}
-      // Se for mobile e ações estiverem abertas, ajuste a altura
-      style={{ minHeight: isActionsOpen && window.innerWidth < 640 ? '100px' : 'auto' }}
     >
-      <CardContent className="p-3 sm:p-4 relative">
+      <CardContent className="p-3 sm:p-4">
         {/* Container Principal: Horizontal e Alinhado ao Centro */}
         <div className="flex items-center gap-3 sm:gap-4">
 
@@ -231,7 +183,7 @@ const MenuItemCard = ({
             <GripVertical className="w-5 h-5" />
           </div>
 
-          {/* Coluna 2: Imagem/Placeholder */}
+          {/* Coluna 2: Imagem/Placeholder (Ajustada para Mobile/Desktop) */}
           {hasImage ? (
             <img
               src={item.image}
@@ -249,8 +201,7 @@ const MenuItemCard = ({
 
           {/* Coluna 3: Detalhes do Item (Foco - Expansível) */}
           <div className="flex-1 min-w-0">
-            {/* REMOVIDO: truncate. Permite que o nome quebre a linha no mobile */}
-            <h3 className="font-semibold text-gray-900 break-words line-clamp-2">
+            <h3 className="font-semibold text-gray-900 truncate">
               {item.name}
             </h3>
             {/* Descrição: Oculta no mobile para manter a compacidade */}
@@ -262,17 +213,21 @@ const MenuItemCard = ({
             </div>
           </div>
 
-          {/* Coluna 4: Ações no Desktop / Ícone de Ações no Mobile */}
-          <div className="hidden sm:flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            {/* Desktop: Switch e Botões Visíveis */}
+          {/* Coluna 4: Disponibilidade e Ações (AJUSTADO PARA COMPACTO) */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            
+            {/* Disponibilidade: APENAS O SWITCH COM CORREÇÃO DE TAMANHO */}
             <div className="flex items-center flex-shrink-0">
               <Switch
                 checked={item.available}
                 onCheckedChange={() => toggleAvailability(item.id!)}
-                className="data-[state=checked]:bg-blue-600 w-9 h-5"
+                // Classes ajustadas para o Switch compacto (w-9 h-5)
+                className="data-[state=checked]:bg-blue-600 w-9 h-5" 
               />
+              {/* O nome "Disponível" foi removido */}
             </div>
 
+            {/* Botões de Ação */}
             <div className="flex gap-1.5 sm:gap-2">
               <Button
                 variant="outline"
@@ -292,70 +247,14 @@ const MenuItemCard = ({
               </Button>
             </div>
           </div>
-
-          {/* Mobile: Botão para abrir ações */}
-          <div className="sm:hidden flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMobileActions}
-                className="h-8 w-8 text-gray-500"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-          </div>
         </div>
       </CardContent>
-      
-      {/* ÁREA DE AÇÕES SLIDEOUT (Mobile) */}
-      <div 
-        ref={actionsRef}
-        className={cn(
-          "absolute right-0 top-0 h-full w-40 bg-gray-100/95 backdrop-blur-sm transition-transform duration-300 sm:hidden",
-          "flex items-center justify-end gap-2 p-3",
-          isActionsOpen ? "translate-x-0" : "translate-x-full"
-        )}
-        // Adicionando onMouseDown/onTouchStart para evitar que o clique dentro da área feche o menu imediatamente
-        onMouseDown={(e) => e.stopPropagation()} 
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        {/* Switch de Disponibilidade */}
-        <Switch
-          checked={item.available}
-          onCheckedChange={() => toggleAvailability(item.id!)}
-          className="data-[state=checked]:bg-blue-600 w-9 h-5"
-        />
-
-        {/* Botão Editar */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => { openEditModal(item); setIsActionsOpen(false); }}
-          className="h-8 w-8"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-
-        {/* Botão Excluir */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => { openDeleteModal(item.id!); setIsActionsOpen(false); }}
-          className="h-8 w-8"
-        >
-          <Trash className="w-4 h-4 text-red-600" />
-        </Button>
-      </div>
-
     </Card>
   );
 };
 
-// O restante do componente MenuManagement (o código grande abaixo)
-// permanece inalterado, como na resposta anterior.
-
 // ---
-// ## Componente MenuManagement (O restante do código, inalterado)
+// ## Componente MenuManagement (Sem Alterações na Lógica)
 // ---
 
 export function MenuManagement({
@@ -410,8 +309,9 @@ export function MenuManagement({
         )
       );
       toast({
-        title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"
-          }`,
+        title: `${itemToUpdate.name} ${
+          newAvailability ? "agora disponível" : "agora indisponível"
+        }`,
       });
     } else {
       toast({
@@ -465,6 +365,23 @@ export function MenuManagement({
     setEditingItem(null);
     setIsItemModalOpen(false);
     setImageFile(null);
+  };
+
+  const validateMenuItem = (item: MenuItem) => {
+    const errors: string[] = [];
+    if (!item.name || item.name.trim().length < 3) {
+      errors.push("O nome deve ter pelo menos 3 caracteres.");
+    }
+    if (!item.description || item.description.trim().length < 3) {
+      errors.push("A descrição deve ter pelo menos 3 caracteres.");
+    }
+    if (item.price <= 0) {
+      errors.push("O preço deve ser maior que zero.");
+    }
+    if (!item.category_id) {
+      errors.push("A categoria é obrigatória.");
+    }
+    return errors;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -683,16 +600,24 @@ export function MenuManagement({
             </Select>
           </div>
 
-          {/* Botões de Ação: APENAS ADICIONAR ITEM */}
+          {/* Botões de Ação */}
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={addNewItem}
-              className="w-full sm:w-auto text-white font-semibold"
+              className="w-1/2 sm:w-auto text-white font-semibold"
               style={{ backgroundColor: "#FD7E14" }}
             >
               <Plus className="w-4 h-4 mr-2" /> Adicionar Item
             </Button>
-            {/* O botão 'Adicionar Categoria' foi movido para baixo */}
+            <Button
+              onClick={addNewCategory}
+              className="w-1/2 sm:w-auto text-white font-semibold"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline-block">Adicionar</span>{" "}
+              Categoria
+            </Button>
           </div>
         </div>
 
@@ -730,20 +655,7 @@ export function MenuManagement({
 
         {/* Gerenciar Categorias */}
         <div className="mt-8">
-          {/* Nova div para alinhamento do título e botão */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Gerenciar Categorias</h2>
-            
-            {/* Botão Adicionar Categoria movido e ajustado para ser compacto */}
-            <Button
-              onClick={addNewCategory}
-              className="text-white font-semibold px-3 h-8 text-sm"
-              style={{ backgroundColor: "#FD7E14" }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Adicionar Categoria
-            </Button>
-          </div>
+          <h2 className="text-xl font-bold mb-4">Gerenciar Categorias</h2>
           <div className="flex flex-wrap gap-2">
             {localCategories.map((category) => (
               <div
@@ -825,9 +737,9 @@ export function MenuManagement({
                         setEditingItem((prev) =>
                           prev
                             ? {
-                              ...prev,
-                              price: Number.parseFloat(e.target.value) || 0,
-                            }
+                                ...prev,
+                                price: Number.parseFloat(e.target.value) || 0,
+                              }
                             : null
                         )
                       }
@@ -861,7 +773,7 @@ export function MenuManagement({
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {editingItem.image &&
-                      editingItem.image !== "/placeholder-img.svg" ? (
+                    editingItem.image !== "/placeholder-img.svg" ? (
                       <img
                         src={editingItem.image}
                         alt="Pré-visualização da imagem"
