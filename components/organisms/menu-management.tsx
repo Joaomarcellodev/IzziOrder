@@ -255,7 +255,7 @@ const MenuItemCard = ({
 };
 
 // ---
-// ## Componente MenuManagement (Sem Alterações na Lógica)
+// ## Componente MenuManagement (Com Modificações no Layout)
 // ---
 
 export function MenuManagement({
@@ -583,24 +583,16 @@ export function MenuManagement({
             </Select>
           </div>
 
-          {/* Botões de Ação */}
+          {/* Botões de Ação: APENAS ADICIONAR ITEM */}
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={addNewItem}
-              className="w-1/2 sm:w-auto text-white font-semibold"
+              className="w-full sm:w-auto text-white font-semibold"
               style={{ backgroundColor: "#FD7E14" }}
             >
               <Plus className="w-4 h-4 mr-2" /> Adicionar Item
             </Button>
-            <Button
-              onClick={addNewCategory}
-              className="w-1/2 sm:w-auto text-white font-semibold"
-              style={{ backgroundColor: "#FD7E14" }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline-block">Adicionar</span>{" "}
-              Categoria
-            </Button>
+            {/* O botão 'Adicionar Categoria' foi movido para baixo */}
           </div>
         </div>
 
@@ -636,9 +628,22 @@ export function MenuManagement({
           )}
         </div>
 
-        {/* Gerenciar Categorias */}
+        {/* Gerenciar Categorias - SEÇÃO MODIFICADA */}
         <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Gerenciar Categorias</h2>
+          {/* Nova div para alinhamento do título e botão */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Gerenciar Categorias</h2>
+            
+            {/* Botão Adicionar Categoria movido e ajustado para ser compacto */}
+            <Button
+              onClick={addNewCategory}
+              className="text-white font-semibold px-3 h-8 text-sm"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Adicionar Categoria
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {localCategories.map((category) => (
               <div
