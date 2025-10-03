@@ -20,6 +20,7 @@ import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/molecules/dropdown-menu"; 
 
+
 // --- Interfaces (Mantidas) ---
 interface Table {
   id: string;
@@ -403,9 +404,9 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden p-0">
+          <div className="flex-1 overflow-hidden p-0 h-full">
             {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
-            <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] h-full"> 
+            <div className="grid grid-cols-1 md:grid-cols-[5fr_1fr] h-[80vh]"> 
               
               {/* PAINEL ESQUERDO: Menu Principal (75% da largura) */}
               <div className="flex flex-col p-4">
@@ -438,148 +439,164 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                 </ScrollArea>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <ScrollArea className="flex-1 h-full">
-                    {/* Mantido o ajuste para xl:grid-cols-4 para cards mais largos */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 pr-4"> 
-                        {filteredMenuItems.map((item) => (
-                        <Card
-                            key={item.id}
-                            className="cursor-pointer hover:shadow-2xl transition-shadow border-2 hover:border-orange-500 transform hover:scale-[1.02]"
-                            onClick={() => addItemToOrder(item)}
-                        >
-                            <CardContent className="p-3 text-center">
-                                {/* Altura mínima maior (min-h-[40px]) para acomodar nomes em 2 linhas sem achatar */}
-                                <div className="font-bold text-md text-gray-900 line-clamp-2 min-h-[40px] mb-1"> 
-                                    {item.name}
-                                </div>
-                                <div className="text-xl font-extrabold text-green-600">
-                                    R$ {item.price.toFixed(2)}
-                                </div>
-                                <Button size="sm" className="w-full mt-2 font-bold" style={{ backgroundColor: "#FD7E14" }}>
-                                    <Plus className="w-4 h-4 mr-1" /> Adicionar
-                                </Button>
-                            </CardContent>
-                        </Card>
-                        ))}
-                    </div>
-                </ScrollArea>
+                <div className="flex-1 overflow-auto"style={{ maxHeight: '500px' }}>
+  <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-4 pr-4">
+    {filteredMenuItems.map((item) => (
+      <Card
+        key={item.id}
+        className="cursor-pointer hover:shadow-2xl transition-shadow border-2 hover:border-orange-500 transform hover:scale-[1.01] w-full min-h-[140px] h-auto flex flex-col"
+        onClick={() => addItemToOrder(item)}
+      >
+        <CardContent className="p-3 text-center flex flex-col justify-between flex-1">
+          {/* IMAGEM E INFORMAÇÕES */}
+          <div className="flex justify-center items-center mb-2">
+            <img 
+              src="/x-calabresa.png"
+              alt={item.name}
+              className="w-24 h-24 object-cover rounded-lg bg-gray-100"
+            />
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="font-bold text-md text-gray-900 mb-1">
+              {item.name}
+            </div>
+            <div className="text-xl font-extrabold text-green-600">
+              R$ {item.price.toFixed(2)}
+            </div>
+          </div>
+          
+          {/* BOTÃO ADICIONAR */}
+          <Button 
+            size="sm" 
+            className="w-full mt-1 font-bold py-1 text-xs" 
+            style={{ backgroundColor: "#FD7E14" }}
+          >
+            <Plus className="w-3 h-3 mr-1" /> Adicionar
+          </Button>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+</div>
               </div>
 
               {/* PAINEL DIREITO: Pedido Atual, Resumo e Ações (25% da largura, Fixo) */}
-              <div className="flex flex-col bg-gray-100 border-l p-4">
-                <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
-                    Pedido
-                </h3>
-                
-                <ScrollArea className="flex-1 h-full max-h-full">
-                    <div className="space-y-3 pr-4 pb-4">
-                    {currentOrder.length === 0 ? (
-                        <div className="text-center py-16 text-gray-500 border border-dashed rounded-lg bg-white">
-                            <Send className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <div className="text-sm">Selecione itens no menu.</div>
-                        </div>
-                    ) : (
-                        currentOrder.map((item) => (
-                        <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
-                            <CardContent className="p-2">
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1 pr-2"> 
-                                    <div className="font-extrabold text-sm text-gray-900 line-clamp-1">
-                                        {item.name}
-                                    </div>
-                                    <div className="text-xs text-gray-600">
-                                        R$ {(item.price * item.quantity).toFixed(2)}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-1 flex-shrink-0"> 
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => updateQuantity(item.id, -1)}
-                                        className="w-8 h-8 p-0" 
-                                    >
-                                        <Minus className="w-4 h-4" /> 
-                                    </Button>
-                                    <span className="w-4 text-center text-sm font-bold text-blue-700">
-                                        {item.quantity}
-                                    </span>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => updateQuantity(item.id, 1)}
-                                        className="w-8 h-8 p-0" 
-                                    >
-                                        <Plus className="w-4 h-4" /> 
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeItem(item.id)}
-                                        className="w-8 h-8 p-0 text-red-500 hover:bg-red-100" 
-                                    >
-                                        <X className="w-4 h-4" /> 
-                                    </Button>
-                                </div>
-                            </div>
-                            </CardContent>
-                        </Card>
-                        ))
-                    )}
+<div className="flex flex-col bg-gray-100 border-l p-4 h-full">
+  <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
+      Pedido
+  </h3>
+  
+  {/* CONTAINER COM SCROLL FIXO */}
+  <div className="flex-1 overflow-auto mb-4" style={{ maxHeight: '250px' }}>
+    <div className="space-y-3 pr-2">
+    {currentOrder.length === 0 ? (
+        <div className="text-center py-16 text-gray-500 border border-dashed rounded-lg bg-white">
+            <Send className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <div className="text-sm">Selecione itens no menu.</div>
+        </div>
+    ) : (
+        currentOrder.map((item) => (
+        <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
+            <CardContent className="p-2">
+            <div className="flex items-center justify-between">
+                <div className="flex-1 pr-2"> 
+                    <div className="font-extrabold text-sm text-gray-900 line-clamp-1">
+                        {item.name}
                     </div>
-                </ScrollArea>
-
-                {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
-                <div className="flex-shrink-0 pt-4 border-t mt-auto bg-gray-100">
-                    <Card className="shadow-xl mb-3 bg-blue-600 text-white">
-                        <CardContent className="p-3">
-                            <div className="text-sm font-semibold uppercase opacity-90">
-                                TOTAL
-                            </div>
-                            <div className="flex justify-between font-extrabold text-3xl mt-0.5">
-                                <span>R$</span>
-                                <span>{calculateTotal().toFixed(2)}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
+                    <div className="text-xs text-gray-600">
+                        R$ {(item.price * item.quantity).toFixed(2)}
+                    </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0"> 
                     <Button
-                        onClick={sendToKitchen}
-                        className="w-full text-white font-bold h-10 text-base shadow-md mb-2"
-                        style={{ backgroundColor: "#FD7E14" }}
-                        disabled={currentOrder.length === 0}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="w-8 h-8 p-0" 
                     >
-                        <Send className="w-4 h-4 mr-2" />
-                        ENVIAR COZINHA
+                        <Minus className="w-4 h-4" /> 
                     </Button>
-                    <div className="grid grid-cols-2 gap-2 mb-2">
-                        <Button
-                            onClick={printBill}
-                            variant="outline"
-                            className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
-                        >
-                            <Printer className="w-3 h-3 mr-1" />
-                            Imprimir
-                        </Button>
-                        <Button
-                            onClick={splitBill}
-                            variant="outline"
-                            className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
-                        >
-                            <Split className="w-3 h-3 mr-1" />
-                            Dividir
-                        </Button>
-                    </div>
+                    <span className="w-4 text-center text-sm font-bold text-blue-700">
+                        {item.quantity}
+                    </span>
                     <Button
-                        onClick={closeAndPay}
-                        className="w-full text-white font-bold h-12 text-base shadow-lg"
-                        style={{ backgroundColor: "#28A745" }}
-                        disabled={currentOrder.length === 0}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="w-8 h-8 p-0" 
                     >
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        PAGAR E FECHAR
+                        <Plus className="w-4 h-4" /> 
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(item.id)}
+                        className="w-8 h-8 p-0 text-red-500 hover:bg-red-100" 
+                    >
+                        <X className="w-4 h-4" /> 
                     </Button>
                 </div>
+            </div>
+            </CardContent>
+        </Card>
+        ))
+    )}
+    </div>
+  </div>
+
+  {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
+  <div className="flex-shrink-0 pt-4 border-t mt-auto bg-gray-100">
+      <Card className="shadow-xl mb-3 bg-blue-600 text-white">
+          <CardContent className="p-3">
+              <div className="text-sm font-semibold uppercase opacity-90">
+                  TOTAL
               </div>
+              <div className="flex justify-between font-extrabold text-3xl mt-0.5">
+                  <span>R$</span>
+                  <span>{calculateTotal().toFixed(2)}</span>
+              </div>
+          </CardContent>
+      </Card>
+
+      <Button
+          onClick={sendToKitchen}
+          className="w-full text-white font-bold h-10 text-base shadow-md mb-2"
+          style={{ backgroundColor: "#FD7E14" }}
+          disabled={currentOrder.length === 0}
+      >
+          <Send className="w-4 h-4 mr-2" />
+          ENVIAR COZINHA
+      </Button>
+      <div className="grid grid-cols-2 gap-2 mb-2">
+          <Button
+              onClick={printBill}
+              variant="outline"
+              className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
+          >
+              <Printer className="w-3 h-3 mr-1" />
+              Imprimir
+          </Button>
+          <Button
+              onClick={splitBill}
+              variant="outline"
+              className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
+          >
+              <Split className="w-3 h-3 mr-1" />
+              Dividir
+          </Button>
+      </div>
+      <Button
+          onClick={closeAndPay}
+          className="w-full text-white font-bold h-12 text-base shadow-lg"
+          style={{ backgroundColor: "#28A745" }}
+          disabled={currentOrder.length === 0}
+      >
+          <CreditCard className="w-5 h-5 mr-2" />
+          PAGAR E FECHAR
+      </Button>
+  </div>
+</div>
             </div>
           </div>
         </DialogContent>
