@@ -358,17 +358,20 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                 <Plus className="w-4 h-4 mr-2" /> Adicionar Mesa
             </Button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-w-full">
-          {tables.map((table) => (
-            <div
-              key={table.id}
-              className={cn("relative p-4 rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", getTableStyle(table))}
-              onClick={() => openTableModal(table)}
-            >
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-w-full">
+    {tables.map((table) => (
+    <div
+      key={table.id}
+      className={cn(
+        "relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", // 📱 MOBILE FIX
+        getTableStyle(table)
+      )}
+      onClick={() => openTableModal(table)}
+    >
               <div className="text-center">
-                <div className="text-3xl font-extrabold text-gray-900 mb-1">{table.table_number}</div>
-                <div className="text-xs text-gray-600 font-medium">Clique para Abrir</div>
-              </div>
+  <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">{table.table_number}</div>
+  <div className="text-xs text-gray-600 font-medium">Clique para Abrir</div>
+</div>
               <TableActionsDropdown table={table} onEdit={openEditModal} onDelete={openDeleteConfirmation} />
             </div>
           ))}
@@ -396,18 +399,18 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
       {/* --- Table Order Modal (Layout Otimizado: LARGURA MÁXIMA) --- */}
       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
         {/* *** MUDANÇA AQUI: Aumentando a largura máxima para dar espaço aos cards *** */}
-        <DialogContent className="max-w-[1536px] w-full h-[95vh] flex flex-col p-0"> 
+        <DialogContent className="max-w-[1500px] w-full h-[93vh] flex flex-col p-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="text-2xl font-bold flex items-center text-blue-700">
-              <Zap className="w-6 h-6 mr-2 text-yellow-500" />
-              PDV Mesa {selectedTable?.table_number}
+            
+              Mesa {selectedTable?.table_number}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden p-0 h-full">
+          <div className="flex-1 overflow-auto p-0 lg:overflow-hidden">
             {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
-            <div className="grid grid-cols-1 md:grid-cols-[5fr_1fr] h-[80vh]"> 
-              
+            
+             <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full"> {/* 📱 MOBILE FIX */}
               {/* PAINEL ESQUERDO: Menu Principal (75% da largura) */}
               <div className="flex flex-col p-4">
                 <h3 className="font-bold text-xl text-gray-900 mb-3">
@@ -439,8 +442,8 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                 </ScrollArea>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <div className="flex-1 overflow-auto"style={{ maxHeight: '500px' }}>
-  <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-4 pr-4">
+               <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[500px]"> {/* 📱 MOBILE FIX */}
+  <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
     {filteredMenuItems.map((item) => (
       <Card
         key={item.id}
@@ -453,7 +456,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
             <img 
               src="/x-calabresa.png"
               alt={item.name}
-              className="w-24 h-24 object-cover rounded-lg bg-gray-100"
+              className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg bg-gray-100"
             />
           </div>
           
@@ -482,7 +485,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
               </div>
 
               {/* PAINEL DIREITO: Pedido Atual, Resumo e Ações (25% da largura, Fixo) */}
-<div className="flex flex-col bg-gray-100 border-l p-4 h-full">
+<div className="flex flex-col bg-gray-100 border-t lg:border-l p-4 h-full w-full lg:w-auto"> {/* 📱 MOBILE FIX */}
   <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
       Pedido
   </h3>
@@ -500,15 +503,15 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
         <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
             <CardContent className="p-2">
             <div className="flex items-center justify-between">
-                <div className="flex-1 pr-2"> 
-                    <div className="font-extrabold text-sm text-gray-900 line-clamp-1">
-                        {item.name}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                        R$ {(item.price * item.quantity).toFixed(2)}
-                    </div>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0"> 
+    <div className="flex-1 pr-2"> 
+        <div className="font-extrabold text-sm text-gray-900">
+            {item.name}
+        </div>
+        <div className="text-xs text-gray-600">
+            R$ {(item.price * item.quantity).toFixed(2)}
+        </div>
+    </div>
+    <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -546,7 +549,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
   </div>
 
   {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
-  <div className="flex-shrink-0 pt-4 border-t mt-auto bg-gray-100">
+ <div className="flex-shrink-0 pt-2 border-t bg-gray-100">
       <Card className="shadow-xl mb-3 bg-blue-600 text-white">
           <CardContent className="p-3">
               <div className="text-sm font-semibold uppercase opacity-90">
@@ -596,8 +599,8 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
           PAGAR E FECHAR
       </Button>
   </div>
-</div>
-            </div>
+</div>  
+   </div>         
           </div>
         </DialogContent>
       </Dialog>
