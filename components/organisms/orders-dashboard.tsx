@@ -6,8 +6,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Eye, Truck } from "lucide-react";
+import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
 
-interface Order {
+export interface Order {
   id: string;
   customerName: string;
   items: Array<{ name: string; quantity: number; notes?: string }>;
@@ -69,6 +70,8 @@ const columns = [
 export function OrdersDashboard() {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [draggedOrder, setDraggedOrder] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getOrdersByStatus = (status: Order["status"]) => {
     return orders.filter((order) => order.status === status);
@@ -95,6 +98,15 @@ export function OrdersDashboard() {
       case "Mesa":
         return <MapPin className="w-5 h-5 text-green-600" />;
     }
+  };
+    const handleViewOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedOrder(null);
   };
 
   return (
@@ -162,26 +174,36 @@ export function OrdersDashboard() {
                       </div>
                     </CardHeader>
 
-                    <CardContent className="space-y-3">
                       {/* Items */}
-                      <div className="space-y-1">
-                        {order.items.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <span>
-                              {item.quantity}x {item.name}
-                            </span>
-                            {item.notes && (
-                              <div title={item.notes}>
-                                <Eye className="w-4 h-4 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+<CardContent className="space-y-3">
+  {/* Items */}
+  <div className="space-y-1">
+    {order.items.map((item, index) => (
+      <div
+        key={index}
+        className="flex items-center justify-between text-sm"
+      >
+        <span>
+          {item.quantity}x {item.name}
+        </span>
+        {/* REMOVA completamente o botão do olho daqui */}
+      </div>
+    ))}
+  </div>
 
+  {/* ADICIONE ESTE BLOCO NOVO AQUI - UM OLHO POR PEDIDO */}
+  <div className="flex justify-end pt-2">
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 w-8 p-0"
+      onClick={() => handleViewOrderDetails(order)}
+      title="Ver detalhes do pedido"
+    >
+      <Eye className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+    </Button>
+  </div>
+  
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <div className="font-semibold text-lg">
@@ -222,10 +244,15 @@ export function OrdersDashboard() {
                   <div className="text-sm">Nenhum Pedido</div>
                 </div>
               )}
-            </div>
-          );
+            </div> 
+            );
         })}
       </div>
+       <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 }
