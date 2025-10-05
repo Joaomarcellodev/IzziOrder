@@ -1,5 +1,11 @@
 "use client";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/organisms/select";
 import React, { useState, useEffect } from "react";
 import {
   Plus,
@@ -535,35 +541,28 @@ export function TableMap({
                 </h3>
 
                 {/* Carrossel de Categorias (Horizontal Scroll) */}
-                <ScrollArea className="flex-shrink-0 h-16 mb-4 whitespace-nowrap">
-                  <div className="flex gap-3 pb-2 w-max">
-                    {categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        variant={
-                          selectedCategory === category.id
-                            ? "default"
-                            : "outline"
-                        }
-                        size="lg"
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={cn(
-                          "flex-shrink-0 font-semibold text-base",
-                          selectedCategory === category.id
-                            ? "text-white"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-200"
-                        )}
-                        style={
-                          selectedCategory === category.id
-                            ? { backgroundColor: "#007BFF" }
-                            : {}
-                        }
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="mb-4 flex-shrink-0">
+                        <Select
+                            value={selectedCategory}
+                            onValueChange={setSelectedCategory}
+                        >
+                            <SelectTrigger className="w-full font-semibold text-base h-11">
+                                {/* NOVO PLACEHOLDER: "Todas as Categorias" */}
+                                <SelectValue placeholder="Todas as Categorias" /> 
+                            </SelectTrigger>
+                            <SelectContent>
+                                {/* OPÇÃO PARA LIMPAR O FILTRO / SELECIONAR TUDO */}
+                                <SelectItem value="All">Todas as Categorias</SelectItem>
+                                
+                                {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
+                                {categories.filter(category => category.id).map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                        {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
                 <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[500px]">
@@ -580,7 +579,6 @@ export function TableMap({
                           {/* IMAGEM E INFORMAÇÕES */}
                           <div className="flex justify-center items-center mb-2">
                             <img
-                              // Use a propriedade 'image' do objeto 'item' que contém a URL do banco de dados
                               src={item.image}
                               alt={item.name}
                               className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg bg-gray-100"
