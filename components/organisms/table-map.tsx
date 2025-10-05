@@ -565,7 +565,7 @@ export function TableMap({
                     </div>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[635px]">
+                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[630px]">
                   {" "}
                   {/* 📱 MOBILE FIX */}
                   <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
