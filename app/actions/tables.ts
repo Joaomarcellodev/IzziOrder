@@ -1,15 +1,72 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { ESTABLISHMENT_ID } from "@/utils/config";
 
-export async function getTables(establishment_id: string) {
-    const client = createClient();
+export async function getTables(id: string) {
+    const supabase = createClient();
 
-    const { data, error } = await (await client).from("tables").select().eq("establishment_id", establishment_id);
+    const { data, error } = await (await supabase).from("tables").select().eq("establishment_id", id);
 
     if (error) {
-        return { success: false, error: "Erro ao carregar tabelas." }
+        console.error("Erro ao carregar mesas:", error);
+        return { success: false, error: "Erro ao carregar mesas." }
     }
 
     return { success: true, data: data ?? [] };
+}
+
+export async function createTable(number: number) {
+    const supabase = createClient();
+
+    const { data, error } = await (await supabase)
+        .from("tables")
+        .insert({ table_number: number, establishment_id: ESTABLISHMENT_ID })
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Erro ao criar mesa:", error);
+        return { success: false, error: "Erro ao criar mesa." }
+    }
+
+    return { success: true, data: data };
+}
+
+export async function updateTable(id: string, new_number: number) {
+    const supabase = await createClient();
+
+    const { data, error } = await (await supabase)
+        .from("tables")
+        .update({ table_number: new_number })
+        .eq("id", id)
+        .eq("establishment_id", ESTABLISHMENT_ID)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Erro ao editar a mesa:", error);
+        return { success: false, error: "Erro ao editar a mesa." }
+    }
+
+    return { success: true, data: data };
+}
+
+export async function deleteTable(id: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await (await supabase)
+        .from("tables")
+        .delete()
+        .eq("id", id)
+        .eq("establishment_id", ESTABLISHMENT_ID)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Erro ao excluir a mesa:", error);
+        return { success: false, error: "Erro ao excluir a mesa." }
+    }
+
+    return { success: true, data: data };
 }
