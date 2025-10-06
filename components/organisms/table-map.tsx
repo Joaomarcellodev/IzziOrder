@@ -42,6 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/molecules/dropdown-menu";
+import { createTable, deleteTable, updateTable } from "@/app/actions/tables";
 
 // --- Interfaces (Mantidas) ---
 interface Table {
@@ -87,12 +88,12 @@ const AddTableModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onAddTable: (tableNumber: number) => void;
+  onAddTable: (newTable: Table) => void;
 }) => {
   const [tableNumber, setTableNumber] = useState<string>("");
   const { toast } = useToast();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const num = parseInt(tableNumber, 10);
     if (isNaN(num) || num <= 0) {
       toast({
@@ -102,7 +103,9 @@ const AddTableModal = ({
       });
       return;
     }
-    onAddTable(num);
+
+    const newTable = (await createTable(num)).data;
+    onAddTable(newTable);
     setTableNumber("");
     onClose();
   };
@@ -168,6 +171,8 @@ const EditTableModal = ({
       });
       return;
     }
+
+    updateTable(table.id, num);
     onEditTable(table.id, num);
     onClose();
   };
@@ -251,7 +256,7 @@ export function TableMap({
   menuItems: menuItems,
   categories: initialCategories,
 }: TableMapProps) {
-  const [tables, setTables] = useState<Table[]>(initialTables);
+  const [tables, setTables] = useState<Table[]>(initialTables.sort((a, b) => a.table_number - b.table_number));
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
@@ -272,16 +277,11 @@ export function TableMap({
       : menuItems.filter((item) => item.category_id === selectedCategory);
 
   // --- Funções de CRUD de Mesa (Mantidas) ---
-  const handleAddTable = (tableNumber: number) => {
-    const newTable: Table = {
-      id: `table-${Date.now()}`,
-      establishment_id: "default",
-      table_number: tableNumber,
-    };
-    if (tables.some((t) => t.table_number === tableNumber)) {
+  const handleAddTable = (newTable: Table) => {
+    if (tables.some((t) => t.table_number === newTable.table_number)) {
       toast({
         title: "Mesa já existe",
-        description: `A mesa ${tableNumber} já está no mapa.`,
+        description: `A mesa ${newTable.table_number} já está no mapa.`,
         variant: "destructive",
       });
       return;
@@ -291,7 +291,7 @@ export function TableMap({
     );
     toast({
       title: "Mesa Adicionada",
-      description: `Mesa ${tableNumber} adicionada com sucesso.`,
+      description: `Mesa ${newTable.table_number} adicionada com sucesso.`,
     });
   };
 
@@ -329,6 +329,7 @@ export function TableMap({
 
   const handleDeleteTable = () => {
     if (!tableToDelete) return;
+    deleteTable(tableToDelete.id);
     setTables((prev) => prev.filter((t) => t.id !== tableToDelete.id));
     toast({
       title: "Mesa Excluída",
@@ -529,7 +530,7 @@ export function TableMap({
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-0 lg:overflow-hidden">
-            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */} 
+            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
 
             <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full">
               {" "}
@@ -542,27 +543,27 @@ export function TableMap({
 
                 {/* Carrossel de Categorias (Horizontal Scroll) */}
                 <div className="mb-4 flex-shrink-0">
-                        <Select
-                            value={selectedCategory}
-                            onValueChange={setSelectedCategory}
-                        >
-                            <SelectTrigger className="w-full font-semibold text-base h-11">
-                                {/* NOVO PLACEHOLDER: "Todas as Categorias" */}
-                                <SelectValue placeholder="Todas as Categorias" /> 
-                            </SelectTrigger>
-                            <SelectContent>
-                                {/* OPÇÃO PARA LIMPAR O FILTRO / SELECIONAR TUDO */}
-                                <SelectItem value="All">Todas as Categorias</SelectItem>
-                                
-                                {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
-                                {categories.filter(category => category.id).map((category) => (
-                                    <SelectItem key={category.id} value={category.id}>
-                                        {category.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger className="w-full font-semibold text-base h-11">
+                      {/* NOVO PLACEHOLDER: "Todas as Categorias" */}
+                      <SelectValue placeholder="Todas as Categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* OPÇÃO PARA LIMPAR O FILTRO / SELECIONAR TUDO */}
+                      <SelectItem value="All">Todas as Categorias</SelectItem>
+
+                      {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
+                      {categories.filter(category => category.id).map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
                 <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[630px]">
