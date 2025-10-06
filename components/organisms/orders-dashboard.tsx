@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
-import { Clock, MapPin, Eye, Truck } from "lucide-react";
+import { Clock, MapPin, Eye, Truck, Trash2 } from "lucide-react";
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
+
 
 export interface Order {
   id: string;
@@ -83,6 +84,10 @@ export function OrdersDashboard() {
         order.id === orderId ? { ...order, status: "Confirmado" } : order
       )
     );
+  };
+   
+  const deleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((order) => order.id !== orderId));
   };
 
   const getSourceIcon = (source: Order["source"]) => {
@@ -224,14 +229,27 @@ export function OrdersDashboard() {
                       </div>
 
                       {/* Action Button for Novo Orders */}
+                                            {/* Action Button for Novo Orders */}
                       {order.status === "Novo" && (
-                        <Button
-                          className="w-full font-semibold text-white"
-                          style={{ backgroundColor: "#FD7E14" }}
-                          onClick={() => confirmOrder(order.id)}
-                        >
-                          Confirmar Pedido
-                        </Button>
+                        <div className="space-y-2">
+                          <Button
+                            className="w-full font-semibold text-white"
+                            style={{ backgroundColor: "#FD7E14" }}
+                            onClick={() => confirmOrder(order.id)}
+                          >
+                            Confirmar Pedido
+                          </Button>
+                          
+                          {/* BOTÃO EXCLUIR - ADICIONE AQUI */}
+                          <Button
+                            variant="outline"
+                            className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => deleteOrder(order.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir Pedido
+                          </Button>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
