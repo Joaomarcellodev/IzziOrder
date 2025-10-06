@@ -13,14 +13,15 @@ interface ActionResponse<T = any> {
 // Tipo para a tabela "orders"
 export interface Order {
   id: string;
+  code?: string;
   date: string; // timestamp
   total: number;
-  status: string;
-  tableNumber?: number;
+  status: "PENDING" | "CONFIRMED" | "Preparando" | "Pronto"; tableNumber?: number;
   customer_id?: string;
-  order_type?: string;
+  type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
+  order_lines: Array<{ name: string; quantity: number; notes?: string }>;
 }
 
 /**
@@ -53,17 +54,22 @@ export async function createOrder(
 }
 
 /*Busca todos os pedidos.*/
-export async function getOrders(): Promise<ActionResponse<Order[]>> {
+export async function getOrders(establishment_id: string) {
   const supabase = createClient();
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .select("*")
+    .select("*, order_lines (*)")
+    .eq("establishment_id", establishment_id)
     .order("date", { ascending: false });
 
   if (error) {
     console.error("Erro ao buscar pedidos:", error);
     return { success: false, error: "Erro ao buscar pedidos." };
+  }
+
+  for (const order of data as Order[]) {
+    order.code = "#" + order.type + "-" + order.id.slice(0, 6).toUpperCase();
   }
 
   return { success: true, data: data as Order[] };

@@ -6,68 +6,21 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Eye, Truck } from "lucide-react";
-
-interface Order {
-  id: string;
-  customerName: string;
-  items: Array<{ name: string; quantity: number; notes?: string }>;
-  total: number;
-  source: "ifood" | "delivery" | "Mesa";
-  waitingTime: number;
-  type: "delivery" | "Mesa";
-  MesaNumber?: number;
-  status: "Novo" | "Confirmado" | "Preparando" | "Pronto";
-}
-
-const mockOrders: Order[] = [
-  {
-    id: "#1235",
-    customerName: "Ana B.",
-    items: [
-      { name: "izziBurger Duplo", quantity: 2, notes: "Sem cebolas" },
-      { name: "Batata Frita", quantity: 1 },
-    ],
-    total: 85.5,
-    source: "ifood",
-    waitingTime: 8,
-    type: "delivery",
-    status: "Novo",
-  },
-  {
-    id: "#1236",
-    customerName: "João S.",
-    items: [
-      { name: "Pizza Margherita", quantity: 1 },
-      { name: "Coca-Cola", quantity: 2 },
-    ],
-    total: 45.0,
-    source: "Mesa",
-    waitingTime: 12,
-    type: "Mesa",
-    MesaNumber: 5,
-    status: "Novo",
-  },
-  {
-    id: "#1234",
-    customerName: "Maria L.",
-    items: [{ name: "Salada Caesar", quantity: 1 }],
-    total: 28.0,
-    source: "delivery",
-    waitingTime: 5,
-    type: "delivery",
-    status: "Confirmado",
-  },
-];
+import { Order } from "@/app/actions/orders";
 
 const columns = [
-  { id: "Novo", title: "Novo Pedido", status: "Novo" as const },
-  { id: "Confirmado", title: "Confirmado", status: "Confirmado" as const },
+  { id: "Novo", title: "Novo Pedido", status: "PENDING" as const },
+  { id: "Confirmado", title: "Confirmado", status: "CONFIRMED" as const },
   { id: "Preparando", title: "Preparando", status: "Preparando" as const },
   { id: "Pronto", title: "Pronto", status: "Pronto" as const },
 ];
 
-export function OrdersDashboard() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+interface OrdersDashboardProps {
+  orders: Order[];
+}
+
+export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps) {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [draggedOrder, setDraggedOrder] = useState<string | null>(null);
 
   const getOrdersByStatus = (status: Order["status"]) => {
@@ -77,22 +30,16 @@ export function OrdersDashboard() {
   const confirmOrder = (orderId: string) => {
     setOrders((prev) =>
       prev.map((order) =>
-        order.id === orderId ? { ...order, status: "Confirmado" } : order
+        order.id === orderId ? { ...order, status: "CONFIRMED" } : order
       )
     );
   };
 
-  const getSourceIcon = (source: Order["source"]) => {
+  const getSourceIcon = (source: Order["type"]) => {
     switch (source) {
-      case "ifood":
-        return (
-          <div className="w-6 h-6 bg-red-500 rounded text-white text-xs flex items-center justify-center font-bold">
-            iF
-          </div>
-        );
-      case "delivery":
+      case "DELIVERY":
         return <Truck className="w-5 h-5 text-blue-600" />;
-      case "Mesa":
+      case "LOCAL":
         return <MapPin className="w-5 h-5 text-green-600" />;
     }
   };
@@ -102,8 +49,8 @@ export function OrdersDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {columns.map((column) => {
           const columnOrders = getOrdersByStatus(column.status);
-          const hasNovoOrders =
-            column.status === "Novo" && columnOrders.length > 0;
+          const hasNewOrders =
+            column.status === "PENDING" && columnOrders.length > 0;
 
           return (
             <div key={column.id} className="space-y-4">
@@ -113,11 +60,11 @@ export function OrdersDashboard() {
                 <div
                   className={cn(
                     "flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium",
-                    hasNovoOrders
+                    hasNewOrders
                       ? "text-white animate-pulse"
                       : "bg-gray-200 text-gray-600"
                   )}
-                  style={hasNovoOrders ? { backgroundColor: "#FD7E14" } : {}}
+                  style={hasNewOrders ? { backgroundColor: "#FD7E14" } : {}}
                 >
                   {columnOrders.length}
                 </div>
@@ -138,24 +85,24 @@ export function OrdersDashboard() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">
-                            {order.id}
+                            {order.code!}
                           </span>
                           <span className="text-gray-600">
-                            - {order.customerName}
+                            - Nome do cliente
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {getSourceIcon(order.source)}
+                          {getSourceIcon(order.type)}
                           <div className="flex items-center gap-1 text-sm">
                             <Clock className="w-4 h-4" />
                             <span
                               className={cn(
-                                order.waitingTime > 10
+                                order.estimated_time ?? 0 > 10
                                   ? "text-red-600"
                                   : "text-gray-500"
                               )}
                             >
-                              {order.waitingTime}min
+                              {order.estimated_time}min
                             </span>
                           </div>
                         </div>
@@ -165,16 +112,16 @@ export function OrdersDashboard() {
                     <CardContent className="space-y-3">
                       {/* Items */}
                       <div className="space-y-1">
-                        {order.items.map((item, index) => (
+                        {order.order_lines.map((line, index) => (
                           <div
                             key={index}
                             className="flex items-center gap-2 text-sm"
                           >
                             <span>
-                              {item.quantity}x {item.name}
+                              {line.quantity}x {line.name}
                             </span>
-                            {item.notes && (
-                              <div title={item.notes}>
+                            {line.notes && (
+                              <div title={line.notes}>
                                 <Eye className="w-4 h-4 text-gray-400" />
                               </div>
                             )}
@@ -188,21 +135,21 @@ export function OrdersDashboard() {
                           R$ {order.total.toFixed(2)}
                         </div>
                         <div className="flex items-center gap-1">
-                          {order.type === "delivery" ? (
+                          {order.type === "DELIVERY" ? (
                             <Truck className="w-4 h-4 text-blue-600" />
                           ) : (
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4 text-green-600" />
                               <span className="text-sm text-gray-600">
-                                #{order.MesaNumber}
+                                numero da mesa
                               </span>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Action Button for Novo Orders */}
-                      {order.status === "Novo" && (
+                      {/* Action Button for New Orders */}
+                      {order.status === "PENDING" && (
                         <Button
                           className="w-full font-semibold text-white"
                           style={{ backgroundColor: "#FD7E14" }}
