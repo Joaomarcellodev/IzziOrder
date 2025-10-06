@@ -521,7 +521,7 @@ export function TableMap({
       {/* --- Table Order Modal (Layout Otimizado: LARGURA MÁXIMA) --- */}
       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
         {/* *** MUDANÇA AQUI: Aumentando a largura máxima para dar espaço aos cards *** */}
-        <DialogContent className="max-w-[1500px] w-full h-[93vh] flex flex-col p-0">
+        <DialogContent className="max-w-[1500px] w-[95%] sm:w-[90%] md:w-[85%] lg:w-full h-[93vh] flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="text-2xl font-bold flex items-center text-blue-700">
               Mesa {selectedTable?.table_number}
@@ -529,7 +529,7 @@ export function TableMap({
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-0 lg:overflow-hidden">
-            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
+            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */} 
 
             <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full">
               {" "}
