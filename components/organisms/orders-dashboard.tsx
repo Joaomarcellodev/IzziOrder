@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
-import { Clock, MapPin, Eye, Truck, Trash2 } from "lucide-react";
+import { Clock, MapPin, Eye, Truck, Trash2, AlertTriangle, X } from "lucide-react";
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
+import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal";
+
 
 
 export interface Order {
@@ -74,6 +76,9 @@ export function OrdersDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const getOrdersByStatus = (status: Order["status"]) => {
     return orders.filter((order) => order.status === status);
   };
@@ -86,9 +91,23 @@ export function OrdersDashboard() {
     );
   };
    
-  const deleteOrder = (orderId: string) => {
-    setOrders((prev) => prev.filter((order) => order.id !== orderId));
-  };
+const openDeleteConfirm = (order: Order) => {
+  setOrderToDelete(order);
+  setIsDeleteModalOpen(true);
+};
+
+const confirmDelete = () => {
+  if (orderToDelete) {
+    setOrders((prev) => prev.filter((order) => order.id !== orderToDelete.id));
+    setIsDeleteModalOpen(false);
+    setOrderToDelete(null);
+  }
+};
+
+const cancelDelete = () => {
+  setIsDeleteModalOpen(false);
+  setOrderToDelete(null);
+};
 
   const getSourceIcon = (source: Order["source"]) => {
     switch (source) {
@@ -244,7 +263,7 @@ export function OrdersDashboard() {
                           <Button
                             variant="outline"
                             className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
-                            onClick={() => deleteOrder(order.id)}
+                            onClick={() => openDeleteConfirm(order)} 
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Excluir Pedido
@@ -270,6 +289,12 @@ export function OrdersDashboard() {
         order={selectedOrder}
         isOpen={isModalOpen}
         onClose={closeModal}
+      />
+       <DeleteConfirmModal
+        order={orderToDelete}
+        isOpen={isDeleteModalOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
       />
     </div>
   );
