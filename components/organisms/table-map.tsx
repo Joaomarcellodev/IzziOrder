@@ -256,7 +256,9 @@ export function TableMap({
   menuItems: menuItems,
   categories: initialCategories,
 }: TableMapProps) {
-  const [tables, setTables] = useState<Table[]>(initialTables.sort((a, b) => a.table_number - b.table_number));
+  const [tables, setTables] = useState<Table[]>(
+    initialTables.sort((a, b) => a.table_number - b.table_number)
+  );
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
@@ -333,8 +335,7 @@ export function TableMap({
     setTables((prev) => prev.filter((t) => t.id !== tableToDelete.id));
     toast({
       title: "Mesa Excluída",
-      description: `Mesa ${tableToDelete.table_number} foi removida.`,
-      variant: "destructive",
+      description: `Mesa ${tableToDelete.table_number} foi removida com sucesso.`,
     });
     setIsDeleteTableModalOpen(false);
     setTableToDelete(null);
@@ -556,17 +557,19 @@ export function TableMap({
                       <SelectItem value="All">Todas as Categorias</SelectItem>
 
                       {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
-                      {categories.filter(category => category.id).map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter((category) => category.id)
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[630px]">
+                <div className="flex-1  overflow-auto max-h-[60vh] lg:max-h-[550px]">
                   {" "}
                   {/* 📱 MOBILE FIX */}
                   <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
