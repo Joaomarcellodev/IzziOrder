@@ -1,7 +1,25 @@
 "use client";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/organisms/select";
 import React, { useState, useEffect } from "react";
-import { Plus, Minus, X, Printer, Split, CreditCard, Send, Zap, MoreVertical, Edit, Trash } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  X,
+  Printer,
+  Split,
+  CreditCard,
+  Send,
+  Zap,
+  MoreVertical,
+  Edit,
+  Trash,
+} from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/molecules/card";
 import {
@@ -18,11 +36,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/molecules/dropdown-menu";
-import { createTable, deleteTable, updateTable } from "@/app/actions/tables";
-import { id } from "date-fns/locale";
-import { table } from "console";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/molecules/dropdown-menu";
 
 // --- Interfaces (Mantidas) ---
 interface Table {
@@ -32,6 +51,7 @@ interface Table {
 }
 
 interface MenuItem {
+  image: string | Blob | undefined;
   id: string;
   name: string;
   price: number;
@@ -58,14 +78,21 @@ interface TableMapProps {
 }
 // --- Fim Interfaces ---
 
-
 // --- Componentes Modais de Ação de Mesa (Mantidos) ---
 
-const AddTableModal = ({ isOpen, onClose, onAddTable }: { isOpen: boolean, onClose: () => void, onAddTable: (newTable: Table) => void }) => {
+const AddTableModal = ({
+  isOpen,
+  onClose,
+  onAddTable,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddTable: (tableNumber: number) => void;
+}) => {
   const [tableNumber, setTableNumber] = useState<string>("");
   const { toast } = useToast();
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const num = parseInt(tableNumber, 10);
     if (isNaN(num) || num <= 0) {
       toast({
@@ -75,9 +102,7 @@ const AddTableModal = ({ isOpen, onClose, onAddTable }: { isOpen: boolean, onClo
       });
       return;
     }
-
-    const newTable = (await createTable(num)).data;
-    onAddTable(newTable);
+    onAddTable(num);
     setTableNumber("");
     onClose();
   };
@@ -111,8 +136,20 @@ const AddTableModal = ({ isOpen, onClose, onAddTable }: { isOpen: boolean, onClo
   );
 };
 
-const EditTableModal = ({ isOpen, onClose, onEditTable, table }: { isOpen: boolean, onClose: () => void, onEditTable: (id: string, newNumber: number) => void, table: Table | null }) => {
-  const [tableNumber, setTableNumber] = useState(table ? table.table_number.toString() : "");
+const EditTableModal = ({
+  isOpen,
+  onClose,
+  onEditTable,
+  table,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onEditTable: (id: string, newNumber: number) => void;
+  table: Table | null;
+}) => {
+  const [tableNumber, setTableNumber] = useState(
+    table ? table.table_number.toString() : ""
+  );
   const { toast } = useToast();
 
   useEffect(() => {
@@ -131,8 +168,6 @@ const EditTableModal = ({ isOpen, onClose, onEditTable, table }: { isOpen: boole
       });
       return;
     }
-
-    updateTable(table.id, num);
     onEditTable(table.id, num);
     onClose();
   };
@@ -166,7 +201,15 @@ const EditTableModal = ({ isOpen, onClose, onEditTable, table }: { isOpen: boole
   );
 };
 
-const TableActionsDropdown = ({ table, onEdit, onDelete }: { table: Table, onEdit: (table: Table) => void, onDelete: (table: Table) => void }) => (
+const TableActionsDropdown = ({
+  table,
+  onEdit,
+  onDelete,
+}: {
+  table: Table;
+  onEdit: (table: Table) => void;
+  onDelete: (table: Table) => void;
+}) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button
@@ -203,8 +246,12 @@ const TableActionsDropdown = ({ table, onEdit, onDelete }: { table: Table, onEdi
 
 // --- Componente Principal TableMap ---
 
-export function TableMap({ tables: initialTables, menuItems: menuItems, categories: initialCategories }: TableMapProps) {
-  const [tables, setTables] = useState<Table[]>(initialTables.sort((a, b) => a.table_number - b.table_number));
+export function TableMap({
+  tables: initialTables,
+  menuItems: menuItems,
+  categories: initialCategories,
+}: TableMapProps) {
+  const [tables, setTables] = useState<Table[]>(initialTables);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
@@ -225,13 +272,27 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
       : menuItems.filter((item) => item.category_id === selectedCategory);
 
   // --- Funções de CRUD de Mesa (Mantidas) ---
-  const handleAddTable = (newTable: Table) => {
-    if (tables.some(t => t.table_number === newTable.table_number)) {
-      toast({ title: "Mesa já existe", description: `A mesa ${newTable.table_number} já está no mapa.`, variant: "destructive" });
+  const handleAddTable = (tableNumber: number) => {
+    const newTable: Table = {
+      id: `table-${Date.now()}`,
+      establishment_id: "default",
+      table_number: tableNumber,
+    };
+    if (tables.some((t) => t.table_number === tableNumber)) {
+      toast({
+        title: "Mesa já existe",
+        description: `A mesa ${tableNumber} já está no mapa.`,
+        variant: "destructive",
+      });
       return;
     }
-    setTables((prev) => [...prev, newTable].sort((a, b) => a.table_number - b.table_number));
-    toast({ title: "Mesa Adicionada", description: `Mesa ${newTable.table_number} adicionada com sucesso.` });
+    setTables((prev) =>
+      [...prev, newTable].sort((a, b) => a.table_number - b.table_number)
+    );
+    toast({
+      title: "Mesa Adicionada",
+      description: `Mesa ${tableNumber} adicionada com sucesso.`,
+    });
   };
 
   const openEditModal = (table: Table) => {
@@ -240,12 +301,23 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
   };
 
   const handleEditTable = (id: string, newNumber: number) => {
-    if (tables.some(t => t.table_number === newNumber && t.id !== id)) {
-      toast({ title: "Número de Mesa Duplicado", description: `A mesa ${newNumber} já existe.`, variant: "destructive" });
+    if (tables.some((t) => t.table_number === newNumber && t.id !== id)) {
+      toast({
+        title: "Número de Mesa Duplicado",
+        description: `A mesa ${newNumber} já existe.`,
+        variant: "destructive",
+      });
       return;
     }
-    setTables((prev) => prev.map(t => t.id === id ? { ...t, table_number: newNumber } : t).sort((a, b) => a.table_number - b.table_number));
-    toast({ title: "Mesa Editada", description: `Mesa atualizada para ${newNumber}.` });
+    setTables((prev) =>
+      prev
+        .map((t) => (t.id === id ? { ...t, table_number: newNumber } : t))
+        .sort((a, b) => a.table_number - b.table_number)
+    );
+    toast({
+      title: "Mesa Editada",
+      description: `Mesa atualizada para ${newNumber}.`,
+    });
     setIsEditTableModalOpen(false);
     setTableToEdit(null);
   };
@@ -257,9 +329,12 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
 
   const handleDeleteTable = () => {
     if (!tableToDelete) return;
-    setTables((prev) => prev.filter(t => t.id !== tableToDelete.id));
-    deleteTable(tableToDelete.id);
-    toast({ title: "Mesa Excluída", description: `Mesa ${tableToDelete.table_number} foi removida.`, variant: "destructive" });
+    setTables((prev) => prev.filter((t) => t.id !== tableToDelete.id));
+    toast({
+      title: "Mesa Excluída",
+      description: `Mesa ${tableToDelete.table_number} foi removida.`,
+      variant: "destructive",
+    });
     setIsDeleteTableModalOpen(false);
     setTableToDelete(null);
   };
@@ -325,20 +400,32 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
   };
 
   const sendToKitchen = () => {
-    toast({ title: "Encomenda enviada para cozinha 👩‍🍳", description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha.` });
+    toast({
+      title: "Encomenda enviada para cozinha 👩‍🍳",
+      description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha.`,
+    });
   };
 
   const printBill = () => {
-    toast({ title: "Conta impressa 🖨️", description: `A conta da mesa ${selectedTable?.table_number} foi impressa.` });
+    toast({
+      title: "Conta impressa 🖨️",
+      description: `A conta da mesa ${selectedTable?.table_number} foi impressa.`,
+    });
   };
 
   const splitBill = () => {
-    toast({ title: "Conta Dividida ✂️", description: `A conta da mesa ${selectedTable?.table_number} foi dividida.` });
+    toast({
+      title: "Conta Dividida ✂️",
+      description: `A conta da mesa ${selectedTable?.table_number} foi dividida.`,
+    });
   };
 
   const closeAndPay = () => {
     if (selectedTable) {
-      toast({ title: "Pagamento concluído ✅", description: `Mesa ${selectedTable.table_number} foi fechada e o pagamento processado.` });
+      toast({
+        title: "Pagamento concluído ✅",
+        description: `Mesa ${selectedTable.table_number} foi fechada e o pagamento processado.`,
+      });
       closeModal();
     }
   };
@@ -376,29 +463,57 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
               onClick={() => openTableModal(table)}
             >
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">{table.table_number}</div>
-                <div className="text-xs text-gray-600 font-medium">Clique para Abrir</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">
+                  {table.table_number}
+                </div>
+                <div className="text-xs text-gray-600 font-medium">
+                  Clique para Abrir
+                </div>
               </div>
-              <TableActionsDropdown table={table} onEdit={openEditModal} onDelete={openDeleteConfirmation} />
+              <TableActionsDropdown
+                table={table}
+                onEdit={openEditModal}
+                onDelete={openDeleteConfirmation}
+              />
             </div>
           ))}
         </div>
       </div>
 
       {/* --- Modais de CRUD de Mesa (Mantidos) --- */}
-      <AddTableModal isOpen={isAddTableModalOpen} onClose={() => setIsAddTableModalOpen(false)} onAddTable={handleAddTable} />
-      <EditTableModal isOpen={isEditTableModalOpen} onClose={() => setIsEditTableModalOpen(false)} onEditTable={handleEditTable} table={tableToEdit} />
-      <Dialog open={isDeleteTableModalOpen} onOpenChange={setIsDeleteTableModalOpen}>
+      <AddTableModal
+        isOpen={isAddTableModalOpen}
+        onClose={() => setIsAddTableModalOpen(false)}
+        onAddTable={handleAddTable}
+      />
+      <EditTableModal
+        isOpen={isEditTableModalOpen}
+        onClose={() => setIsEditTableModalOpen(false)}
+        onEditTable={handleEditTable}
+        table={tableToEdit}
+      />
+      <Dialog
+        open={isDeleteTableModalOpen}
+        onOpenChange={setIsDeleteTableModalOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir a **Mesa {tableToDelete?.table_number}**? Esta ação é irreversível.
+              Tem certeza que deseja excluir a **Mesa{" "}
+              {tableToDelete?.table_number}**? Esta ação é irreversível.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteTableModalOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleDeleteTable}>Excluir Mesa</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteTableModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTable}>
+              Excluir Mesa
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -406,18 +521,19 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
       {/* --- Table Order Modal (Layout Otimizado: LARGURA MÁXIMA) --- */}
       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
         {/* *** MUDANÇA AQUI: Aumentando a largura máxima para dar espaço aos cards *** */}
-        <DialogContent className="max-w-[1500px] w-full h-[93vh] flex flex-col p-0">
+        <DialogContent className="max-w-[1500px] w-[95%] sm:w-[90%] md:w-[85%] lg:w-full h-[93vh] flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="text-2xl font-bold flex items-center text-blue-700">
-
               Mesa {selectedTable?.table_number}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-0 lg:overflow-hidden">
-            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */}
+            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */} 
 
-            <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full"> {/* 📱 MOBILE FIX */}
+            <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full">
+              {" "}
+              {/* 📱 MOBILE FIX */}
               {/* PAINEL ESQUERDO: Menu Principal (75% da largura) */}
               <div className="flex flex-col p-4">
                 <h3 className="font-bold text-xl text-gray-900 mb-3">
@@ -425,31 +541,33 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                 </h3>
 
                 {/* Carrossel de Categorias (Horizontal Scroll) */}
-                <ScrollArea className="flex-shrink-0 h-16 mb-4 whitespace-nowrap">
-                  <div className="flex gap-3 pb-2 w-max">
-                    {categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        variant={
-                          selectedCategory === category.id ? "default" : "outline"
-                        }
-                        size="lg"
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={cn("flex-shrink-0 font-semibold text-base", selectedCategory === category.id ? "text-white" : "border-gray-300 text-gray-700 hover:bg-gray-200")}
-                        style={
-                          selectedCategory === category.id
-                            ? { backgroundColor: "#007BFF" }
-                            : {}
-                        }
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="mb-4 flex-shrink-0">
+                        <Select
+                            value={selectedCategory}
+                            onValueChange={setSelectedCategory}
+                        >
+                            <SelectTrigger className="w-full font-semibold text-base h-11">
+                                {/* NOVO PLACEHOLDER: "Todas as Categorias" */}
+                                <SelectValue placeholder="Todas as Categorias" /> 
+                            </SelectTrigger>
+                            <SelectContent>
+                                {/* OPÇÃO PARA LIMPAR O FILTRO / SELECIONAR TUDO */}
+                                <SelectItem value="All">Todas as Categorias</SelectItem>
+                                
+                                {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
+                                {categories.filter(category => category.id).map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                        {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                 {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[500px]"> {/* 📱 MOBILE FIX */}
+                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[630px]">
+                  {" "}
+                  {/* 📱 MOBILE FIX */}
                   <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
                     {filteredMenuItems.map((item) => (
                       <Card
@@ -461,7 +579,7 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                           {/* IMAGEM E INFORMAÇÕES */}
                           <div className="flex justify-center items-center mb-2">
                             <img
-                              src="/x-calabresa.png"
+                              src={item.image}
                               alt={item.name}
                               className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg bg-gray-100"
                             />
@@ -490,15 +608,18 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                   </div>
                 </div>
               </div>
-
               {/* PAINEL DIREITO: Pedido Atual, Resumo e Ações (25% da largura, Fixo) */}
-              <div className="flex flex-col bg-gray-100 border-t lg:border-l p-4 h-full w-full lg:w-auto"> {/* 📱 MOBILE FIX */}
+              <div className="flex flex-col bg-gray-100 border-t lg:border-l p-4 h-full w-full lg:w-auto">
+                {" "}
+                {/* 📱 MOBILE FIX */}
                 <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
                   Pedido
                 </h3>
-
                 {/* CONTAINER COM SCROLL FIXO */}
-                <div className="flex-1 overflow-auto mb-4" style={{ maxHeight: '250px' }}>
+                <div
+                  className="flex-1 overflow-auto mb-4"
+                  style={{ maxHeight: "250px" }}
+                >
                   <div className="space-y-3 pr-2">
                     {currentOrder.length === 0 ? (
                       <div className="text-center py-16 text-gray-500 border border-dashed rounded-lg bg-white">
@@ -507,7 +628,10 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                       </div>
                     ) : (
                       currentOrder.map((item) => (
-                        <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
+                        <Card
+                          key={item.id}
+                          className="shadow-md border-l-4 border-l-blue-500"
+                        >
                           <CardContent className="p-2">
                             <div className="flex items-center justify-between">
                               <div className="flex-1 pr-2">
@@ -554,7 +678,6 @@ export function TableMap({ tables: initialTables, menuItems: menuItems, categori
                     )}
                   </div>
                 </div>
-
                 {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
                 <div className="flex-shrink-0 pt-2 border-t bg-gray-100">
                   <Card className="shadow-xl mb-3 bg-blue-600 text-white">
