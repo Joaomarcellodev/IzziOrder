@@ -76,6 +76,23 @@ export function OrdersDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // FUNÇÃO PARA ATUALIZAR STATUS AO SOLTAR
+  const handleDrop = (status: Order["status"]) => {
+    if (!draggedOrder) return;
+
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === draggedOrder ? { ...order, status } : order
+      )
+    );
+    setDraggedOrder(null);
+  };
+
+    // FUNÇÃO PARA PERMITIR O DROP
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
     const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -142,7 +159,15 @@ const cancelDelete = () => {
             column.status === "Novo" && columnOrders.length > 0;
 
           return (
-            <div key={column.id} className="space-y-4">
+            <div 
+  key={column.id} 
+  className={cn(
+    "space-y-4 min-h-[200px] p-2 rounded-lg transition-colors",
+    draggedOrder && "bg-gray-50 border-2 border-dashed border-orange-300"
+  )}
+  onDragOver={handleDragOver}
+  onDrop={() => handleDrop(column.status)}
+>
               {/* Column Header */}
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-gray-900">{column.title}</h3>
