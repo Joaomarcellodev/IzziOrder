@@ -289,25 +289,30 @@ return (
                       </div>
 
                       {/* Action Button for Novo Orders */}
-                      {order.status === "Novo" && (
-                        <div className="space-y-2">
-                          <Button
-                            className="w-full font-semibold text-white"
-                            style={{ backgroundColor: "#FD7E14" }}
-                            onClick={() => confirmOrder(order.id)}
-                          >
-                            Confirmar Pedido
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
-                            onClick={() => openDeleteConfirm(order)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Excluir Pedido
-                          </Button>
-                        </div>
-                      )}
+                      
+                     
+  <div className="space-y-2">
+  {order.status === "Novo" && (
+    <Button
+      className="w-full font-semibold text-white"
+      style={{ backgroundColor: "#FD7E14" }}
+      onClick={() => confirmOrder(order.id)}
+    >
+      Confirmar Pedido
+    </Button>
+  )}
+  {(order.status === "Novo" || order.status === "Confirmado" || order.status === "Preparando") && (
+    <Button
+      variant="outline"
+      className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
+      onClick={() => openDeleteConfirm(order)}
+    >
+      <Trash2 className="w-4 h-4 mr-2" />
+      Excluir Pedido
+    </Button>
+  )}
+</div>
+                      
                     </CardContent>
                   </Card> 
                 ))}
@@ -420,7 +425,7 @@ return (
               {/* Total */}
               <div className="flex justify-between items-center mt-3 pt-3 border-t">
                 <span className="font-bold text-lg text-gray-900">R$ {order.total.toFixed(2)}</span>
-                {order.status === "Novo" && (
+              {(order.status === "Novo" || order.status === "Confirmado" || order.status === "Preparando") && (
                   <Button
                     variant="ghost"
                     size="sm"
