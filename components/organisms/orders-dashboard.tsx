@@ -8,6 +8,7 @@ import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Eye, Truck, Trash2, AlertTriangle, X } from "lucide-react";
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
 import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 
 
@@ -75,6 +76,13 @@ export function OrdersDashboard() {
   const [draggedOrder, setDraggedOrder] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+     const [activeTab, setActiveTab] = useState<"all" | Order["status"]>("all");
+const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+// Use este estado (ou mantenha o que já tem):
+const [activeFilter, setActiveFilter] = useState<"all" | Order["status"]>("all");
+const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
 
     // FUNÇÃO PARA ATUALIZAR STATUS AO SOLTAR
   const handleDrop = (status: Order["status"]) => {
@@ -93,9 +101,6 @@ export function OrdersDashboard() {
     e.preventDefault();
   };
 
-    const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const getOrdersByStatus = (status: Order["status"]) => {
     return orders.filter((order) => order.status === status);
   };
@@ -104,6 +109,21 @@ export function OrdersDashboard() {
     setOrders((prev) =>
       prev.map((order) =>
         order.id === orderId ? { ...order, status: "Confirmado" } : order
+      )
+    );
+  };
+    const moveToPreparing = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: "Preparando" } : order
+      )
+    );
+  };
+
+  const moveToReady = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: "Pronto" } : order
       )
     );
   };
@@ -150,24 +170,22 @@ const cancelDelete = () => {
     setSelectedOrder(null);
   };
 
-  return (
-    <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+return (
+  <div className="p-4 lg:p-6">
+    {/* VERSÃO DESKTOP (4 colunas - apenas desktop grande) */}
+       <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {columns.map((column) => {
           const columnOrders = getOrdersByStatus(column.status);
-          const hasNovoOrders =
-            column.status === "Novo" && columnOrders.length > 0;
+          const hasNovoOrders = column.status === "Novo" && columnOrders.length > 0;
 
           return (
             <div 
-  key={column.id} 
-  className={cn(
-    "space-y-4 min-h-[200px] p-2 rounded-lg transition-colors",
-    draggedOrder && "bg-gray-50 border-2 border-dashed border-orange-300"
-  )}
-  onDragOver={handleDragOver}
-  onDrop={() => handleDrop(column.status)}
->
+              key={column.id} 
+              className="space-y-4"
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(column.status)}
+            >
               {/* Column Header */}
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-gray-900">{column.title}</h3>
@@ -223,36 +241,34 @@ const cancelDelete = () => {
                       </div>
                     </CardHeader>
 
+                    <CardContent className="space-y-3">
                       {/* Items */}
-<CardContent className="space-y-3">
-  {/* Items */}
-  <div className="space-y-1">
-    {order.items.map((item, index) => (
-      <div
-        key={index}
-        className="flex items-center justify-between text-sm"
-      >
-        <span>
-          {item.quantity}x {item.name}
-        </span>
-        {/* REMOVA completamente o botão do olho daqui */}
-      </div>
-    ))}
-  </div>
+                      <div className="space-y-1">
+                        {order.items.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span>
+                              {item.quantity}x {item.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
 
-  {/* ADICIONE ESTE BLOCO NOVO AQUI - UM OLHO POR PEDIDO */}
-  <div className="flex justify-end pt-2">
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0"
-      onClick={() => handleViewOrderDetails(order)}
-      title="Ver detalhes do pedido"
-    >
-      <Eye className="w-5 h-5 text-gray-500 hover:text-gray-700" />
-    </Button>
-  </div>
-  
+                      {/* Botão Ver Detalhes */}
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleViewOrderDetails(order)}
+                          title="Ver detalhes do pedido"
+                        >
+                          <Eye className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+                        </Button>
+                      </div>
+
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <div className="font-semibold text-lg">
@@ -273,7 +289,6 @@ const cancelDelete = () => {
                       </div>
 
                       {/* Action Button for Novo Orders */}
-                                            {/* Action Button for Novo Orders */}
                       {order.status === "Novo" && (
                         <div className="space-y-2">
                           <Button
@@ -283,12 +298,10 @@ const cancelDelete = () => {
                           >
                             Confirmar Pedido
                           </Button>
-                          
-                          {/* BOTÃO EXCLUIR - ADICIONE AQUI */}
                           <Button
                             variant="outline"
                             className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
-                            onClick={() => openDeleteConfirm(order)} 
+                            onClick={() => openDeleteConfirm(order)}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Excluir Pedido
@@ -296,7 +309,7 @@ const cancelDelete = () => {
                         </div>
                       )}
                     </CardContent>
-                  </Card>
+                  </Card> 
                 ))}
               </div>
 
@@ -306,16 +319,137 @@ const cancelDelete = () => {
                   <div className="text-sm">Nenhum Pedido</div>
                 </div>
               )}
-            </div> 
-            );
+            </div>
+          );
         })}
       </div>
-       <OrderDetailsModal
+
+  
+      {/* VERSÃO MOBILE/TABLET (Cards com Swipe Actions) */}
+      <div className="lg:hidden space-y-3 p-4">
+        {/* Status Quick Actions */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {[
+            { status: "all", label: "📋 Todos", count: orders.length },
+            { status: "Novo", label: "🆕 Novos", count: getOrdersByStatus("Novo").length },
+            { status: "Confirmado", label: "✅ Confirmados", count: getOrdersByStatus("Confirmado").length },
+            { status: "Preparando", label: "👨‍🍳 Preparando", count: getOrdersByStatus("Preparando").length },
+            { status: "Pronto", label: "🚀 Prontos", count: getOrdersByStatus("Pronto").length }
+          ].map((item) => (
+            <button
+              key={item.status}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap",
+                activeFilter === item.status 
+                  ? "bg-orange-500 text-white" 
+                  : "bg-gray-100 text-gray-700"
+              )}
+              onClick={() => setActiveFilter(item.status as any)}
+            >
+              {item.label} ({item.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Cards com Ações Rápidas */}
+        <div className="space-y-3">
+          {orders
+            .filter(order => activeFilter === "all" || order.status === activeFilter)
+            .map((order) => (
+            <div key={order.id} className="bg-gradient-to-r from-white to-gray-50 rounded-2xl p-4 shadow-sm border">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-gray-900 text-lg">{order.id}</span>
+                    <span className="text-gray-600">• {order.customerName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    {getSourceIcon(order.source)}
+                    <span>{order.waitingTime} min</span>
+                  </div>
+                </div>
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-xs font-bold",
+                  order.status === "Novo" && "bg-orange-100 text-orange-800",
+                  order.status === "Confirmado" && "bg-green-100 text-green-800",
+                  order.status === "Preparando" && "bg-blue-100 text-blue-800",
+                  order.status === "Pronto" && "bg-purple-100 text-purple-800"
+                )}>
+                  {order.status}
+                </span>
+              </div>
+
+              {/* Itens */}
+              <div className="mb-4">
+                {order.items.map((item, index) => (
+                  <div key={index} className="flex justify-between py-1 text-sm">
+                    <span className="text-gray-700">{item.quantity}x {item.name}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Ações Rápidas */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleViewOrderDetails(order)}
+                >
+                  Detalhes
+                </Button>
+                <select 
+                  className="flex-1 text-sm border rounded-lg px-3 bg-white"
+                  onChange={(e) => {
+                    const newStatus = e.target.value as Order["status"];
+                    if (newStatus !== order.status) {
+                      setOrders(prev => prev.map(o => 
+                        o.id === order.id ? { ...o, status: newStatus } : o
+                      ));
+                    }
+                  }}
+                  value={order.status}
+                >
+                  <option value="Novo">🆕 Novo</option>
+                  <option value="Confirmado">✅ Confirmado</option>
+                  <option value="Preparando">👨‍🍳 Preparando</option>
+                  <option value="Pronto">🚀 Pronto</option>
+                </select>
+              </div>
+
+              {/* Total */}
+              <div className="flex justify-between items-center mt-3 pt-3 border-t">
+                <span className="font-bold text-lg text-gray-900">R$ {order.total.toFixed(2)}</span>
+                {order.status === "Novo" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => openDeleteConfirm(order)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Empty State */}
+          {orders.filter(order => activeFilter === "all" || order.status === activeFilter).length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-sm">Nenhum Pedido</div>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Modais */}
+      <OrderDetailsModal
         order={selectedOrder}
         isOpen={isModalOpen}
         onClose={closeModal}
       />
-       <DeleteConfirmModal
+      <DeleteConfirmModal
         order={orderToDelete}
         isOpen={isDeleteModalOpen}
         onClose={cancelDelete}
