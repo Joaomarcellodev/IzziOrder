@@ -166,7 +166,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             {order.code!}
                           </span>
                           <span className="text-gray-600">
-                            - Nome do cliente
+                            - {order.customerName}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -315,7 +315,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-bold text-gray-900 text-lg">{order.id}</span>
-                      <span className="text-gray-600">• {order.customer_id}</span>
+                      <span className="text-gray-600">• {order.customerName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       {getSourceIcon(order.type)}
@@ -440,7 +440,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-bold text-gray-900 text-lg">{order.code}</span>
-                        <span className="text-gray-600">• {order.customer_id}</span>
+                        <span className="text-gray-600">• {order.customerName}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         {getSourceIcon(order.type)}
@@ -505,10 +505,10 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                       }}
                       value={order.status}
                     >
-                      <option value="Novo">🆕 Novo</option>
-                      <option value="Confirmado">✅ Confirmado</option>
-                      <option value="Preparando">👨‍🍳 Preparando</option>
-                      <option value="Pronto">🚀 Pronto</option>
+                      <option value="Novo">Novo</option>
+                      <option value="Confirmado">Confirmado</option>
+                      <option value="Preparando">Preparando</option>
+                      <option value="Pronto">Pronto</option>
                     </select>
                   </div>
 

@@ -17,11 +17,25 @@ export interface Order {
   date: string; // timestamp
   total: number;
   status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
-  customer_id?: string;
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
   order_lines: Array<{ name: string; quantity: number; notes?: string }>;
+  customerName?: string | null;
+  observation: string;
+}
+
+interface OrderDTO {
+  id: string;
+  date: string; // timestamp
+  total: number;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
+  type: "DELIVERY" | "LOCAL";
+  delivery_fee?: number;
+  estimated_time?: number;
+  order_lines: Array<{ name: string; quantity: number; notes?: string }>;
+  customer: { name: string; };
+  observation: string;
 }
 
 /**
@@ -59,7 +73,7 @@ export async function getOrders(establishment_id: string) {
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .select("*, order_lines (*)")
+    .select("*, order_lines(*), customer:customer_id(*)")
     .eq("establishment_id", establishment_id)
     .order("date", { ascending: false });
 
@@ -68,11 +82,16 @@ export async function getOrders(establishment_id: string) {
     return { success: false, error: "Erro ao buscar pedidos." };
   }
 
-  for (const order of data as Order[]) {
+  const orders: Order[] = [];
+  for (const orderDTO of data as OrderDTO[]) {
+    const order = orderDTO as Order;
     order.code = "#" + order.type + "-" + order.id.slice(0, 6).toUpperCase();
+    order.customerName = orderDTO.customer ? orderDTO.customer.name : null;
+
+    orders.push(order);
   }
 
-  return { success: true, data: data as Order[] };
+  return { success: true, data: orders };
 }
 
 /**
