@@ -15,7 +15,6 @@ import {
   Split,
   CreditCard,
   Send,
-  Zap,
   MoreVertical,
   Edit,
   Trash,
@@ -30,8 +29,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/molecules/dialog";
-import { ScrollArea } from "@/components/molecules/scroll-area";
-import { Separator } from "@/components/atoms/separator";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/atoms/input";
@@ -42,8 +39,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/molecules/dropdown-menu";
+import { createTable, deleteTable, updateTable } from "@/app/actions/tables";
 
-// --- Interfaces (Mantidas) ---
+// Importar o componente Textarea (necessário para o modal de observações)
+import { Textarea } from "@/components/atoms/textarea"; 
+// Supondo que você tenha um componente Textarea em '@/components/atoms/textarea'
+
+// --- Interfaces ---
 interface Table {
   id: string;
   establishment_id: string;
@@ -78,7 +80,7 @@ interface TableMapProps {
 }
 // --- Fim Interfaces ---
 
-// --- Componentes Modais de Ação de Mesa (Mantidos) ---
+// --- Componentes Modais de Ação de Mesa ---
 
 const AddTableModal = ({
   isOpen,
@@ -87,12 +89,12 @@ const AddTableModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onAddTable: (tableNumber: number) => void;
+  onAddTable: (newTable: Table) => void;
 }) => {
   const [tableNumber, setTableNumber] = useState<string>("");
   const { toast } = useToast();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const num = parseInt(tableNumber, 10);
     if (isNaN(num) || num <= 0) {
       toast({
@@ -102,9 +104,20 @@ const AddTableModal = ({
       });
       return;
     }
-    onAddTable(num);
-    setTableNumber("");
-    onClose();
+
+    const newTableData = await createTable(num);
+    
+    if (newTableData && newTableData.data) {
+        onAddTable(newTableData.data);
+        setTableNumber("");
+        onClose();
+    } else {
+         toast({
+            title: "Erro ao adicionar",
+            description: "Não foi possível adicionar a mesa.",
+            variant: "destructive",
+        });
+    }
   };
 
   return (
@@ -168,6 +181,8 @@ const EditTableModal = ({
       });
       return;
     }
+
+    updateTable(table.id, num);
     onEditTable(table.id, num);
     onClose();
   };
@@ -251,7 +266,9 @@ export function TableMap({
   menuItems: menuItems,
   categories: initialCategories,
 }: TableMapProps) {
-  const [tables, setTables] = useState<Table[]>(initialTables);
+  const [tables, setTables] = useState<Table[]>(
+    initialTables.sort((a, b) => a.table_number - b.table_number)
+  );
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
@@ -261,27 +278,29 @@ export function TableMap({
   const [tableToDelete, setTableToDelete] = useState<Table | null>(null);
 
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  // FIX: Altera o estado inicial para 'all' (string não vazia)
+  const [selectedCategory, setSelectedCategory] = useState<string>("all"); 
   const { toast } = useToast();
 
-  const categories = [{ id: "", name: "Todos" }, ...initialCategories];
+  // Estados para o modal de observação (CORRIGIDOS)
+  const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
+  const [orderObservations, setOrderObservations] = useState("");
 
+  // FIX: Simplifica a lista de categorias, não precisamos de um item com id=""
+  const categories = initialCategories;
+
+  // FIX: Atualiza a lógica de filtro para usar 'all'
   const filteredMenuItems =
-    selectedCategory === ""
+    selectedCategory === "all"
       ? menuItems
       : menuItems.filter((item) => item.category_id === selectedCategory);
 
   // --- Funções de CRUD de Mesa (Mantidas) ---
-  const handleAddTable = (tableNumber: number) => {
-    const newTable: Table = {
-      id: `table-${Date.now()}`,
-      establishment_id: "default",
-      table_number: tableNumber,
-    };
-    if (tables.some((t) => t.table_number === tableNumber)) {
+  const handleAddTable = (newTable: Table) => {
+    if (tables.some((t) => t.table_number === newTable.table_number)) {
       toast({
         title: "Mesa já existe",
-        description: `A mesa ${tableNumber} já está no mapa.`,
+        description: `A mesa ${newTable.table_number} já está no mapa.`,
         variant: "destructive",
       });
       return;
@@ -291,7 +310,7 @@ export function TableMap({
     );
     toast({
       title: "Mesa Adicionada",
-      description: `Mesa ${tableNumber} adicionada com sucesso.`,
+      description: `Mesa ${newTable.table_number} adicionada com sucesso.`,
     });
   };
 
@@ -329,21 +348,22 @@ export function TableMap({
 
   const handleDeleteTable = () => {
     if (!tableToDelete) return;
+    deleteTable(tableToDelete.id);
     setTables((prev) => prev.filter((t) => t.id !== tableToDelete.id));
     toast({
       title: "Mesa Excluída",
-      description: `Mesa ${tableToDelete.table_number} foi removida.`,
-      variant: "destructive",
+      description: `Mesa ${tableToDelete.table_number} foi removida com sucesso.`,
     });
     setIsDeleteTableModalOpen(false);
     setTableToDelete(null);
   };
 
-  // --- Funções de Pedido (Mantidas) ---
+  // --- Funções de Pedido (Alteradas para incluir Observações) ---
 
   const openTableModal = (table: Table) => {
     setSelectedTable(table);
     setCurrentOrder([]);
+    setOrderObservations(""); // Resetar observações
     setIsOrderModalOpen(true);
   };
 
@@ -351,7 +371,9 @@ export function TableMap({
     setSelectedTable(null);
     setIsOrderModalOpen(false);
     setCurrentOrder([]);
-    setSelectedCategory("");
+    // FIX: Altera o reset para 'all'
+    setSelectedCategory("all"); 
+    setOrderObservations(""); // Garantir reset
   };
 
   const addItemToOrder = (menuItem: MenuItem) => {
@@ -399,11 +421,33 @@ export function TableMap({
     );
   };
 
+  // FUNÇÃO ALTERADA: Abre o modal de observações
   const sendToKitchen = () => {
+    if (currentOrder.length === 0) {
+      toast({
+        title: "Pedido Vazio",
+        description: "Adicione itens ao pedido antes de enviar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsObservationModalOpen(true);
+  };
+
+  // FUNÇÃO NOVA: Confirma o envio após as observações
+  const confirmSendToKitchen = () => {
+    const observationText = orderObservations.trim();
+    
+    // Simulação do envio para a cozinha
+    console.log(`Pedido da Mesa ${selectedTable?.table_number} enviado. Observações: ${observationText}`);
+    
     toast({
       title: "Encomenda enviada para cozinha 👩‍🍳",
-      description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha.`,
+      description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha. ${observationText ? 'Obs: ' + observationText.substring(0, 50) + '...' : ''}`,
     });
+    
+    setIsObservationModalOpen(false);
+    setOrderObservations(""); // Limpa o campo após envio
   };
 
   const printBill = () => {
@@ -431,8 +475,8 @@ export function TableMap({
   };
 
   const getTableStyle = (table: Table) => {
-    // Exemplo de estilo para mesa ocupada
-    const isOccupied = currentOrder.length > 0; // Usando o pedido atual como placeholder
+    // Lógica simples: verifica se há itens no pedido para o estilo de "mesa ocupada"
+    const isOccupied = false; 
     return isOccupied
       ? "border-red-500 bg-red-50 cursor-pointer hover:shadow-lg shadow-md"
       : "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg shadow-md";
@@ -440,7 +484,7 @@ export function TableMap({
 
   return (
     <div className="p-6">
-      {/* Container de Mesas (Inalterado) */}
+      {/* Container de Mesas */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900">Planta das Mesas</h2>
@@ -457,7 +501,7 @@ export function TableMap({
             <div
               key={table.id}
               className={cn(
-                "relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", // 📱 MOBILE FIX
+                "relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", 
                 getTableStyle(table)
               )}
               onClick={() => openTableModal(table)}
@@ -480,7 +524,7 @@ export function TableMap({
         </div>
       </div>
 
-      {/* --- Modais de CRUD de Mesa (Mantidos) --- */}
+      {/* --- Modais de CRUD de Mesa --- */}
       <AddTableModal
         isOpen={isAddTableModalOpen}
         onClose={() => setIsAddTableModalOpen(false)}
@@ -518,220 +562,208 @@ export function TableMap({
         </DialogContent>
       </Dialog>
 
-      {/* --- Table Order Modal (Layout Otimizado: LARGURA MÁXIMA) --- */}
-      <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
-        {/* *** MUDANÇA AQUI: Aumentando a largura máxima para dar espaço aos cards *** */}
-        <DialogContent className="max-w-[1500px] w-[95%] sm:w-[90%] md:w-[85%] lg:w-full h-[93vh] flex flex-col">
+      {/* --- Table Order Modal --- */}
+       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
+        <DialogContent className="max-w-[1400px] w-[95%] h-[90vh] flex flex-col">
           <DialogHeader className="p-4 border-b">
-            <DialogTitle className="text-2xl font-bold flex items-center text-blue-700">
-              Mesa {selectedTable?.table_number}
-            </DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-700">Mesa {selectedTable?.table_number}</DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-auto p-0 lg:overflow-hidden">
-            {/* Split View Container: 75% (Menu) e 25% (Pedido/Ações) */} 
+          <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
+            <div className="flex-shrink-0">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full max-w-xs font-semibold text-base h-11">
+                  <SelectValue placeholder="Todas as Categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* FIX: Altera o value de "" para "all" */}
+                  <SelectItem value="all">Todas as Categorias</SelectItem>
+                  {categories
+                    // Não é mais necessário o filter, pois a lista só tem categorias válidas
+                    .map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <div className="flex flex-col lg:grid lg:grid-cols-[5fr_2fr] h-full">
-              {" "}
-              {/* 📱 MOBILE FIX */}
-              {/* PAINEL ESQUERDO: Menu Principal (75% da largura) */}
-              <div className="flex flex-col p-4">
-                <h3 className="font-bold text-xl text-gray-900 mb-3">
-                  Menu de Produtos
-                </h3>
+            <div className="flex-shrink-0">
+              <h3 className="font-bold text-xl text-gray-900 mb-3">Menu de Produtos</h3>
+              <div className="relative">
+                <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory">
+                  {filteredMenuItems.map((item) => (
+                    <Card
+                      key={item.id}
+                      className="cursor-pointer hover:shadow-xl transition-all border-2 hover:border-orange-500 transform hover:scale-105 flex-shrink-0 w-[200px] snap-start"
+                      onClick={() => addItemToOrder(item)}
+                    >
+                      <CardContent className="p-4 text-center flex flex-col h-full">
+                        <div className="flex justify-center items-center mb-3">
+                          <img
+                            src={item.image || "/placeholder.svg"}
+                            alt={item.name}
+                            className="w-24 h-24 object-cover rounded-lg bg-gray-100"
+                          />
+                        </div>
 
-                {/* Carrossel de Categorias (Horizontal Scroll) */}
-                <div className="mb-4 flex-shrink-0">
-                        <Select
-                            value={selectedCategory}
-                            onValueChange={setSelectedCategory}
-                        >
-                            <SelectTrigger className="w-full font-semibold text-base h-11">
-                                {/* NOVO PLACEHOLDER: "Todas as Categorias" */}
-                                <SelectValue placeholder="Todas as Categorias" /> 
-                            </SelectTrigger>
-                            <SelectContent>
-                                {/* OPÇÃO PARA LIMPAR O FILTRO / SELECIONAR TUDO */}
-                                <SelectItem value="All">Todas as Categorias</SelectItem>
-                                
-                                {/* CATEGORIAS MAPEADAS (Filtrando IDs vazios para evitar erro) */}
-                                {categories.filter(category => category.id).map((category) => (
-                                    <SelectItem key={category.id} value={category.id}>
-                                        {category.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                        <div className="flex-1 flex flex-col justify-center mb-3">
+                          <div className="font-bold text-base text-gray-900 mb-2">{item.name}</div>
+                          <div className="text-xl font-extrabold text-green-600">R$ {item.price.toFixed(2)}</div>
+                        </div>
 
-                {/* Lista de Itens do Menu (Grid com Overflow) */}
-                <div className="flex-1 overflow-auto max-h-[60vh] lg:max-h-[630px]">
-                  {" "}
-                  {/* 📱 MOBILE FIX */}
-                  <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
-                    {filteredMenuItems.map((item) => (
-                      <Card
-                        key={item.id}
-                        className="cursor-pointer hover:shadow-2xl transition-shadow border-2 hover:border-orange-500 transform hover:scale-[1.01] w-full min-h-[140px] h-auto flex flex-col"
-                        onClick={() => addItemToOrder(item)}
-                      >
-                        <CardContent className="p-3 text-center flex flex-col justify-between flex-1">
-                          {/* IMAGEM E INFORMAÇÕES */}
-                          <div className="flex justify-center items-center mb-2">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg bg-gray-100"
-                            />
-                          </div>
+                        <Button size="sm" className="w-full font-bold" style={{ backgroundColor: "#FD7E14" }}>
+                          <Plus className="w-4 h-4 mr-1" /> Adicionar
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                          <div className="flex-1 flex flex-col justify-center">
-                            <div className="font-bold text-md text-gray-900 mb-1">
-                              {item.name}
+            <div className="flex-1 bg-gray-100 rounded-lg p-4 border-2 border-gray-200">
+              <h3 className="font-bold text-xl text-gray-900 mb-4">Pedido Atual</h3>
+
+              <div className="mb-4 max-h-[200px] overflow-auto">
+                {currentOrder.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg bg-white">
+                    <Send className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <div className="text-sm">Selecione itens no menu acima.</div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {currentOrder.map((item) => (
+                      <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="font-bold text-base text-gray-900">{item.name}</div>
+                              <div className="text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</div>
+                              <div className="text-sm font-semibold text-blue-600">
+                                Subtotal: R$ {(item.price * item.quantity).toFixed(2)}
+                              </div>
                             </div>
-                            <div className="text-xl font-extrabold text-green-600">
-                              R$ {item.price.toFixed(2)}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="w-8 h-8"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-10 text-center text-lg font-bold text-blue-700">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="w-8 h-8"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItem(item.id)}
+                                className="w-8 h-8 text-red-500 hover:bg-red-100 ml-2"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-
-                          {/* BOTÃO ADICIONAR */}
-                          <Button
-                            size="sm"
-                            className="w-full mt-1 font-bold py-1 text-xs"
-                            style={{ backgroundColor: "#FD7E14" }}
-                          >
-                            <Plus className="w-3 h-3 mr-1" /> Adicionar
-                          </Button>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
-              {/* PAINEL DIREITO: Pedido Atual, Resumo e Ações (25% da largura, Fixo) */}
-              <div className="flex flex-col bg-gray-100 border-t lg:border-l p-4 h-full w-full lg:w-auto">
-                {" "}
-                {/* 📱 MOBILE FIX */}
-                <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-3">
-                  Pedido
-                </h3>
-                {/* CONTAINER COM SCROLL FIXO */}
-                <div
-                  className="flex-1 overflow-auto mb-4"
-                  style={{ maxHeight: "250px" }}
-                >
-                  <div className="space-y-3 pr-2">
-                    {currentOrder.length === 0 ? (
-                      <div className="text-center py-16 text-gray-500 border border-dashed rounded-lg bg-white">
-                        <Send className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <div className="text-sm">Selecione itens no menu.</div>
-                      </div>
-                    ) : (
-                      currentOrder.map((item) => (
-                        <Card
-                          key={item.id}
-                          className="shadow-md border-l-4 border-l-blue-500"
-                        >
-                          <CardContent className="p-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 pr-2">
-                                <div className="font-extrabold text-sm text-gray-900">
-                                  {item.name}
-                                </div>
-                                <div className="text-xs text-gray-600">
-                                  R$ {(item.price * item.quantity).toFixed(2)}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => updateQuantity(item.id, -1)}
-                                  className="w-8 h-8 p-0"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </Button>
-                                <span className="w-4 text-center text-sm font-bold text-blue-700">
-                                  {item.quantity}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => updateQuantity(item.id, 1)}
-                                  className="w-8 h-8 p-0"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeItem(item.id)}
-                                  className="w-8 h-8 p-0 text-red-500 hover:bg-red-100"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </div>
-                {/* Resumo e Botões de Ação (FIXO no rodapé do painel) */}
-                <div className="flex-shrink-0 pt-2 border-t bg-gray-100">
-                  <Card className="shadow-xl mb-3 bg-blue-600 text-white">
-                    <CardContent className="p-3">
-                      <div className="text-sm font-semibold uppercase opacity-90">
-                        TOTAL
-                      </div>
-                      <div className="flex justify-between font-extrabold text-3xl mt-0.5">
-                        <span>R$</span>
-                        <span>{calculateTotal().toFixed(2)}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
 
+              <div className="space-y-3">
+                <Card className="shadow-xl bg-blue-600 text-white">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-semibold uppercase opacity-90">TOTAL DO PEDIDO</div>
+                    <div className="flex justify-between items-center font-extrabold text-3xl mt-1">
+                      <span>R$</span>
+                      <span>{calculateTotal().toFixed(2)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     onClick={sendToKitchen}
-                    className="w-full text-white font-bold h-10 text-base shadow-md mb-2"
+                    className="text-white font-bold h-12 col-span-2"
                     style={{ backgroundColor: "#FD7E14" }}
                     disabled={currentOrder.length === 0}
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    ENVIAR COZINHA
+                    Enviar para Cozinha
                   </Button>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <Button
-                      onClick={printBill}
-                      variant="outline"
-                      className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
-                    >
-                      <Printer className="w-3 h-3 mr-1" />
-                      Imprimir
-                    </Button>
-                    <Button
-                      onClick={splitBill}
-                      variant="outline"
-                      className="w-full bg-transparent h-9 border-blue-500 text-blue-500 hover:bg-blue-100 text-xs"
-                    >
-                      <Split className="w-3 h-3 mr-1" />
-                      Dividir
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={printBill}
+                    variant="outline"
+                    className="h-11 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold bg-transparent"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Imprimir
+                  </Button>
+                  <Button
+                    onClick={splitBill}
+                    variant="outline"
+                    className="h-11 border-2 border-purple-500 text-purple-600 hover:bg-purple-50 font-semibold bg-transparent"
+                  >
+                    <Split className="w-4 h-4 mr-2" />
+                    Dividir
+                  </Button>
                   <Button
                     onClick={closeAndPay}
-                    className="w-full text-white font-bold h-12 text-base shadow-lg"
+                    className="text-white font-bold h-12 col-span-2"
                     style={{ backgroundColor: "#28A745" }}
                     disabled={currentOrder.length === 0}
                   >
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    PAGAR E FECHAR
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Encerrar e Pagar
                   </Button>
                 </div>
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- Modal de Observações do Pedido (CORRIGIDO) --- */}
+      <Dialog open={isObservationModalOpen} onOpenChange={setIsObservationModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">Observações do Pedido</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="modal-observations" className="text-sm font-semibold text-gray-700 mb-2 block">
+              Há alguma observação para este pedido?
+            </Label>
+            <Textarea
+              id="modal-observations"
+              placeholder="Ex: Sem cebola, ponto da carne mal passado, sem gelo..."
+              value={orderObservations}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOrderObservations(e.target.value)}
+              className="w-full h-32 resize-none"
+            />
+          </div>
+          <DialogFooter className="flex-col sm:flex-row sm:justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsObservationModalOpen(false)} className="flex-1 sm:flex-none">
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmSendToKitchen}
+              className="flex-1 sm:flex-none text-white font-bold"
+              style={{ backgroundColor: "#FD7E14" }}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Confirmar Envio
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
