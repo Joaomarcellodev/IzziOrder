@@ -16,7 +16,7 @@ export interface Order {
   code?: string;
   date: string; // timestamp
   total: number;
-  status: "PENDING" | "CONFIRMED" | "Preparando" | "Pronto"; tableNumber?: number;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
   customer_id?: string;
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;

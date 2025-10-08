@@ -240,18 +240,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                       </div>
 
                       {/* Action Button for New Orders */}
-                      {order.status === "PENDING" && (
-                        <Button
-                          className="w-full font-semibold text-white"
-                          style={{ backgroundColor: "#FD7E14" }}
-                          onClick={() => confirmOrder(order.id)}
-                        >
-                          Confirmar Pedido
-                        </Button>
-                      )}
-                      {/* Action Button for Novo Orders */}
-
-
                       <div className="space-y-2">
                         {order.status === "PENDING" && (
                           <Button
@@ -451,7 +439,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-gray-900 text-lg">{order.id}</span>
+                        <span className="font-bold text-gray-900 text-lg">{order.code}</span>
                         <span className="text-gray-600">• {order.customer_id}</span>
                       </div>
                       <div className="flex items-center gap-3">
