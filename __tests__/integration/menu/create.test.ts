@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase/supabaseClient";
 
 describe("Menu CREATE Integration", () => {
   const testCategoryId = "c1d8bc12-dfce-463c-914a-91265b8aaf0b";
+  const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
 
   // Casos válidos
   it("should create a valid menu item", async () => {
@@ -13,6 +14,7 @@ describe("Menu CREATE Integration", () => {
         price: 20,
         category_id: testCategoryId,
         available: true,
+        establishment_id: testEstablishmentId,
       })
       .select()
       .single();
@@ -30,6 +32,7 @@ describe("Menu CREATE Integration", () => {
         price: 0,
         category_id: testCategoryId,
         available: true,
+        establishment_id: testEstablishmentId,
       })
       .select()
       .single();
@@ -47,6 +50,7 @@ describe("Menu CREATE Integration", () => {
         price: -10,
         category_id: testCategoryId,
         available: true,
+        establishment_id: testEstablishmentId,
       })
       .select()
       .maybeSingle();
@@ -61,6 +65,7 @@ describe("Menu CREATE Integration", () => {
         price: 10,
         category_id: testCategoryId,
         available: true,
+        establishment_id: testEstablishmentId,
       })
       .select()
       .maybeSingle();
@@ -75,6 +80,7 @@ describe("Menu CREATE Integration", () => {
         name: "Sem preço",
         category_id: testCategoryId,
         available: true,
+        establishment_id: testEstablishmentId,
       })
       .select()
       .maybeSingle();
