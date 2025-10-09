@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { AlertTriangle, X } from "lucide-react";
-import { Order } from "@/components/organisms/orders-dashboard";
+import { Order } from "@/app/actions/orders";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -36,9 +36,9 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, order }: Delete
 
         <CardContent className="space-y-4 pt-0">
           <p className="text-gray-700">
-            Tem certeza que deseja excluir o pedido <strong>{order.id}</strong> - <strong>{order.customerName}</strong>?
+            Tem certeza que deseja excluir o pedido <strong>{order.code}</strong>?
           </p>
-          
+
           <div className="flex gap-3 pt-2">
             <Button
               variant="outline"

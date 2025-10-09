@@ -20,7 +20,8 @@ export async function getMenuItems(establishment_id: string) {
   const { data, error } = await (await supabase)
     .from("menu_items")
     .select()
-    .eq("establishment_id", establishment_id);
+    .eq("establishment_id", establishment_id)
+    .eq("is_active", true);
 
   if (error) {
     return { success: false, error: "Erro ao recuperar as itens do menu." };
@@ -250,10 +251,10 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
     }
   }
 
-  // 3. Deleta o item no Supabase
+  // 3. "Deleta" o item no Supabase, fazendo um soft delete nele
   const { error: deleteError } = await (await supabase)
     .from("menu_items")
-    .delete()
+    .update({ "is_active": false })
     .eq("id", id);
 
   if (deleteError) {

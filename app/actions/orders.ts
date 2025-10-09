@@ -13,14 +13,31 @@ interface ActionResponse<T = any> {
 // Tipo para a tabela "orders"
 export interface Order {
   id: string;
+  code?: string;
   date: string; // timestamp
   total: number;
-  status: string;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY";
   tableNumber?: number;
-  customer_id?: string;
-  order_type?: string;
+  type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
+  order_lines: Array<{ name: string; quantity: number; notes?: string }>;
+  customerName?: string | null;
+  observation: string;
+}
+
+interface OrderDTO {
+  id: string;
+  date: string; // timestamp
+  total: number;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
+  type: "DELIVERY" | "LOCAL";
+  delivery_fee?: number;
+  estimated_time?: number;
+  order_lines: Array<{ name: string; quantity: number; notes?: string }>;
+  customer: { name: string; };
+  observation: string;
+  table_number: number;
 }
 
 /**
@@ -53,12 +70,13 @@ export async function createOrder(
 }
 
 /*Busca todos os pedidos.*/
-export async function getOrders(): Promise<ActionResponse<Order[]>> {
+export async function getOrders(establishment_id: string) {
   const supabase = createClient();
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .select("*")
+    .select("*, order_lines(*), customer:customer_id(*)")
+    .eq("establishment_id", establishment_id)
     .order("date", { ascending: false });
 
   if (error) {
@@ -66,7 +84,22 @@ export async function getOrders(): Promise<ActionResponse<Order[]>> {
     return { success: false, error: "Erro ao buscar pedidos." };
   }
 
-  return { success: true, data: data as Order[] };
+  const orders: Order[] = [];
+  for (const orderDTO of data as OrderDTO[]) {
+    const order = orderDTO as Order;
+    if (order.type == "LOCAL") {
+      order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
+    } else if (order.type == "DELIVERY") {
+      order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
+    }
+
+    order.customerName = orderDTO.customer ? orderDTO.customer.name : null;
+    order.tableNumber = orderDTO.table_number ?? null;
+
+    orders.push(order);
+  }
+
+  return { success: true, data: orders };
 }
 
 /**

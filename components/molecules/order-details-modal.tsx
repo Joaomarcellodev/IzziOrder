@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Truck, X } from "lucide-react";
-import { Order } from "@/components/organisms/orders-dashboard"; // Você precisará exportar a interface Order
+import { Order } from "@/app/actions/orders";
 
 interface OrderDetailsModalProps {
   order: Order | null;
@@ -15,17 +15,11 @@ interface OrderDetailsModalProps {
 export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null;
 
-  const getSourceIcon = (source: Order["source"]) => {
-    switch (source) {
-      case "ifood":
-        return (
-          <div className="w-6 h-6 bg-red-500 rounded text-white text-xs flex items-center justify-center font-bold">
-            iF
-          </div>
-        );
-      case "delivery":
+  const getSourceIcon = (type: Order["type"]) => {
+    switch (type) {
+      case "DELIVERY":
         return <Truck className="w-5 h-5 text-blue-600" />;
-      case "Mesa":
+      case "LOCAL":
         return <MapPin className="w-5 h-5 text-green-600" />;
     }
   };
@@ -35,7 +29,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
       <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto border-2 border-orange-300 shadow-xl">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-lg">{order.id}</span>
+            <span className="font-semibold text-lg">{order.code}</span>
             <span className="text-gray-600">- {order.customerName}</span>
           </div>
           <Button
@@ -52,14 +46,14 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           {/* Informações da origem e tempo */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {getSourceIcon(order.source)}
+              {getSourceIcon(order.type)}
               <span className="text-sm font-medium capitalize">
-                {order.source === "Mesa" ? `Mesa ${order.MesaNumber}` : order.source}
+                {order.type === "LOCAL" ? `Mesa ${order.tableNumber}` : order.type}
               </span>
             </div>
             <div className="flex items-center gap-1 text-sm">
               <Clock className="w-4 h-4" />
-              <span>{order.waitingTime}min</span>
+              <span>{order.estimated_time}min</span>
             </div>
           </div>
 
@@ -74,20 +68,20 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           {/* Itens do pedido */}
           <div className="space-y-3">
             <h4 className="font-medium">Itens do Pedido:</h4>
-            {order.items.map((item, index) => (
+            {order.order_lines.map((line, index) => (
               <div key={index} className="border rounded-lg p-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="font-medium">
-                      {item.quantity}x {item.name}
+                      {line.quantity}x {line.name}
                     </span>
-                    {item.notes && (
+                    {line.notes && (
                       <div className="mt-2">
                         <span className="text-sm font-medium text-gray-600">
                           Observações:
                         </span>
                         <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded mt-1">
-                          {item.notes}
+                          {line.notes}
                         </p>
                       </div>
                     )}
