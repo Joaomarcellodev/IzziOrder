@@ -1,4 +1,3 @@
-// __tests__/integration/tables/create.test.ts
 import { supabase } from "@/lib/supabase/supabaseClient";
 
 describe("Tables CREATE Integration", () => {
