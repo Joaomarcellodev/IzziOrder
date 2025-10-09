@@ -16,7 +16,8 @@ export interface Order {
   code?: string;
   date: string; // timestamp
   total: number;
-  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY";
+  tableNumber?: number;
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
@@ -36,6 +37,7 @@ interface OrderDTO {
   order_lines: Array<{ name: string; quantity: number; notes?: string }>;
   customer: { name: string; };
   observation: string;
+  table_number: number;
 }
 
 /**
@@ -85,8 +87,14 @@ export async function getOrders(establishment_id: string) {
   const orders: Order[] = [];
   for (const orderDTO of data as OrderDTO[]) {
     const order = orderDTO as Order;
-    order.code = "#" + order.type + "-" + order.id.slice(0, 6).toUpperCase();
+    if (order.type == "LOCAL") {
+      order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
+    } else if (order.type == "DELIVERY") {
+      order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
+    }
+
     order.customerName = orderDTO.customer ? orderDTO.customer.name : null;
+    order.tableNumber = orderDTO.table_number ?? null;
 
     orders.push(order);
   }

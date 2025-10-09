@@ -232,7 +232,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4 text-green-600" />
                               <span className="text-sm text-gray-600">
-                                numero da mesa
+                                {order.tableNumber}
                               </span>
                             </div>
                           )}
@@ -314,7 +314,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-gray-900 text-lg">{order.id}</span>
+                      <span className="font-bold text-gray-900 text-lg">{order.code}</span>
                       <span className="text-gray-600">• {order.customerName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
