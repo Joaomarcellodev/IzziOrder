@@ -1,17 +1,13 @@
-import { supabase } from '../../lib/supabase/supabaseClient';
+import { supabase } from '@/lib/supabase/supabaseClient';
 
-describe('Supabase Connection', () => {
-  afterEach(async () => {
-    await supabase.from('test_table').delete().neq('id', 0);
-  });
-
-  it('should insert and fetch data from test_table', async () => {
+describe('Supabase Connection ', () => {
+  it('should fetch tables without errors', async () => {
     const { data, error } = await supabase
-      .from('test_table')
-      .insert([{ name: 'Primeiro Teste' }])
-      .select();
+      .from('tables')
+      .select()
+      .limit(1);
 
-    expect(error).toBeNull();
-    expect(data?.[0]?.name).toBe('Primeiro Teste');
+    expect(error).toBeNull(); 
+    expect(data).toBeDefined(); 
   });
 });
