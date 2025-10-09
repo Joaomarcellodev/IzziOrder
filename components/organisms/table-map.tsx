@@ -42,7 +42,8 @@ import {
 import { createTable, deleteTable, updateTable } from "@/app/actions/tables";
 
 // Importar o componente Textarea (necessário para o modal de observações)
-import { Textarea } from "@/components/atoms/textarea"; 
+import { Textarea } from "@/components/atoms/textarea";
+import { createOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
 // Supondo que você tenha um componente Textarea em '@/components/atoms/textarea'
 
 // --- Interfaces ---
@@ -66,7 +67,7 @@ interface Category {
   name: string;
 }
 
-interface OrderItem {
+interface OrderLine {
   id: string;
   name: string;
   price: number;
@@ -106,17 +107,17 @@ const AddTableModal = ({
     }
 
     const newTableData = await createTable(num);
-    
+
     if (newTableData && newTableData.data) {
-        onAddTable(newTableData.data);
-        setTableNumber("");
-        onClose();
+      onAddTable(newTableData.data);
+      setTableNumber("");
+      onClose();
     } else {
-         toast({
-            title: "Erro ao adicionar",
-            description: "Não foi possível adicionar a mesa.",
-            variant: "destructive",
-        });
+      toast({
+        title: "Erro ao adicionar",
+        description: "Não foi possível adicionar a mesa.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -277,9 +278,9 @@ export function TableMap({
   const [isDeleteTableModalOpen, setIsDeleteTableModalOpen] = useState(false);
   const [tableToDelete, setTableToDelete] = useState<Table | null>(null);
 
-  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
+  const [currentOrder, setCurrentOrder] = useState<OrderLine[]>([]);
   // FIX: Altera o estado inicial para 'all' (string não vazia)
-  const [selectedCategory, setSelectedCategory] = useState<string>("all"); 
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const { toast } = useToast();
 
   // Estados para o modal de observação (CORRIGIDOS)
@@ -372,7 +373,7 @@ export function TableMap({
     setIsOrderModalOpen(false);
     setCurrentOrder([]);
     // FIX: Altera o reset para 'all'
-    setSelectedCategory("all"); 
+    setSelectedCategory("all");
     setOrderObservations(""); // Garantir reset
   };
 
@@ -435,17 +436,31 @@ export function TableMap({
   };
 
   // FUNÇÃO NOVA: Confirma o envio após as observações
-  const confirmSendToKitchen = () => {
-    const observationText = orderObservations.trim();
-    
-    // Simulação do envio para a cozinha
-    console.log(`Pedido da Mesa ${selectedTable?.table_number} enviado. Observações: ${observationText}`);
-    
-    toast({
-      title: "Encomenda enviada para cozinha 👩‍🍳",
-      description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha. ${observationText ? 'Obs: ' + observationText.substring(0, 50) + '...' : ''}`,
-    });
-    
+  const confirmSendToKitchen = async () => {
+    const observation = orderObservations.trim();
+    const total = calculateTotal();
+    const order: OrderRequestDTO = {
+      total: total,
+      type: "LOCAL",
+      order_lines: currentOrder,
+      observation: observation,
+      table_id: selectedTable!.id,
+    }
+
+    // Envio para a cozinha
+    const { success, error } = await createOrder(order);
+    if (success) {
+      toast({
+        title: "Encomenda enviada para cozinha 👩‍🍳",
+        description: `Mesa ${selectedTable?.table_number} enviou o pedido para a cozinha. ${observation ? 'Obs: ' + observation.substring(0, 50) + '...' : ''}`,
+      });
+    } else {
+      toast({
+        title: "❌ Erro ao enviar pedido:",
+        description: error
+      });
+    }
+
     setIsObservationModalOpen(false);
     setOrderObservations(""); // Limpa o campo após envio
   };
@@ -476,7 +491,7 @@ export function TableMap({
 
   const getTableStyle = (table: Table) => {
     // Lógica simples: verifica se há itens no pedido para o estilo de "mesa ocupada"
-    const isOccupied = false; 
+    const isOccupied = false;
     return isOccupied
       ? "border-red-500 bg-red-50 cursor-pointer hover:shadow-lg shadow-md"
       : "border-blue-500 bg-blue-50 cursor-pointer hover:shadow-lg shadow-md";
@@ -501,7 +516,7 @@ export function TableMap({
             <div
               key={table.id}
               className={cn(
-                "relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center", 
+                "relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 aspect-square flex items-center justify-center",
                 getTableStyle(table)
               )}
               onClick={() => openTableModal(table)}
@@ -563,7 +578,7 @@ export function TableMap({
       </Dialog>
 
       {/* --- Table Order Modal --- */}
-       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
+      <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
         <DialogContent className="max-w-[1400px] w-[95%] h-[90vh] flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="text-2xl font-bold text-blue-700">Mesa {selectedTable?.table_number}</DialogTitle>
