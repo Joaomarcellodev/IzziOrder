@@ -9,7 +9,8 @@ import { Clock, MapPin, Eye, Truck, Trash2, AlertTriangle, X } from "lucide-reac
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
 import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Order } from "@/app/actions/orders";
+import { deleteOrder, Order } from "@/app/actions/orders";
+import { useToast } from "../atoms/use-toast";
 
 const columns = [
   { id: "Novo", title: "Novo Pedido", status: "PENDING" as const },
@@ -34,6 +35,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const { toast } = useToast();
 
   // FUNÇÃO PARA ATUALIZAR STATUS AO SOLTAR
   const handleDrop = (status: Order["status"]) => {
@@ -84,9 +86,27 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (orderToDelete) {
+  const confirmDelete = async () => {
+    if (!orderToDelete) return;
+
+    try {
+      await deleteOrder(orderToDelete.id);
+
       setOrders((prev) => prev.filter((order) => order.id !== orderToDelete.id));
+
+      toast({
+        title: "Pedido excluído",
+        description: `O pedido #${orderToDelete.code} foi removido com sucesso.`,
+        variant: "default", // pode ser 'default' ou 'success' dependendo do seu tema
+      });
+    } catch (error) {
+      console.error("Erro ao deletar pedido:", error);
+      toast({
+        title: "Erro ao excluir pedido",
+        description: "Não foi possível remover o pedido. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
       setIsDeleteModalOpen(false);
       setOrderToDelete(null);
     }
@@ -198,11 +218,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             <span>
                               {line.quantity}x {line.name}
                             </span>
-                            {line.notes && (
-                              <div title={line.notes}>
-                                <Eye className="w-4 h-4 text-gray-400" />
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -473,11 +488,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                         <span className="text-gray-700 text-sm">
                           {line.quantity}x {line.name}
                         </span>
-                        {line.notes && (
-                          <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded ml-2">
-                            {line.notes}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>
