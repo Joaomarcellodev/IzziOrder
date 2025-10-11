@@ -65,21 +65,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
       )
     );
   };
-  const moveToPreparing = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: "PENDING" } : order
-      )
-    );
-  };
-
-  const moveToReady = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: "READY" } : order
-      )
-    );
-  };
 
   const openDeleteConfirm = (order: Order) => {
     setOrderToDelete(order);
