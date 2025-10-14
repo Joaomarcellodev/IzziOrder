@@ -9,13 +9,12 @@ import { Clock, MapPin, Eye, Truck, Trash2, AlertTriangle, X } from "lucide-reac
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
 import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Order } from "@/app/actions/orders";
+import { deleteOrder, Order } from "@/app/actions/orders";
+import { useToast } from "../atoms/use-toast";
 
 const columns = [
-  { id: "Novo", title: "Novo Pedido", status: "PENDING" as const },
-  { id: "Confirmado", title: "Confirmado", status: "CONFIRMED" as const },
-  { id: "Preparando", title: "Preparando", status: "IN_PROGRESS" as const },
-  { id: "Pronto", title: "Pronto", status: "READY" as const },
+  { id: "Aberto", title: "Aberto", status: "OPEN" as const },
+  { id: "Fechado", title: "Fechado", status: "CLOSED" as const },
 ];
 
 interface OrdersDashboardProps {
@@ -34,6 +33,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const { toast } = useToast();
 
   // FUNÇÃO PARA ATUALIZAR STATUS AO SOLTAR
   const handleDrop = (status: Order["status"]) => {
@@ -59,22 +59,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const confirmOrder = (orderId: string) => {
     setOrders((prev) =>
       prev.map((order) =>
-        order.id === orderId ? { ...order, status: "CONFIRMED" } : order
-      )
-    );
-  };
-  const moveToPreparing = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: "PENDING" } : order
-      )
-    );
-  };
-
-  const moveToReady = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: "READY" } : order
+        order.id === orderId ? { ...order, status: "CLOSED" } : order
       )
     );
   };
@@ -84,9 +69,27 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (orderToDelete) {
+  const confirmDelete = async () => {
+    if (!orderToDelete) return;
+
+    try {
+      await deleteOrder(orderToDelete.id);
+
       setOrders((prev) => prev.filter((order) => order.id !== orderToDelete.id));
+
+      toast({
+        title: "Pedido excluído",
+        description: `O pedido #${orderToDelete.code} foi removido com sucesso.`,
+        variant: "default", // pode ser 'default' ou 'success' dependendo do seu tema
+      });
+    } catch (error) {
+      console.error("Erro ao deletar pedido:", error);
+      toast({
+        title: "Erro ao excluir pedido",
+        description: "Não foi possível remover o pedido. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
       setIsDeleteModalOpen(false);
       setOrderToDelete(null);
     }
@@ -123,7 +126,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
         {columns.map((column) => {
           const columnOrders = getOrdersByStatus(column.status);
           const hasNewOrders =
-            column.status === "PENDING" && columnOrders.length > 0;
+            column.status === "OPEN" && columnOrders.length > 0;
 
           return (
             <div
@@ -198,11 +201,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             <span>
                               {line.quantity}x {line.name}
                             </span>
-                            {line.notes && (
-                              <div title={line.notes}>
-                                <Eye className="w-4 h-4 text-gray-400" />
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -241,7 +239,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
                       {/* Action Button for New Orders */}
                       <div className="space-y-2">
-                        {order.status === "PENDING" && (
+                        {order.status === "OPEN" && (
                           <Button
                             className="w-full font-semibold text-white"
                             style={{ backgroundColor: "#FD7E14" }}
@@ -250,7 +248,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             Confirmar Pedido
                           </Button>
                         )}
-                        {(order.status === "PENDING" || order.status === "CONFIRMED" || order.status === "IN_PROGRESS") && (
+                        {(order.status === "CLOSED") && (
                           <Button
                             variant="outline"
                             className="w-full font-semibold text-red-600 border-red-300 hover:bg-red-50"
@@ -285,10 +283,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[
             { status: "all", label: "Todos", count: orders.length },
-            { status: "Novo", label: "Novos", count: getOrdersByStatus("PENDING").length },
-            { status: "Confirmado", label: "Confirmados", count: getOrdersByStatus("CONFIRMED").length },
-            { status: "Preparando", label: "Preparando", count: getOrdersByStatus("IN_PROGRESS").length },
-            { status: "Pronto", label: "Prontos", count: getOrdersByStatus("READY").length }
+            { status: "Aberto", label: "Abertos", count: getOrdersByStatus("OPEN").length },
+            { status: "Fechado", label: "Fechados", count: getOrdersByStatus("CLOSED").length },
           ].map((item) => (
             <button
               key={item.status}
@@ -324,10 +320,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                   </div>
                   <span className={cn(
                     "px-3 py-1 rounded-full text-xs font-bold",
-                    order.status === "PENDING" && "bg-orange-100 text-orange-800",
-                    order.status === "CONFIRMED" && "bg-green-100 text-green-800",
-                    order.status === "IN_PROGRESS" && "bg-blue-100 text-blue-800",
-                    order.status === "READY" && "bg-purple-100 text-purple-800"
+                    order.status === "OPEN" && "bg-green-100 text-red-800",
+                    order.status === "CLOSED" && "bg-blue-100 text-green-800",
                   )}>
                     {order.status}
                   </span>
@@ -374,7 +368,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                 {/* Total */}
                 <div className="flex justify-between items-center mt-3 pt-3 border-t">
                   <span className="font-bold text-lg text-gray-900">R$ {order.total.toFixed(2)}</span>
-                  {(order.status === "PENDING" || order.status === "CONFIRMED" || order.status === "IN_PROGRESS") && (
+                  {(order.status === "OPEN") && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -405,10 +399,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
           <div className="flex gap-3 overflow-x-auto pb-4 mb-6">
             {[
               { status: "all", label: "Todos", count: orders.length },
-              { status: "Novo", label: "Novos", count: getOrdersByStatus("PENDING").length },
-              { status: "Confirmado", label: "Confirmados", count: getOrdersByStatus("CONFIRMED").length },
-              { status: "Preparando", label: "Preparando", count: getOrdersByStatus("IN_PROGRESS").length },
-              { status: "Pronto", label: "Prontos", count: getOrdersByStatus("READY").length }
+              { status: "Aberto", label: "Abertos", count: getOrdersByStatus("OPEN").length },
+              { status: "Fechado", label: "Fechados", count: getOrdersByStatus("CLOSED").length },
             ].map((item) => (
               <button
                 key={item.status}
@@ -457,10 +449,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     </div>
                     <span className={cn(
                       "px-3 py-1 rounded-full text-xs font-bold",
-                      order.status === "PENDING" && "bg-orange-100 text-orange-800 border border-orange-200",
-                      order.status === "CONFIRMED" && "bg-green-100 text-green-800 border border-green-200",
-                      order.status === "IN_PROGRESS" && "bg-blue-100 text-blue-800 border border-blue-200",
-                      order.status === "READY" && "bg-purple-100 text-purple-800 border border-purple-200"
+                      order.status === "OPEN" && "bg-orange-100 text-orange-800 border border-orange-200",
+                      order.status === "CLOSED" && "bg-green-100 text-green-800 border border-green-200",
                     )}>
                       {order.status}
                     </span>
@@ -473,11 +463,6 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                         <span className="text-gray-700 text-sm">
                           {line.quantity}x {line.name}
                         </span>
-                        {line.notes && (
-                          <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded ml-2">
-                            {line.notes}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -533,7 +518,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                       </div>
                     </div>
 
-                    {(order.status === "PENDING" || order.status === "CONFIRMED" || order.status === "IN_PROGRESS") && (
+                    {(order.status === "OPEN") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -547,7 +532,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                   </div>
 
                   {/* Botão Confirmar para pedidos Novos */}
-                  {order.status === "PENDING" && (
+                  {order.status === "OPEN" && (
                     <div className="mt-3">
                       <Button
                         className="w-full font-semibold text-white text-sm h-9"

@@ -462,6 +462,8 @@ export function TableMap({
     }
 
     setIsObservationModalOpen(false);
+    setIsOrderModalOpen(false);
+    setCurrentOrder([]);
     setOrderObservations(""); // Limpa o campo após envio
   };
 

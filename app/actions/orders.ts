@@ -17,7 +17,7 @@ export interface Order {
   code?: string;
   date: string; // timestamp
   total: number;
-  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY";
+  status: "OPEN" | "CLOSED";
   tableNumber?: number;
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
@@ -31,7 +31,8 @@ interface OrderResponseDTO {
   id?: string;
   date: string; // timestamp
   total: number;
-  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "READY"; tableNumber?: number;
+  status: "OPEN" | "CLOSED";
+  tableNumber?: number;
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
@@ -116,8 +117,6 @@ export async function createOrder(
       return { success: false, error: orderLinesError.message };
     }
   }
-
-
 
   revalidatePath("/orders");
   return { success: true, data: orderCreated as Order };
@@ -233,6 +232,27 @@ export async function deleteOrder(id: string): Promise<ActionResponse> {
   if (error) {
     console.error("Erro ao excluir pedido:", error);
     return { success: false, error: "Erro ao excluir pedido." };
+  }
+
+  revalidatePath("/orders");
+  return { success: true };
+}
+
+export async function updateToClosedOrder(id: string): Promise<ActionResponse> {
+  const supabase = createClient();
+
+  if (!id) {
+    return { success: false, error: "ID do pedido inválido." };
+  }
+
+  const { error } = await (await supabase)
+    .from("orders")
+    .update({ status: "CLOSED" })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erro ao fechar pedido:", error);
+    return { success: false, error: "Erro ao fechar pedido." };
   }
 
   revalidatePath("/orders");
