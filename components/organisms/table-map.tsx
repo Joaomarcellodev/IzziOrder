@@ -68,10 +68,11 @@ interface Category {
 }
 
 interface OrderLine {
-  id: string;
+  menuItemId: string;
   name: string;
   price: number;
   quantity: number;
+  observation: string;
 }
 
 interface TableMapProps {
@@ -379,10 +380,10 @@ export function TableMap({
 
   const addItemToOrder = (menuItem: MenuItem) => {
     setCurrentOrder((prev) => {
-      const existingItem = prev.find((item) => item.id === menuItem.id);
+      const existingItem = prev.find((item) => item.menuItemId === menuItem.id);
       if (existingItem) {
         return prev.map((item) =>
-          item.id === menuItem.id
+          item.menuItemId === menuItem.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -390,10 +391,11 @@ export function TableMap({
       return [
         ...prev,
         {
-          id: menuItem.id,
+          menuItemId: menuItem.id,
           name: menuItem.name,
           price: menuItem.price,
           quantity: 1,
+          observation: "implementar"
         },
       ];
     });
@@ -403,7 +405,7 @@ export function TableMap({
     setCurrentOrder((prev) =>
       prev
         .map((item) =>
-          item.id === itemId
+          item.menuItemId === itemId
             ? { ...item, quantity: Math.max(0, item.quantity + change) }
             : item
         )
@@ -412,7 +414,7 @@ export function TableMap({
   };
 
   const removeItem = (itemId: string) => {
-    setCurrentOrder((prev) => prev.filter((item) => item.id !== itemId));
+    setCurrentOrder((prev) => prev.filter((item) => item.menuItemId !== itemId));
   };
 
   const calculateTotal = () => {
@@ -442,9 +444,8 @@ export function TableMap({
     const order: OrderRequestDTO = {
       total: total,
       type: "LOCAL",
-      order_lines: currentOrder,
-      observation: observation,
-      table_id: selectedTable!.id,
+      orderLines: currentOrder,
+      tableNumber: selectedTable!.table_number,
     }
 
     // Envio para a cozinha
@@ -652,7 +653,7 @@ export function TableMap({
                 ) : (
                   <div className="flex flex-col gap-2">
                     {currentOrder.map((item) => (
-                      <Card key={item.id} className="shadow-md border-l-4 border-l-blue-500">
+                      <Card key={item.menuItemId} className="shadow-md border-l-4 border-l-blue-500">
                         <CardContent className="p-3">
                           <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
@@ -666,7 +667,7 @@ export function TableMap({
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => updateQuantity(item.id, -1)}
+                                onClick={() => updateQuantity(item.menuItemId, -1)}
                                 className="w-8 h-8"
                               >
                                 <Minus className="w-4 h-4" />
@@ -675,7 +676,7 @@ export function TableMap({
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => updateQuantity(item.id, 1)}
+                                onClick={() => updateQuantity(item.menuItemId, 1)}
                                 className="w-8 h-8"
                               >
                                 <Plus className="w-4 h-4" />
@@ -683,7 +684,7 @@ export function TableMap({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => removeItem(item.id)}
+                                onClick={() => removeItem(item.menuItemId)}
                                 className="w-8 h-8 text-red-500 hover:bg-red-100 ml-2"
                               >
                                 <X className="w-4 h-4" />

@@ -53,7 +53,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             </div>
             <div className="flex items-center gap-1 text-sm">
               <Clock className="w-4 h-4" />
-              <span>{order.estimated_time}min</span>
+              <span>{order.estimatedTime}min</span>
             </div>
           </div>
 
@@ -68,7 +68,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           {/* Itens do pedido */}
           <div className="space-y-3">
             <h4 className="font-medium">Itens do Pedido:</h4>
-            {order.order_lines.map((line, index) => (
+            {order.orderLines.map((line, index) => (
               <div key={index} className="border rounded-lg p-3">
                 <div className="flex justify-between items-start">
                   <div>

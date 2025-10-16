@@ -20,45 +20,28 @@ export interface Order {
   status: "OPEN" | "CLOSED";
   tableNumber?: number;
   type: "DELIVERY" | "LOCAL";
-  delivery_fee?: number;
-  estimated_time?: number;
-  order_lines: Array<{ name: string; quantity: number }>;
+  deliveryFee?: number;
+  estimatedTime?: number;
+  orderLines: Array<{ name: string; quantity: number; observation: string }>;
   customerName?: string | null;
-  observation: string;
-}
-
-interface OrderResponseDTO {
-  id?: string;
-  date: string; // timestamp
-  total: number;
-  status: "OPEN" | "CLOSED";
-  tableNumber?: number;
-  type: "DELIVERY" | "LOCAL";
-  delivery_fee?: number;
-  estimated_time?: number;
-  order_lines: Array<{ name: string; quantity: number }>;
-  customer: { name: string; };
-  observation: string;
-  table_number: number;
 }
 
 export interface OrderRequestDTO {
   total: number;
-  table_id?: string;
+  tableNumber?: number;
   type: "DELIVERY" | "LOCAL";
-  delivery_fee?: number;
-  estimated_time?: number;
-  order_lines: Array<OrderLineRequestDTO>;
-  customer_id?: string | null;
-  observation?: string;
+  deliveryFee?: number;
+  estimatedTime?: number;
+  orderLines: Array<OrderLineRequestDTO>;
+  customerId?: string | null;
 }
 
 interface OrderLineRequestDTO {
-  id: string,
+  menuItemId: string,
   name: string,
   quantity: number,
   price: number,
-  order_id?: string
+  observation: string;
 }
 
 /**
@@ -70,26 +53,17 @@ export async function createOrder(
 ): Promise<ActionResponse<Order>> {
   const supabase = createClient();
 
-  const { data: table, error: errorTable } = await (await supabase)
-    .from("tables")
-    .select("table_number")
-    .eq("id", order.table_id)
-    .single();
-
-  if (errorTable) {
-    console.error("Erro ao encontrar a mesa:", errorTable);
-    return { success: false, error: "Erro ao encontrar a mesa." };
-  }
-
   const { data: orderCreated, error } = await (await supabase)
     .from("orders")
     .insert({
       total: order.total.toFixed(2),
       type: order.type,
-      status: "PENDING",
+      status: "OPEN",
       establishment_id: ESTABLISHMENT_ID,
-      observation: order.observation ?? "",
-      table_number: table.table_number
+      table_number: order.tableNumber,
+      delivery_fee: order.deliveryFee,
+      estimated_time: order.estimatedTime,
+      customer_id: order.customerId
     })
     .select("id")
     .single();
@@ -99,13 +73,14 @@ export async function createOrder(
     return { success: false, error: "Erro ao criar pedido." };
   }
 
-  if (order.order_lines.length > 0) {
-    const orderLinesToInsert = order.order_lines.map((line) => ({
+  if (order.orderLines.length > 0) {
+    const orderLinesToInsert = order.orderLines.map((line) => ({
       name: line.name,
       price: line.price,
       quantity: line.quantity,
       order_id: orderCreated.id,
-      menu_item_id: line.id
+      menu_item_id: line.menuItemId,
+      observation: line.observation
     }));
 
     const { error: orderLinesError } = await (await supabase)
@@ -138,16 +113,19 @@ export async function getOrders(establishment_id: string) {
   }
 
   const orders: Order[] = [];
-  for (const orderDTO of data as OrderResponseDTO[]) {
-    const order = orderDTO as Order;
+  for (const orderData of data) {
+    const order = orderData as Order;
     if (order.type == "LOCAL") {
       order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
     } else if (order.type == "DELIVERY") {
       order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
     }
 
-    order.customerName = orderDTO.customer ? orderDTO.customer.name : null;
-    order.tableNumber = orderDTO.table_number ?? null;
+    order.customerName = orderData.customer ? orderData.customer.name : null;
+    order.tableNumber = orderData.table_number;
+    order.deliveryFee = orderData.delivery_fee;
+    order.estimatedTime = orderData.estimated_time;
+    order.orderLines = orderData.order_lines;
 
     orders.push(order);
   }

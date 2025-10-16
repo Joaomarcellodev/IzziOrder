@@ -178,12 +178,12 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             <Clock className="w-4 h-4" />
                             <span
                               className={cn(
-                                order.estimated_time ?? 0 > 10
+                                order.estimatedTime ?? 0 > 10
                                   ? "text-red-600"
                                   : "text-gray-500"
                               )}
                             >
-                              {order.estimated_time}min
+                              {order.estimatedTime}min
                             </span>
                           </div>
                         </div>
@@ -193,7 +193,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     <CardContent className="space-y-3">
                       {/* Items */}
                       <div className="space-y-1">
-                        {order.order_lines.map((line, index) => (
+                        {order.orderLines.map((line, index) => (
                           <div
                             key={index}
                             className="flex items-center justify-between text-sm"
@@ -315,7 +315,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       {getSourceIcon(order.type)}
-                      <span>{order.estimated_time} min</span>
+                      <span>{order.estimatedTime} min</span>
                     </div>
                   </div>
                   <span className={cn(
@@ -329,7 +329,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
                 {/* Itens */}
                 <div className="mb-4">
-                  {order.order_lines.map((line, index) => (
+                  {order.orderLines.map((line, index) => (
                     <div key={index} className="flex justify-between py-1 text-sm">
                       <span className="text-gray-700">{line.quantity}x {line.name}</span>
                     </div>
@@ -440,9 +440,9 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                           <Clock className="w-4 h-4" />
                           <span className={cn(
                             "text-sm font-medium",
-                            order.estimated_time! > 10 ? "text-red-600" : ""
+                            order.estimatedTime! > 10 ? "text-red-600" : ""
                           )}>
-                            {order.estimated_time} min
+                            {order.estimatedTime} min
                           </span>
                         </div>
                       </div>
@@ -458,7 +458,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
                   {/* Itens */}
                   <div className="mb-4 space-y-2">
-                    {order.order_lines.map((line, index) => (
+                    {order.orderLines.map((line, index) => (
                       <div key={index} className="flex justify-between items-center py-1">
                         <span className="text-gray-700 text-sm">
                           {line.quantity}x {line.name}
