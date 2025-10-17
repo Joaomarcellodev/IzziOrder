@@ -28,7 +28,7 @@ interface AppShellProps {
 const navigationItems = [
   { id: "orders", label: "Pedidos", icon: Calendar, href: "/" },
   { id: "menu", label: "Cardápio", icon: ChefHat, href: "/menu" },
-  { id: "tables", label: "Mesas", icon: Users, href: "/tables" },
+  // { id: "tables", label: "Mesas", icon: Users, href: "/tables" },
   { id: "reports", label: "Relatórios", icon: BarChart3, href: "/reports" },
   { id: "settings", label: "Configurações", icon: Settings, href: "/settings" },
 ];

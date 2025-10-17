@@ -11,6 +11,8 @@ import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal"
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { deleteOrder, Order } from "@/app/actions/orders";
 import { useToast } from "../atoms/use-toast";
+// NOVO: Importação do modal de novo pedido
+import { NewOrderModal } from "@/components/molecules/new-order-modal"; 
 
 const columns = [
   { id: "Aberto", title: "Aberto", status: "OPEN" as const },
@@ -28,12 +30,38 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | Order["status"]>("all");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  // Use este estado (ou mantenha o que já tem):
   const [activeFilter, setActiveFilter] = useState<"all" | Order["status"]>("all");
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // NOVO ESTADO: Modal de Adicionar Pedido
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false); 
 
   const { toast } = useToast();
+
+  // FUNÇÃO PARA ABRIR O MODAL DE NOVO PEDIDO
+  const openNewOrderModal = () => setIsNewOrderModalOpen(true);
+
+  // FUNÇÃO PARA FECHAR O MODAL DE NOVO PEDIDO
+  const closeNewOrderModal = () => setIsNewOrderModalOpen(false);
+
+  // NOVO: Função para Adicionar um Novo Pedido
+  const handleAddNewOrder = (newOrderData: Omit<Order, 'id' | 'code'>) => {
+    // Simulação de um novo pedido completo (gera ID e Code)
+    const newOrder: Order = {
+      ...newOrderData,
+      id: Math.random().toString(36).substring(2, 9), // ID aleatório
+      code: `#${(orders.length + 1).toString().padStart(3, '0')}`, // Código sequencial simulado
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+    closeNewOrderModal();
+
+    toast({
+      title: "Novo Pedido Adicionado",
+      description: `O pedido ${newOrder.code} foi criado com sucesso.`,
+      variant: "default",
+    });
+  };
 
   // FUNÇÃO PARA ATUALIZAR STATUS AO SOLTAR
   const handleDrop = (status: Order["status"]) => {
@@ -121,6 +149,17 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
   return (
     <div className="p-4 lg:p-6">
+      
+      {/* NOVO: Botão Adicionar Pedido */}
+      <div className="mb-6 flex justify-end">
+        <Button 
+          className="bg-green-500 hover:bg-green-600 text-white font-bold"
+          onClick={openNewOrderModal}
+        >
+          Adicionar Pedido
+        </Button>
+      </div>
+
       {/* VERSÃO DESKTOP (4 colunas - apenas desktop grande) */}
       <div className="hidden xl:grid grid-cols-4 gap-6">
         {columns.map((column) => {
@@ -557,6 +596,14 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
         </div>
       </div>
       {/* Modais */}
+
+      {/* NOVO MODAL: Adicionar Pedido */}
+      <NewOrderModal
+        isOpen={isNewOrderModalOpen}
+        onClose={closeNewOrderModal}
+        onAddOrder={handleAddNewOrder}
+      />
+
       <OrderDetailsModal
         order={selectedOrder}
         isOpen={isModalOpen}

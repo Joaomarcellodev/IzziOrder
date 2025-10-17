@@ -11,7 +11,7 @@ export default async function HomePage() {
       currentPage="Painel de Pedidos"
       breadcrumb=" Painel > Painel de Pedidos"
     >
-      <OrdersDashboard orders={orders!} />
+      <OrdersDashboard orders={orders || []}  />
     </AppShell>
   );
 }
