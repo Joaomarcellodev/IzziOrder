@@ -36,7 +36,7 @@ export interface OrderRequestDTO {
   customerId?: string | null;
 }
 
-interface OrderLineRequestDTO {
+export interface OrderLineRequestDTO {
   id?: string,
   menuItemId: string,
   name: string,
