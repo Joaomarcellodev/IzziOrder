@@ -37,6 +37,7 @@ export interface OrderRequestDTO {
 }
 
 interface OrderLineRequestDTO {
+  id?: string,
   menuItemId: string,
   name: string,
   quantity: number,
@@ -167,7 +168,7 @@ export async function getOrderById(
  */
 export async function updateOrder(
   id: string,
-  updates: Partial<Omit<Order, "id" | "date">>
+  updates: Omit<OrderRequestDTO, "id" | "date">
 ): Promise<ActionResponse<Order>> {
   const supabase = createClient();
 
@@ -177,7 +178,15 @@ export async function updateOrder(
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .update(updates)
+    .update({
+      total: updates.total!.toFixed(2),
+      type: updates.type,
+      status: "OPEN",
+      table_number: updates.tableNumber,
+      delivery_fee: updates.deliveryFee,
+      estimated_time: updates.estimatedTime,
+      customer_id: updates.customerId
+    })
     .eq("id", id)
     .select()
     .single();
@@ -185,6 +194,51 @@ export async function updateOrder(
   if (error) {
     console.error("Erro ao atualizar pedido:", error);
     return { success: false, error: "Erro ao atualizar pedido." };
+  }
+
+  if (updates.orderLines.length > 0) {
+    const { data: existingLines, error: fetchError } = await (await supabase)
+      .from("order_lines")
+      .select("id")
+      .eq("order_id", id);
+
+    if (fetchError) {
+      console.error("Erro ao buscar linhas do pedido:", fetchError);
+      return { success: false, error: "Erro ao buscar linhas do pedido." };
+    }
+
+    // Pega os ids das linhas existentes
+    const existingIds = (existingLines ?? []).map(line => line.id);
+
+    // Pega apenas as linhas que ainda existem ou foram editadas
+    const updatedIds = updates.orderLines
+      .filter(line => line.id)
+      .map(line => line.id);
+
+    // Pega os ids que existem no banco mas não no update
+    const removedLineIds = existingIds.filter(existingId => !updatedIds.includes(existingId));
+
+    if (removedLineIds.length > 0) {
+      const { error: deleteError } = await (await supabase)
+        .from("order_lines")
+        .delete()
+        .in("id", removedLineIds);
+
+      if (deleteError) {
+        console.error("Erro ao excluir linhas do pedido:", deleteError);
+        return { success: false, error: "Erro ao excluir linhas do pedido." };
+      }
+    }
+
+    for (const line of updates.orderLines) {
+      if (line.id) {
+        // Atualiza linha existente
+        await (await supabase).from("order_lines").update(line).eq("id", line.id);
+      } else {
+        // Insere nova
+        await (await supabase).from("order_lines").insert({ ...line, order_id: id });
+      }
+    }
   }
 
   revalidatePath("/orders");
