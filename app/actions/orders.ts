@@ -22,7 +22,9 @@ export interface Order {
   type: "DELIVERY" | "LOCAL";
   delivery_fee?: number;
   estimated_time?: number;
-  order_lines: Array<{ name: string; quantity: number }>;
+  order_lines: Array<{
+    id: Key | null | undefined; name: string; quantity: number 
+}>;
   customerName?: string | null;
   observation: string;
 }
