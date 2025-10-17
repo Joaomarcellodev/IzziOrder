@@ -12,7 +12,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { deleteOrder, Order } from "@/app/actions/orders";
 import { useToast } from "../atoms/use-toast";
 // NOVO: Importação do modal de novo pedido
-import { NewOrderModal } from "@/components/molecules/new-order-modal"; 
+import { NewOrderModal } from "@/components/molecules/new-order-modal";
+import { Category } from "@/app/actions/category";
+import { MenuItem } from "@/app/actions/menuItem";
 
 const columns = [
   { id: "Aberto", title: "Aberto", status: "OPEN" as const },
@@ -21,9 +23,11 @@ const columns = [
 
 interface OrdersDashboardProps {
   orders: Order[];
+  menuItems: MenuItem[];
+  categories: Category[];
 }
 
-export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps) {
+export function OrdersDashboard({ orders: initialOrders, menuItems, categories }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [draggedOrder, setDraggedOrder] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -34,7 +38,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   // NOVO ESTADO: Modal de Adicionar Pedido
-  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false); 
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -149,10 +153,10 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
   return (
     <div className="p-4 lg:p-6">
-      
+
       {/* NOVO: Botão Adicionar Pedido */}
       <div className="mb-6 flex justify-end">
-        <Button 
+        <Button
           className="bg-green-500 hover:bg-green-600 text-white font-bold"
           onClick={openNewOrderModal}
         >
@@ -602,6 +606,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
         isOpen={isNewOrderModalOpen}
         onClose={closeNewOrderModal}
         onAddOrder={handleAddNewOrder}
+        menuItems={menuItems}
+        categories={categories}
       />
 
       <OrderDetailsModal

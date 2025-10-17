@@ -4,72 +4,31 @@ import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Truck, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-// Defina um tipo simples para os itens do menu (simulação)
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-}
-
-// Cardápio de Exemplo
-const MENU: MenuItem[] = [
-  { id: "1", name: "Hambúrguer Clássico", price: 25.90, category: "Lanches" },
-  { id: "2", name: "Batata Frita Média", price: 12.00, category: "Acompanhamentos" },
-  { id: "3", name: "Refrigerante Lata", price: 6.50, category: "Bebidas" },
-  { id: "4", name: "Milk-shake de Chocolate", price: 18.00, category: "Bebidas" },
-  { id: "5", name: "Sanduíche Vegetariano", price: 22.50, category: "Lanches" },
-  { id: "6", name: "Porção de Camarão", price: 55.00, category: "Acompanhamentos" },
-];
-
-// Defina a estrutura de um item de linha de pedido temporário
-interface OrderLineTemp {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
+import { MenuItem } from "@/app/actions/menuItem";
+import { Category } from "@/app/actions/category";
+import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/orders";
 
 // ⚠️ CORREÇÃO DA INTERFACE: tableNumber deve ser number | undefined.
-interface NewOrderData {
-  customerName: string;
-  total: number;
-  type: 'DELIVERY' | 'LOCAL';
-  estimated_time: number;
-  tableNumber?: number; // Tipo corrigido para number
-  status: 'OPEN' | 'CLOSED';
-  order_lines: OrderLineTemp[];
-  date: string;
-  observation: string;
-}
 
 interface NewOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   // Função para adicionar o pedido (recebida do OrdersDashboard)
-  onAddOrder: (order: NewOrderData) => void;
+  onAddOrder: (order: OrderRequestDTO) => void;
+  menuItems: MenuItem[];
+  categories: Category[];
 }
 
-export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProps) {
-  const [currentOrder, setCurrentOrder] = useState<OrderLineTemp[]>([]);
+export function NewOrderModal({ isOpen, onClose, onAddOrder, menuItems, categories }: NewOrderModalProps) {
+  const [currentOrder, setCurrentOrder] = useState<OrderLineRequestDTO[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [orderType, setOrderType] = useState<'DELIVERY' | 'LOCAL'>('LOCAL');
   // Mantemos como string, pois é o que o input retorna
-  const [tableNumber, setTableNumber] = useState(""); 
+  const [tableNumber, setTableNumber] = useState("");
   const [observation, setObservation] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Lanches"); // Categoria inicial
 
   if (!isOpen) return null;
-
-  // Agrupa o menu por categoria
-  const groupedMenu = MENU.reduce((acc, item) => {
-    acc[item.category] = acc[item.category] || [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, MenuItem[]>);
-
-  const categories = Object.keys(groupedMenu);
 
   const total = currentOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -82,7 +41,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
           line.id === item.id ? { ...line, quantity: line.quantity + 1 } : line
         );
       }
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }];
+      return [...prev, { name: item.name, price: item.price, quantity: 1, menuItemId: item.id!, observation: "todo" }];
     });
   };
 
@@ -112,36 +71,31 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
 
     if (orderType === 'LOCAL') {
       if (!tableNumber.trim()) {
-          alert("O número da mesa é obrigatório para pedidos LOCAIS.");
-          return;
+        alert("O número da mesa é obrigatório para pedidos LOCAIS.");
+        return;
       }
       // Conversão da string para number
       const parsedNumber = Number(tableNumber.trim());
-      
+
       if (isNaN(parsedNumber)) {
-          alert("O número da mesa deve ser um número válido.");
-          return;
+        alert("O número da mesa deve ser um número válido.");
+        return;
       }
       finalTableNumber = parsedNumber;
     }
 
-    const newOrder: NewOrderData = {
-      customerName: customerName.trim(),
+    const newOrder: OrderRequestDTO = {
       total: total,
       type: orderType,
-      estimated_time: Math.floor(Math.random() * 15) + 5, // Tempo simulado entre 5 e 20 min
-      
+      estimatedTime: Math.floor(Math.random() * 15) + 5, // Tempo simulado entre 5 e 20 min
+
       // Usando o valor number | undefined corrigido
-      tableNumber: finalTableNumber, 
-      
-      status: 'OPEN' as const,
-      order_lines: currentOrder,
-      date: new Date().toISOString(), // Data atual
-      observation: observation,
+      tableNumber: finalTableNumber,
+      orderLines: currentOrder,
     };
 
     onAddOrder(newOrder);
-    
+
     // Limpa o estado após adicionar o pedido
     setCurrentOrder([]);
     setCustomerName("");
@@ -169,22 +123,22 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
             <div className="flex gap-2 overflow-x-auto pb-2 sticky top-0 bg-white pt-1 z-10">
               {categories.map(category => (
                 <Button
-                  key={category}
-                  variant={categoryFilter === category ? "default" : "outline"}
+                  key={category.name}
+                  variant={categoryFilter === category.name ? "default" : "outline"}
                   className={cn(
                     "whitespace-nowrap",
-                    categoryFilter === category ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-gray-300 text-gray-700"
+                    categoryFilter === category.name ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-gray-300 text-gray-700"
                   )}
-                  onClick={() => setCategoryFilter(category)}
+                  onClick={() => setCategoryFilter(category.name)}
                 >
-                  {category}
+                  {category.name}
                 </Button>
               ))}
             </div>
 
             {/* Itens do Menu */}
             <div className="space-y-3">
-              {groupedMenu[categoryFilter]?.map(item => (
+              {menuItems?.map(item => (
                 <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div>
                     <p className="font-semibold text-gray-900">{item.name}</p>
@@ -199,7 +153,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
                   </Button>
                 </div>
               ))}
-              {groupedMenu[categoryFilter]?.length === 0 && (
+              {menuItems?.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Nenhum item nesta categoria.
                 </div>
@@ -210,7 +164,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
           {/* Coluna 2: Resumo do Pedido e Dados */}
           <div className="lg:col-span-1 space-y-4 lg:h-full lg:overflow-y-auto">
             <h3 className="text-lg font-semibold border-b pb-2">Resumo do Pedido ({currentOrder.length} itens)</h3>
-            
+
             {/* Lista de Itens do Pedido */}
             <div className="space-y-3">
               {currentOrder.length > 0 ? (
@@ -225,7 +179,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
                         variant="outline"
                         size="icon"
                         className="h-6 w-6 p-0"
-                        onClick={() => updateItemQuantity(line.id, -1)}
+                        onClick={() => updateItemQuantity(line.id!, -1)}
                       >
                         -
                       </Button>
@@ -233,7 +187,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
                       <Button
                         size="icon"
                         className="h-6 w-6 p-0 bg-orange-500 hover:bg-orange-600"
-                        onClick={() => updateItemQuantity(line.id, 1)}
+                        onClick={() => updateItemQuantity(line.id!, 1)}
                       >
                         +
                       </Button>
@@ -256,7 +210,7 @@ export function NewOrderModal({ isOpen, onClose, onAddOrder }: NewOrderModalProp
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="w-full p-2 border rounded-lg focus:ring-orange-500 focus:border-orange-500"
               />
-              
+
               {/* Observação */}
               <textarea
                 placeholder="Observação (Ex: Sem cebola, ponto da carne)"
