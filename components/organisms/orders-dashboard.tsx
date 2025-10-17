@@ -12,7 +12,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { deleteOrder, Order } from "@/app/actions/orders";
 import { useToast } from "../atoms/use-toast";
 // NOVO: Importação do modal de novo pedido
-import { NewOrderModal } from "@/components/molecules/new-order-modal"; 
+import { NewOrderModal } from "@/components/molecules/new-order-modal";
+import { Category } from "@/app/actions/category";
+import { MenuItem } from "@/app/actions/menuItem";
 
 const columns = [
   { id: "Aberto", title: "Aberto", status: "OPEN" as const },
@@ -21,9 +23,11 @@ const columns = [
 
 interface OrdersDashboardProps {
   orders: Order[];
+  menuItems: MenuItem[];
+  categories: Category[];
 }
 
-export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps) {
+export function OrdersDashboard({ orders: initialOrders, menuItems, categories }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [draggedOrder, setDraggedOrder] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -34,7 +38,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   // NOVO ESTADO: Modal de Adicionar Pedido
-  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false); 
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -149,10 +153,10 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
   return (
     <div className="p-4 lg:p-6">
-      
+
       {/* NOVO: Botão Adicionar Pedido */}
       <div className="mb-6 flex justify-end">
-        <Button 
+        <Button
           className="bg-green-500 hover:bg-green-600 text-white font-bold"
           onClick={openNewOrderModal}
         >
@@ -217,12 +221,12 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                             <Clock className="w-4 h-4" />
                             <span
                               className={cn(
-                                order.estimated_time ?? 0 > 10
+                                order.estimatedTime ?? 0 > 10
                                   ? "text-red-600"
                                   : "text-gray-500"
                               )}
                             >
-                              {order.estimated_time}min
+                              {order.estimatedTime}min
                             </span>
                           </div>
                         </div>
@@ -232,7 +236,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     <CardContent className="space-y-3">
                       {/* Items */}
                       <div className="space-y-1">
-                        {order.order_lines.map((line, index) => (
+                        {order.orderLines.map((line, index) => (
                           <div
                             key={index}
                             className="flex items-center justify-between text-sm"
@@ -354,7 +358,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       {getSourceIcon(order.type)}
-                      <span>{order.estimated_time} min</span>
+                      <span>{order.estimatedTime} min</span>
                     </div>
                   </div>
                   <span className={cn(
@@ -368,7 +372,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
                 {/* Itens */}
                 <div className="mb-4">
-                  {order.order_lines.map((line, index) => (
+                  {order.orderLines.map((line, index) => (
                     <div key={index} className="flex justify-between py-1 text-sm">
                       <span className="text-gray-700">{line.quantity}x {line.name}</span>
                     </div>
@@ -479,9 +483,9 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
                           <Clock className="w-4 h-4" />
                           <span className={cn(
                             "text-sm font-medium",
-                            order.estimated_time! > 10 ? "text-red-600" : ""
+                            order.estimatedTime! > 10 ? "text-red-600" : ""
                           )}>
-                            {order.estimated_time} min
+                            {order.estimatedTime} min
                           </span>
                         </div>
                       </div>
@@ -497,7 +501,7 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
 
                   {/* Itens */}
                   <div className="mb-4 space-y-2">
-                    {order.order_lines.map((line, index) => (
+                    {order.orderLines.map((line, index) => (
                       <div key={index} className="flex justify-between items-center py-1">
                         <span className="text-gray-700 text-sm">
                           {line.quantity}x {line.name}
@@ -602,6 +606,8 @@ export function OrdersDashboard({ orders: initialOrders }: OrdersDashboardProps)
         isOpen={isNewOrderModalOpen}
         onClose={closeNewOrderModal}
         onAddOrder={handleAddNewOrder}
+        menuItems={menuItems}
+        categories={categories}
       />
 
       <OrderDetailsModal

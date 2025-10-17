@@ -33,6 +33,7 @@ import {
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
+  MenuItem,
 } from "@/app/actions/menuItem";
 import {
   createCategory,
@@ -42,16 +43,6 @@ import {
 import { validateMenuItem } from "@/lib/validators/menuItem";
 
 // Interfaces (Mantidas as originais)
-interface MenuItem {
-  id: string | null;
-  name: string;
-  description: string;
-  price: number;
-  category_id: string;
-  image: string;
-  available: boolean;
-}
-
 interface Category {
   id: string | null;
   name: string;
