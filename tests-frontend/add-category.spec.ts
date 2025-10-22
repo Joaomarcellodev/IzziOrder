@@ -37,6 +37,37 @@ test.describe('Adicionar Categoria', () => {
     
     await expect(page.getByText('Lanches 2024').first()).toBeVisible();
   });
+      // 3. CATEGORIA COM NOME LONGO
+  test('deve adicionar categoria com nome longo', async ({ page }) => {
+    test.setTimeout(60000);
+    
+    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
+    await page.waitForTimeout(3000);
+    
+    await page.getByRole('textbox', { name: /nome da categoria/i }).fill('Pratos Veganos e Vegetarianos');
+    await page.waitForTimeout(3000);
+    
+    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
+    await page.waitForTimeout(5000);
+    
+    await expect(page.getByText('Pratos Veganos e Vegetarianos').first()).toBeVisible();
+  });
+
+      // 4. CATEGORIA COM NOME CONTENDO HÍFEN
+  test('deve adicionar categoria com nome contendo hífen', async ({ page }) => {
+    test.setTimeout(60000);
+    
+    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
+    await page.waitForTimeout(3000);
+    
+    await page.getByRole('textbox', { name: /nome da categoria/i }).fill('Pratos Self-Service');
+    await page.waitForTimeout(3000);
+    
+    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
+    await page.waitForTimeout(5000);
+    
+    await expect(page.getByText('Pratos Self-Service').first()).toBeVisible();
+  });
  
  
   });
