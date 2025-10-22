@@ -104,7 +104,7 @@ export async function getOrders(establishment_id: string) {
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .select("*, order_lines(*), customer:customer_id(*)")
+    .select("*, order_lines(*)")
     .eq("establishment_id", establishment_id)
     .order("date", { ascending: false });
 
