@@ -150,4 +150,51 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
 
   });
+    // 7. SEM CATEGORIA SELECIONADA
+  test('deve bloquear item sem categoria selecionada', async ({ page }) => {
+    await page.getByRole('button', { name: /Adicionar Item/i }).click();
+    await page.waitForTimeout(2000);
+    
+    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Sem Categoria');
+    await page.waitForTimeout(1000);
+    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+    await page.waitForTimeout(1000);
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('30.00');
+    await page.waitForTimeout(1000);
+    
+    // Não seleciona categoria
+    
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(2000);
+    
+    // Verifica se mostra mensagem de erro
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+
+  // 8. CANCELAR CRIAÇÃO DE ITEM
+  test('deve cancelar criação de item ao clicar em cancelar', async ({ page }) => {
+    await page.getByRole('button', { name: /Adicionar Item/i }).click();
+    await page.waitForTimeout(2000);
+    
+    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Cancelado');
+    await page.waitForTimeout(1000);
+    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição do item cancelado');
+    await page.waitForTimeout(1000);
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('40.00');
+    await page.waitForTimeout(1000);
+    
+    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('option', { name: 'Teste' }).first().click();
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('button', { name: /cancelar/i }).click();
+    await page.waitForTimeout(2000);
+    
+    // Verifica se o modal/dialog foi fechado
+    await expect(page.getByRole('textbox', { name: 'Nome do Item' })).not.toBeVisible();
+    
+    // Verifica se o item NÃO foi criado
+    await expect(page.getByText('Item Cancelado')).not.toBeVisible();
+  });
 });
