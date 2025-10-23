@@ -47,4 +47,22 @@ test.describe('Adicionar Categoria - Testes Negativos', () => {
     // Verifica mensagem de duplicação
     await expect(page.getByText(/Erro ao adicionar a categoria "Categoria Duplicada"!/i).first()).toBeVisible();
   });
+
+    // 5. CANCELAR CRIAÇÃO DE CATEGORIA
+  test('deve cancelar criação de categoria ao clicar em cancelar', async ({ page }) => {
+    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
+    await page.waitForTimeout(2000);
+    
+    await page.getByRole('textbox', { name: /nome da categoria/i }).fill('Categoria Cancelada');
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('button', { name: /cancelar/i }).click();
+    await page.waitForTimeout(2000);
+    
+    // Verifica se o modal/dialog foi fechado
+    await expect(page.getByRole('textbox', { name: /nome da categoria/i })).not.toBeVisible();
+    
+    // Verifica se a categoria NÃO foi criada
+    await expect(page.getByText('Categoria Cancelada')).not.toBeVisible();
+  });
 });
