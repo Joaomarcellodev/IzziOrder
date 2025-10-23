@@ -57,5 +57,49 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     // Verifica se mostra mensagem de erro
    await expect(page.getByRole('dialog')).toBeVisible();
   });
- 
+
+    // 3. DESCRIÇÃO VAZIA
+  test('deve bloquear item com descrição vazia', async ({ page }) => {
+    await page.getByRole('button', { name: /Adicionar Item/i }).click();
+    await page.waitForTimeout(2000);
+    
+    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
+    await page.waitForTimeout(1000);
+    await page.getByPlaceholder('Escreva a descrição do item').fill('');
+    await page.waitForTimeout(1000);
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('20.00');
+    await page.waitForTimeout(1000);
+    
+    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('option', { name: 'Teste' }).first().click();
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+  });
+      // 4. DESCRIÇÃO COM MENOS DE 3 CARACTERES
+  test('deve bloquear item com descrição menor que 3 caracteres', async ({ page }) => {
+    await page.getByRole('button', { name: /Adicionar Item/i }).click();
+    await page.waitForTimeout(2000);
+    
+    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
+    await page.waitForTimeout(1000);
+    await page.getByPlaceholder('Escreva a descrição do item').fill('De');
+    await page.waitForTimeout(1000);
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
+    await page.waitForTimeout(1000);
+    
+    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('option', { name: 'Teste' }).first().click();
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
 });
