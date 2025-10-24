@@ -7,7 +7,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     await page.waitForTimeout(2000);
   });
 
-    // 1. EDITAR NOME DO ITEM - CORRIGIDO
+    // 1. EDITAR NOME DO ITEM 
   test('deve editar nome do item existente', async ({ page }) => {
     test.setTimeout(60000);
     
@@ -73,6 +73,27 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     
     // Verifica se a descrição foi atualizada (pode precisar abrir detalhes do item)
     await expect(page.getByText('Pizza atualizada com novos ingredientes')).toBeVisible();
+  });
+
+    // 4. EDITAR CATEGORIA DO ITEM
+  test('deve editar categoria do item existente', async ({ page }) => {
+    test.setTimeout(60000);
+    
+    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
+    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+    await page.waitForTimeout(3000);
+    
+    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('option', { name: 'Sobremesas' }).click();
+    await page.waitForTimeout(1000);
+    
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(5000);
+    
+    await page.getByText('Sobremesas').click();
+    await expect(page.getByText('Item atualizado com sucesso')).toBeVisible();
   });
 
 });

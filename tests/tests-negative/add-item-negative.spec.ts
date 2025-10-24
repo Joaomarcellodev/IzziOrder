@@ -123,7 +123,7 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(2000);
     
-    // Verifica se mostra mensagem de erro
+   
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 
@@ -162,12 +162,12 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('30.00');
     await page.waitForTimeout(1000);
     
-    // Não seleciona categoria
+    
     
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(2000);
     
-    // Verifica se mostra mensagem de erro
+    
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 
