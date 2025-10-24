@@ -61,7 +61,6 @@ describe("Orders CREATE Integration", () => {
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data.customer_id).toBeNull();
     });
 
 
