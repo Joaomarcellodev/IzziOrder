@@ -33,6 +33,7 @@ test.describe('Testes Negativos - Adicionar Item', () => {
    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
+  // 2. ITEM COM NOME VAZIO
    test('deve bloquear item com nome vazio', async ({ page }) => {
     test.setTimeout(60000);
     
@@ -54,7 +55,7 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(5000);
     
-    // Verifica se mostra mensagem de erro
+    
    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
@@ -162,11 +163,8 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('30.00');
     await page.waitForTimeout(1000);
     
-    
-    
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(2000);
-    
     
     await expect(page.getByRole('dialog')).toBeVisible();
   });
@@ -191,10 +189,8 @@ test.describe('Testes Negativos - Adicionar Item', () => {
     await page.getByRole('button', { name: /cancelar/i }).click();
     await page.waitForTimeout(2000);
     
-    // Verifica se o modal/dialog foi fechado
     await expect(page.getByRole('textbox', { name: 'Nome do Item' })).not.toBeVisible();
-    
-    // Verifica se o item NÃO foi criado
+  
     await expect(page.getByText('Item Cancelado')).not.toBeVisible();
   });
 });
