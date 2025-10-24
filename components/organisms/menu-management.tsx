@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react"; // Adicionado useEffect
-import { GripVertical, Edit, Trash, Upload, Plus, CameraOff, MoreVertical } from "lucide-react"; 
+import { GripVertical, Edit, Trash, Upload, Plus, CameraOff, MoreVertical } from "lucide-react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -33,6 +33,7 @@ import {
   updateMenuItemAvailability,
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
+  MenuItem,
 } from "@/app/actions/menuItem";
 import {
   createCategory,
@@ -42,16 +43,6 @@ import {
 import { validateMenuItem } from "@/lib/validators/menuItem";
 
 // Interfaces (Mantidas as originais)
-interface MenuItem {
-  id: string | null;
-  name: string;
-  description: string;
-  price: number;
-  category_id: string;
-  image: string;
-  available: boolean;
-}
-
 interface Category {
   id: string | null;
   name: string;
@@ -100,7 +91,7 @@ const MenuItemCard = ({
 }: MenuItemCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null); // Referência para a área de ações
-  
+
   // Estado para simular o "abrir" das ações no mobile sem um swipe real
   const [isActionsOpen, setIsActionsOpen] = useState(false);
 
@@ -197,7 +188,7 @@ const MenuItemCard = ({
   const dragRef = drag(useRef<HTMLDivElement>(null));
 
   const hasImage = item.image && item.image !== "/placeholder-img.svg";
-  
+
   // Função para abrir/fechar ações no clique (alternativa ao swipe)
   const toggleMobileActions = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Para evitar que o clique no botão abra as ações no desktop
@@ -295,20 +286,20 @@ const MenuItemCard = ({
 
           {/* Mobile: Botão para abrir ações */}
           <div className="sm:hidden flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMobileActions}
-                className="h-8 w-8 text-gray-500"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileActions}
+              className="h-8 w-8 text-gray-500"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </CardContent>
-      
+
       {/* ÁREA DE AÇÕES SLIDEOUT (Mobile) */}
-      <div 
+      <div
         ref={actionsRef}
         className={cn(
           "absolute right-0 top-0 h-full w-40 bg-gray-100/95 backdrop-blur-sm transition-transform duration-300 sm:hidden",
@@ -316,7 +307,7 @@ const MenuItemCard = ({
           isActionsOpen ? "translate-x-0" : "translate-x-full"
         )}
         // Adicionando onMouseDown/onTouchStart para evitar que o clique dentro da área feche o menu imediatamente
-        onMouseDown={(e) => e.stopPropagation()} 
+        onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
         {/* Switch de Disponibilidade */}
@@ -733,7 +724,7 @@ export function MenuManagement({
           {/* Nova div para alinhamento do título e botão */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Gerenciar Categorias</h2>
-            
+
             {/* Botão Adicionar Categoria movido e ajustado para ser compacto */}
             <Button
               onClick={addNewCategory}
@@ -820,7 +811,7 @@ export function MenuManagement({
                       id="price"
                       type="number"
                       step="1"
-                      value={editingItem.price}
+                      value={editingItem.price === 0 ? "" : editingItem.price}
                       onChange={(e) =>
                         setEditingItem((prev) =>
                           prev

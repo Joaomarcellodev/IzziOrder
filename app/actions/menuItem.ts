@@ -12,6 +12,16 @@ interface ActionResponse {
   data?: any;
 }
 
+export interface MenuItem {
+  id: string | null;
+  name: string;
+  description: string;
+  price: number;
+  category_id: string;
+  image: string;
+  available: boolean;
+}
+
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
 export async function getMenuItems(establishment_id: string) {
