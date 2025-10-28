@@ -19,17 +19,22 @@ export interface Order {
   total: number;
   status: "OPEN" | "CLOSED";
   tableNumber?: number;
-  type: "DELIVERY" | "LOCAL";
+  customerName?: string;
+  type: "DELIVERY" | "LOCAL" | "PUCKUP";
   deliveryFee?: number;
   estimatedTime?: number;
-  orderLines: Array<{ id?: string; name: string; quantity: number }>;
-  customerName?: string | null;
+  orderLines: Array<{
+    id?: string;
+    name: string;
+    quantity: number;
+    observation: string
+  }>;
 }
 
 export interface OrderRequestDTO {
   total: number;
-  tableNumber?: number;
-  type: "DELIVERY" | "LOCAL";
+  type: "DELIVERY" | "LOCAL" | "PUCKUP";
+  detail?: string;
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<OrderLineRequestDTO>;
@@ -42,7 +47,7 @@ export interface OrderLineRequestDTO {
   name: string,
   quantity: number,
   price: number,
-  observation: string;
+  observation?: string;
 }
 
 /**
@@ -61,7 +66,7 @@ export async function createOrder(
       type: order.type,
       status: "OPEN",
       establishment_id: ESTABLISHMENT_ID,
-      table_number: order.tableNumber,
+      detail: order.detail,
       delivery_fee: order.deliveryFee,
       estimated_time: order.estimatedTime,
       customer_id: order.customerId
@@ -182,7 +187,7 @@ export async function updateOrder(
       total: updates.total!.toFixed(2),
       type: updates.type,
       status: "OPEN",
-      table_number: updates.tableNumber,
+      detail: updates.detail,
       delivery_fee: updates.deliveryFee,
       estimated_time: updates.estimatedTime,
       customer_id: updates.customerId
