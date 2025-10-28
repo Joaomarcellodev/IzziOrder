@@ -84,7 +84,7 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
+                <Link href="/reset-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
                   Esqueceu a senha?
                 </Link>
               </div>
