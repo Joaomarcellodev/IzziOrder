@@ -8,10 +8,8 @@ import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Eye, Truck, Trash2, AlertTriangle, X } from "lucide-react";
 import { OrderDetailsModal } from "@/components/molecules/order-details-modal";
 import { DeleteConfirmModal } from "@/components/molecules/delete-confirm-modal";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { deleteOrder, Order } from "@/app/actions/orders";
 import { useToast } from "../atoms/use-toast";
-// NOVO: Importação do modal de novo pedido
 import { NewOrderModal } from "@/components/molecules/new-order-modal";
 import { Category } from "@/app/actions/category";
 import { MenuItem } from "@/app/actions/menuItem";

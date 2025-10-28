@@ -26,45 +26,48 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo Section */}
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-4">
-            <span className="text-2xl font-bold text-primary-foreground">IO</span>
+          <div className="mx-auto flex items-center justify-center mb-4">
+            <img className="w-20 h-20" src="./android-chrome-512x512.png" alt="Logo principal" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">IzziOrder</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your restaurant dashboard</p>
+          <div className="text-4xl font-bold text-gray-900">
+            <span style={{ color: "#007BFF" }}>izzi</span>
+            <span style={{ color: "#FD7E14" }}>Order</span>
+          </div>
+          <p className="text-muted-foreground mt-2">Faça login no painel de controle do seu restaurante.</p>
         </div>
 
         {/* Login Form */}
         <Card className="border-border shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+            <CardTitle className="text-2xl text-center">Bem vindo de volta</CardTitle>
+            <CardDescription className="text-center">Insira suas credenciais para acessar sua conta.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Insira seu e-mail"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 "
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Insira sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
@@ -82,23 +85,14 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between">
                 <Link href="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                  Forgot password?
+                  Esqueceu a senha?
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                Sign In
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+                Entrar
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                  Sign up
-                </Link>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
