@@ -4,12 +4,9 @@ import { getOrders } from "@/app/actions/orders";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { getMenuItems } from "@/app/actions/menuItem";
 import { getCategories } from "@/app/actions/category";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/auth"; ;
+
 
 export default async function OrdersPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
 
   const { data: orders, error: errorTables } = await getOrders(ESTABLISHMENT_ID);
   const { data: categories, error: errorCategories } = await getCategories(ESTABLISHMENT_ID);
