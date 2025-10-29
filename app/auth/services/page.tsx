@@ -202,7 +202,7 @@ export default function SettingsPage() {
                 </div>
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button onClick={resetForm}>
+                    <Button onClick={resetForm} className="bg-blue-500">
                       <Plus className="mr-2 h-4 w-4" />
                       Criar Usuário
                     </Button>
@@ -278,7 +278,7 @@ export default function SettingsPage() {
                       <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleCreateUser}>Criar Usuário</Button>
+                      <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleCreateUser}>Criar Usuário</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -401,7 +401,7 @@ export default function SettingsPage() {
                             <div className="space-y-3 rounded-lg border border-border p-4">
                               {PERMISSIONS.map((permission) => (
                                 <div key={permission.id} className="flex items-start space-x-3">
-                                  <Checkbox
+                                  <Checkbox 
                                     id={`edit-${permission.id}`}
                                     checked={formData.permissions.includes(permission.id)}
                                     onCheckedChange={() => togglePermission(permission.id)}
@@ -424,7 +424,7 @@ export default function SettingsPage() {
                           <Button variant="outline" onClick={() => setEditingUser(null)}>
                             Cancelar
                           </Button>
-                          <Button onClick={handleUpdateUser}>Salvar Alterações</Button>
+                          <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleUpdateUser}>Salvar Alterações</Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
