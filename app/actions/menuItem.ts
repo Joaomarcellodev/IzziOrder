@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 import { ESTABLISHMENT_ID } from "@/utils/config";
