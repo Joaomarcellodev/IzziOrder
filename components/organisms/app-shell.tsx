@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import {
@@ -50,6 +51,9 @@ export function AppShell({
   const handleNavigation = () => {
     if (isSidebarOpen) setIsSidebarOpen(false);
   };
+
+  const router = useRouter();
+
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -240,9 +244,9 @@ export function AppShell({
                 Cancelar
               </Button>
               <Button
-                style={{ backgroundColor: "#FD7E14", color: "white" }}
+                className=" bg-blue-600 hover:bg-blue-700"
                 onClick={() => {
-                  console.log("Usuário deslogado");
+                  router.push("/login");
                   setIsLogoutModalOpen(false);
                 }}
               >
