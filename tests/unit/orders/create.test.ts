@@ -1,4 +1,4 @@
-// create-order.test.ts
+
 import { createClient } from "@/lib/supabase/server";
 import { createOrder, OrderRequestDTO } from "@/app/actions/orders";
 import { ESTABLISHMENT_ID } from "@/utils/config";
@@ -26,7 +26,6 @@ describe("CREATE Order - createOrder", () => {
   const mockValidOrder: OrderRequestDTO = {
     total: 100.50,
     type: "LOCAL",
-    tableNumber: 5,
     deliveryFee: 0,
     estimatedTime: 30,
     customerId: "customer-123",
@@ -70,7 +69,6 @@ describe("CREATE Order - createOrder", () => {
         type: "LOCAL",
         status: "OPEN",
         establishment_id: ESTABLISHMENT_ID,
-        table_number: 5,
         delivery_fee: 0,
         estimated_time: 30,
         customer_id: "customer-123"
