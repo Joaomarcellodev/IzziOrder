@@ -170,7 +170,7 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-4 ml-auto">
+            {/* <div className="flex items-center gap-4 ml-auto">
               <Button
                 variant="ghost"
                 size="icon"
@@ -185,7 +185,7 @@ export function AppShell({
                   />
                 )}
               </Button>
-            </div>
+            </div> */}
           </div>
         </header>
 
@@ -216,7 +216,7 @@ export function AppShell({
               Email: carlos.mendes@izziorder.com.br
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              Permissão: <span className="font-medium">Manager</span>
+              Cargo: <span className="font-medium">Manager</span>
             </p>
             <div className="mt-6 flex justify-end">
               <Button onClick={() => setIsProfileOpen(false)}>Fechar</Button>
