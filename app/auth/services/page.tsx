@@ -215,7 +215,7 @@ export default function SettingsPage() {
               />
             </div>
             <Button
-              className="gap-2"
+              className="gap-2  bg-blue-600 hover:bg-blue-700"
               onClick={() => {
                 resetForm()
                 setEditingUser(null)
@@ -274,6 +274,7 @@ export default function SettingsPage() {
                     {PERMISSIONS.map((p) => (
                       <div key={p.id} className="flex items-center space-x-2">
                         <Checkbox
+                          
                           checked={formData.permissions.includes(p.id)}
                           onCheckedChange={() => togglePermission(p.id)}
                         />
@@ -284,7 +285,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={editingUser ? handleUpdateUser : handleCreateUser}>
+                <Button className=" bg-blue-600 hover:bg-blue-700" onClick={editingUser ? handleUpdateUser : handleCreateUser}>
                   {editingUser ? "Salvar Alterações" : "Criar Usuário"}
                 </Button>
               </DialogFooter>
