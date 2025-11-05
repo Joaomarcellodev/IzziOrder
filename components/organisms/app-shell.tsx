@@ -223,7 +223,7 @@ export function AppShell({
               Cargo: <span className="font-medium">Manager</span>
             </p>
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setIsProfileOpen(false)}>Fechar</Button>
+              <Button className=" bg-blue-600 hover:bg-blue-700" onClick={() => setIsProfileOpen(false)}>Fechar</Button>
             </div>
           </div>
         </div>
