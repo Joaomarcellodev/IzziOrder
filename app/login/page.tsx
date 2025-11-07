@@ -9,17 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/atoms/label"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { login } from "../actions/login"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement authentication logic
-    console.log("Login attempt:", { email, password })
-  }
+  const { toast } = useToast();
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -43,17 +41,23 @@ export default function LoginPage() {
             <CardDescription className="text-center">Insira suas credenciais para acessar sua conta.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form action={async (formData: FormData) => {
+              const { success, error } = await login(formData)
+              if (!success) {
+                toast({ title: "Erro ao fazer login", description: error! })
+              } else {
+                window.location.href = "/auth/orders"
+              }
+            }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="Insira seu e-mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 "
                     required
                   />
@@ -66,10 +70,9 @@ export default function LoginPage() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Insira sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     required
                   />

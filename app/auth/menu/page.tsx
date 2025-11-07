@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/organisms/app-shell";
 import { MenuManagement } from "@/components/organisms/menu-management";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { getCategories } from "../../actions/category";
 import { getMenuItems } from "../../actions/menuItem";
 import { ESTABLISHMENT_ID } from "@/utils/config";
