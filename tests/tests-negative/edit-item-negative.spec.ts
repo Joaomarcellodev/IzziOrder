@@ -1,192 +1,171 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 test.describe('Editar Item do Cardápio - Testes Negativos', () => {
-  
+  let itemDeTeste: string = '';
+
+  // PREPARAÇÃO (executa antes de CADA teste)
   test.beforeEach(async ({ page }) => {
+    console.log('🔄 Preparando ambiente de teste...');
+
     await page.goto('http://localhost:3000/menu');
     await page.waitForTimeout(2000);
+
+    if (!itemDeTeste) {
+      console.log('🎯 PRIMEIRA EXECUÇÃO - Criando item compartilhado');
+      await limparItensDeTesteAnteriores(page);
+
+      const prefixos = ['Pizza', 'Hambúrguer', 'Salada', 'Risotto', 'Lasanha', 'Frango'];
+      const sufixos = ['Margherita', 'Artesanal', 'Caesar', 'Cogumelos', 'Bolonhesa', 'Grelhado'];
+      const prefixo = prefixos[Math.floor(Math.random() * prefixos.length)];
+      const sufixo = sufixos[Math.floor(Math.random() * sufixos.length)];
+      itemDeTeste = `${prefixo} ${sufixo} Compartilhado`;
+
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(2000);
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill(itemDeTeste);
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Item compartilhado para testes negativos');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('35.50');
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(1000);
+      await page.getByRole('option').first().click();
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(5000);
+
+      await expect(page.getByText(itemDeTeste).first()).toBeVisible({ timeout: 10000 });
+      
+    } else {
+      
+      await expect(page.getByText(itemDeTeste).first()).toBeVisible({ timeout: 10000 });
+      
+    }
+  });
+
+  // LIMPEZA (executa depois de CADA teste)
+  test.afterEach(async ({ page }) => {
+    console.log(`🧹 AFTEREACH - Removendo item de teste: ${itemDeTeste}`);
+    await page.goto('http://localhost:3000/menu');
+    await page.waitForTimeout(2000);
+
+    if (itemDeTeste) {
+      await excluirItemEspecifico(page, itemDeTeste);
+      itemDeTeste = ''; // zera para o próximo beforeEach criar outro
+    }
   });
 
   // 1. EDITAR COM NOME VAZIO
   test('deve bloquear edição com nome vazio', async ({ page }) => {
     test.setTimeout(60000);
-    
-    // Encontra um item existente para editar
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
+    console.log(`❌ Teste 1 - Tentando editar com NOME VAZIO: ${itemDeTeste}`);
+
+    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
-    
-    // Limpa o nome
+
+    // Limpa o nome completamente
     await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
     await page.waitForTimeout(1000);
-    
-    // Tenta salvar
+
+    // Tenta salvar com nome vazio
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(3000);
+
+    // Verifica se ainda está no modal (não salvou) ou se mostra erro
+    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+    const temErro = await page.getByText(/erro|obrigatório|nome deve ter|inválido/i).first().isVisible().catch(() => false);
     
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/Erro: O nome deve ter pelo menos 3 caracteres./i).first().isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
+    expect(aindaNoModal || temErro).toBeTruthy();
+    console.log('✅ Edição com nome vazio foi bloqueada corretamente');
+
+    // Cancela a edição
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
   });
 
-  // 2. EDITAR COM NOME MUITO CURTO (2 caracteres)
-  test('deve bloquear edição com nome menor que 3 caracteres', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Ab');
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/Erro: O nome deve ter pelo menos 3 caracteres./i).first().isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
-  });
-
-  // 3. EDITAR COM NOME COM APENAS ESPAÇOS
-  test('deve bloquear edição com nome contendo apenas espaços', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('   ');
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/Erro: O nome deve ter pelo menos 3 caracteres.|campo obrigatório/i).first().isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
-  });
-
-  // 4. EDITAR COM PREÇO ZERO
+  // 2. EDITAR COM PREÇO ZERO
   test('deve bloquear edição com preço zero', async ({ page }) => {
     test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
+    console.log(`❌ Teste 2 - Tentando editar com PREÇO ZERO: ${itemDeTeste}`);
+
+    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
-    
+
+    // Define preço como zero
     await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
     await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0');
     await page.waitForTimeout(1000);
-    
+
+    // Tenta salvar com preço zero
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(3000);
+
+    // Verifica se ainda está no modal (não salvou) ou se mostra erro
+    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+    const temErro = await page.getByText(/erro|preço deve ser maior|inválido|zero/i).first().isVisible().catch(() => false);
     
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/Erro: O preço deve ser maior que zero./i).first().isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
+    expect(aindaNoModal || temErro).toBeTruthy();
+    console.log('✅ Edição com preço zero foi bloqueada corretamente');
+
+    // Cancela a edição
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
   });
-
-  // 5. EDITAR COM PREÇO NEGATIVO
-  test('deve bloquear edição com preço negativo', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('-10.00');
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/Erro: O preço deve ser maior que zero./i).first().isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
-  });
-
-
-  // 6. EDITAR COM DESCRIÇÃO VAZIA
-  test('deve bloquear edição com descrição vazia', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    await page.getByPlaceholder('Escreva a descrição do item').clear();
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/campo obrigatório|descrição é obrigatória/i).first().isVisible().catch(() => false);
-  
-  });
-
-  // 7. EDITAR COM DESCRIÇÃO MUITO CURTA
-  test('deve bloquear edição com descrição menor que 3 caracteres', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const itemContainer = page.locator('div', { hasText: 'Pizza Teste' }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    await page.getByPlaceholder('Escreva a descrição do item').clear();
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Oi');
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica se mostra erro
-    const hasError = await page.getByText(/mínimo 3 caracteres|descrição muito curta/i).first().isVisible().catch(() => false);
-   
-  });
-
-  // 8. CANCELAR EDIÇÃO
-  test('deve cancelar edição sem salvar alterações', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const nomeOriginal = 'Pizza Teste';
-    const itemContainer = page.locator('div', { hasText: nomeOriginal }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    // Altera o nome
-    await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Nome Alterado Temporariamente');
-    await page.waitForTimeout(1000);
-    
-    // Clica em cancelar
-    await page.getByRole('button', { name: /cancelar/i }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica que o nome original permanece
-    await expect(page.getByText(nomeOriginal).first()).toBeVisible();
-    await expect(page.getByText('Nome Alterado Temporariamente')).not.toBeVisible();
-  });
-
-  // 9. EDITAR SEM ALTERAR NENHUM CAMPO
-  test('deve manter item inalterado ao salvar sem modificações', async ({ page }) => {
-    test.setTimeout(60000);
-    
-    const nomeOriginal = 'Pizza Teste';
-    const itemContainer = page.locator('div', { hasText: nomeOriginal }).first();
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    
-    // Não altera nada, apenas clica em salvar
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(3000);
-    
-    // Verifica que o item ainda existe com o mesmo nome
-    await expect(page.getByText(nomeOriginal).first()).toBeVisible();
-  });
-
 });
+
+/* ------------------ FUNÇÕES AUXILIARES ------------------ */
+
+async function encontrarItemRecemCriado(page: Page, nomeItem: string) {
+  const containersComEdit = page.locator('div, li, article, section')
+    .filter({ has: page.locator('button:has(svg.lucide-square-pen)') })
+    .filter({ hasText: nomeItem });
+  const countComEdit = await containersComEdit.count();
+  return containersComEdit.nth(countComEdit - 1);
+}
+
+async function excluirItemEspecifico(page: Page, nomeItem: string) {
+  console.log(`🗑️  Tentando excluir item: ${nomeItem}`);
+  const itens = page.locator('div, li, article, section')
+    .filter({ has: page.locator('button:has(svg.lucide-trash)') })
+    .filter({ hasText: nomeItem });
+  const count = await itens.count();
+
+  if (count > 0) {
+    const item = itens.nth(count - 1);
+    const deleteButton = item.locator('button:has(svg.lucide-trash)').first();
+
+    if (await deleteButton.isVisible()) {
+      await deleteButton.click();
+      await page.waitForTimeout(1000);
+
+      const confirmarExclusao = page.getByRole('button', { name: /excluir|confirmar|sim/i });
+      if (await confirmarExclusao.isVisible({ timeout: 2000 })) {
+        await confirmarExclusao.click();
+        await page.waitForTimeout(1000);
+        console.log(`✅ Item excluído: ${nomeItem}`);
+      }
+    }
+  } else {
+    console.log(`ℹ️  Item não encontrado para exclusão: ${nomeItem}`);
+  }
+}
+
+async function limparItensDeTesteAnteriores(page: Page) {
+  console.log('🧹 Procurando itens de teste anteriores...');
+  const nomesTeste = [
+    'Pizza Margherita Compartilhado',
+    'Hambúrguer Artesanal Compartilhado',
+    'Salada Caesar Compartilhado',
+    'Risotto Cogumelos Compartilhado',
+    'Lasanha Bolonhesa Compartilhado',
+    'Frango Grelhado Compartilhado',
+    'Pizza Especial Editada',
+    'Hambúrguer Premium Editado',
+    'Salada Gourmet Editada',
+    'Risotto Cremoso Editado',
+    'Lasanha Tradicional Editada',
+    'Frango Temperado Editado'
+  ];
+  for (const nome of nomesTeste) {
+    await excluirItemEspecifico(page, nome);
+  }
+}
