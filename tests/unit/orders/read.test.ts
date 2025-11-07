@@ -1,4 +1,4 @@
-// read-orders.test.ts
+
 import { createClient } from "@/lib/supabase/server";
 import { getOrders, getOrderById } from "@/app/actions/orders";
 import { ESTABLISHMENT_ID } from "@/utils/config";

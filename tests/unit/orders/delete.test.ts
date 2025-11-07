@@ -1,4 +1,4 @@
-// delete-orders.test.ts
+
 import { createClient } from "@/lib/supabase/server";
 import { deleteOrder } from "@/app/actions/orders";
 

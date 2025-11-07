@@ -1,4 +1,4 @@
-// update-orders.test.ts
+
 import { createClient } from "@/lib/supabase/server";
 import { updateOrder, updateToClosedOrder } from "@/app/actions/orders";
 
