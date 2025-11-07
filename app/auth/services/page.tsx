@@ -1,7 +1,6 @@
 "use client"
 
-
-import { AppShell } from "@/components/organisms/app-shell";
+import { AppShell } from "@/components/organisms/app-shell"
 import { useState } from "react"
 import { Button } from "@/components/atoms/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
@@ -22,6 +21,7 @@ import {
 import { Checkbox } from "@/components/atoms/checkbox"
 import { Search, Plus, MoreVertical, Trash2, Edit } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/molecules/dropdown-menu"
+import { Toaster, toast } from "sonner"
 
 type Permission = {
   id: string
@@ -54,6 +54,14 @@ const PERMISSIONS: Permission[] = [
   { id: "view_analytics", label: "Ver Análises", description: "Acessar relatórios e análises" },
 ]
 
+// 🔧 Permissões padrão por cargo
+const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
+  admin: PERMISSIONS.map((p) => p.id),
+  manager: ["read", "write", "view_analytics", "manage_users"],
+  editor: ["read", "write"],
+  viewer: ["read", "view_analytics"],
+}
+
 export default function SettingsPage() {
   const [users, setUsers] = useState<User[]>([
     {
@@ -75,17 +83,22 @@ export default function SettingsPage() {
   ])
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "viewer",
-    permissions: [] as string[],
+    permissions: ROLE_DEFAULT_PERMISSIONS["viewer"],
   })
 
   const handleCreateUser = () => {
+    if (!formData.name || !formData.email) {
+      toast.error("Por favor, preencha todos os campos.")
+      return
+    }
+
     const newUser: User = {
       id: Date.now().toString(),
       name: formData.name,
@@ -94,32 +107,33 @@ export default function SettingsPage() {
       permissions: formData.permissions,
       createdAt: new Date().toISOString().split("T")[0],
     }
+
     setUsers([...users, newUser])
-    setIsCreateDialogOpen(false)
+    setIsDialogOpen(false)
     resetForm()
+    toast.success("Usuário criado com sucesso!")
   }
 
   const handleUpdateUser = () => {
     if (!editingUser) return
+
     setUsers(
       users.map((u) =>
         u.id === editingUser.id
-          ? {
-              ...u,
-              name: formData.name,
-              email: formData.email,
-              role: formData.role,
-              permissions: formData.permissions,
-            }
+          ? { ...u, ...formData }
           : u,
       ),
     )
+
     setEditingUser(null)
     resetForm()
+    setIsDialogOpen(false)
+    toast.success("Usuário atualizado com sucesso!")
   }
 
   const handleDeleteUser = (id: string) => {
     setUsers(users.filter((u) => u.id !== id))
+    toast.success("Usuário excluído com sucesso!")
   }
 
   const resetForm = () => {
@@ -127,7 +141,7 @@ export default function SettingsPage() {
       name: "",
       email: "",
       role: "viewer",
-      permissions: [],
+      permissions: ROLE_DEFAULT_PERMISSIONS["viewer"],
     })
   }
 
@@ -139,6 +153,7 @@ export default function SettingsPage() {
       role: user.role,
       permissions: user.permissions,
     })
+    setIsDialogOpen(true) // ✅ abre o modal automaticamente
   }
 
   const togglePermission = (permissionId: string) => {
@@ -148,6 +163,15 @@ export default function SettingsPage() {
         ? prev.permissions.filter((p) => p !== permissionId)
         : [...prev.permissions, permissionId],
     }))
+  }
+
+  const handleRoleChange = (role: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      role,
+      permissions: ROLE_DEFAULT_PERMISSIONS[role] || [],
+    }))
+    toast.info("Permissões ajustadas para o cargo selecionado.")
   }
 
   const filteredUsers = users.filter(
@@ -169,274 +193,146 @@ export default function SettingsPage() {
     }
   }
 
-  return (
-    <AppShell
-      currentPage="Configurações de Usuários"
-      breadcrumb="Painel > Configurações"
-    >
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-foreground">Configurações de Usuários</h1>
-          <p className="mt-2 text-muted-foreground">Gerencie usuários, cargos e permissões da sua plataforma</p>
-        </div>
+  const getPermissionLabel = (id: string) => {
+    const permission = PERMISSIONS.find((p) => p.id === id)
+    return permission ? permission.label : id
+  }
 
-        <Card className="border-border">
-          <CardHeader className="border-b border-border">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Usuários</CardTitle>
-                <CardDescription>
-                  {users.length} {users.length === 1 ? "usuário cadastrado" : "usuários cadastrados"}
-                </CardDescription>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+  return (
+    <AppShell currentPage="Configurações de Usuários" breadcrumb="Painel > Configurações">
+      <Toaster position="top-right" richColors />
+
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar usuário..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button
+              className="gap-2  bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                resetForm()
+                setEditingUser(null)
+                setIsDialogOpen(true)
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </div>
+
+          {/* 🧱 Modal único para criar e editar */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
+                <DialogDescription>
+                  {editingUser
+                    ? "Atualize as informações do usuário."
+                    : "Preencha os dados para adicionar um novo usuário."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
                   <Input
-                    placeholder="Buscar usuários..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 w-full sm:w-[250px]"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={resetForm} className="bg-blue-500">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Criar Usuário
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Criar Novo Usuário</DialogTitle>
-                      <DialogDescription>Adicione um novo usuário e configure suas permissões</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nome Completo</Label>
-                        <Input
-                          id="name"
-                          placeholder="Digite o nome do usuário"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="usuario@exemplo.com"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="role">Cargo</Label>
-                        <Select
-                          value={formData.role}
-                          onValueChange={(value) => setFormData({ ...formData, role: value })}
-                        >
-                          <SelectTrigger id="role">
-                            <SelectValue placeholder="Selecione um cargo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ROLES.map((role) => (
-                              <SelectItem key={role.value} value={role.value}>
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-3">
-                        <Label>Permissões</Label>
-                        <div className="space-y-3 rounded-lg border border-border p-4">
-                          {PERMISSIONS.map((permission) => (
-                            <div key={permission.id} className="flex items-start space-x-3">
-                              <Checkbox
-                                id={permission.id}
-                                checked={formData.permissions.includes(permission.id)}
-                                onCheckedChange={() => togglePermission(permission.id)}
-                              />
-                              <div className="flex-1">
-                                <label
-                                  htmlFor={permission.id}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                >
-                                  {permission.label}
-                                </label>
-                                <p className="text-sm text-muted-foreground mt-1">{permission.description}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleCreateUser}>Criar Usuário</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {filteredUsers.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p className="text-muted-foreground">Nenhum usuário encontrado</p>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
                 </div>
-              ) : (
-                filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-foreground">{user.name}</p>
-                          <Badge variant="outline" className={getRoleBadgeColor(user.role)}>
-                            {ROLES.find((r) => r.value === user.role)?.label}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {user.permissions.slice(0, 3).map((permId) => {
-                            const perm = PERMISSIONS.find((p) => p.id === permId)
-                            return perm ? (
-                              <Badge key={permId} variant="secondary" className="text-xs">
-                                {perm.label}
-                              </Badge>
-                            ) : null
-                          })}
-                          {user.permissions.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{user.permissions.length - 3}
-                            </Badge>
-                          )}
-                        </div>
+                <div className="space-y-2">
+                  <Label>Cargo</Label>
+                  <Select value={formData.role} onValueChange={handleRoleChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um cargo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                          {r.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Permissões</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PERMISSIONS.map((p) => (
+                      <div key={p.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          
+                          checked={formData.permissions.includes(p.id)}
+                          onCheckedChange={() => togglePermission(p.id)}
+                        />
+                        <span>{p.label}</span>
                       </div>
-                    </div>
-                    <Dialog open={editingUser?.id === user.id} onOpenChange={(open) => !open && setEditingUser(null)}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DialogTrigger asChild>
-                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                          </DialogTrigger>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteUser(user.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Editar Usuário</DialogTitle>
-                          <DialogDescription>Atualize as informações e permissões do usuário</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-6 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="edit-name">Nome Completo</Label>
-                            <Input
-                              id="edit-name"
-                              value={formData.name}
-                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="edit-email">Email</Label>
-                            <Input
-                              id="edit-email"
-                              type="email"
-                              value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="edit-role">Cargo</Label>
-                            <Select
-                              value={formData.role}
-                              onValueChange={(value) => setFormData({ ...formData, role: value })}
-                            >
-                              <SelectTrigger id="edit-role">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {ROLES.map((role) => (
-                                  <SelectItem key={role.value} value={role.value}>
-                                    {role.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-3">
-                            <Label>Permissões</Label>
-                            <div className="space-y-3 rounded-lg border border-border p-4">
-                              {PERMISSIONS.map((permission) => (
-                                <div key={permission.id} className="flex items-start space-x-3">
-                                  <Checkbox 
-                                    id={`edit-${permission.id}`}
-                                    checked={formData.permissions.includes(permission.id)}
-                                    onCheckedChange={() => togglePermission(permission.id)}
-                                  />
-                                  <div className="flex-1">
-                                    <label
-                                      htmlFor={`edit-${permission.id}`}
-                                      className="text-sm font-medium leading-none cursor-pointer"
-                                    >
-                                      {permission.label}
-                                    </label>
-                                    <p className="text-sm text-muted-foreground mt-1">{permission.description}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setEditingUser(null)}>
-                            Cancelar
-                          </Button>
-                          <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleUpdateUser}>Salvar Alterações</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                    ))}
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button className=" bg-blue-600 hover:bg-blue-700" onClick={editingUser ? handleUpdateUser : handleCreateUser}>
+                  {editingUser ? "Salvar Alterações" : "Criar Usuário"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* 🧱 Cards de usuários */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredUsers.map((user) => (
+              <Card key={user.id}>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarFallback>{user.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle>{user.name}</CardTitle>
+                      <CardDescription>{user.email}</CardDescription>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <MoreVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                        <Edit className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <Badge className={getRoleBadgeColor(user.role)}>
+                    {ROLES.find((r) => r.value === user.role)?.label || user.role}
+                  </Badge>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    <strong>Permissões:</strong> {user.permissions.map(getPermissionLabel).join(", ")}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
     </AppShell>
-    
   )
 }
