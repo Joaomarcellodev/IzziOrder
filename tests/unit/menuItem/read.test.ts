@@ -1,4 +1,3 @@
-// tests/unit/menuItem/read-menuItem.test.ts
 import { getMenuItems } from "@/app/actions/menuItem";
 import { createClient } from "@/utils/supabase/server";
 
@@ -12,7 +11,7 @@ describe("UNIT — getMenuItems", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Criar uma cadeia de métodos mockada
+    // Cria uma cadeia de métodos mockada
     mockChain = {
       data: null,
       error: null,

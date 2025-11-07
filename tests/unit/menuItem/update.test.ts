@@ -1,4 +1,3 @@
-// tests/unit/menuItem/update-menuItem.test.ts
 import { updateMenuItem, updateMenuItemAvailability, updateMenuOrdernation } from "@/app/actions/menuItem";
 import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";

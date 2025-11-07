@@ -1,4 +1,3 @@
-// tests/unit/menuItem/create-menuItem.test.ts
 import { createMenuItem } from "@/app/actions/menuItem";
 import { createClient } from "@/utils/supabase/server";
 import { put } from "@vercel/blob";
@@ -45,14 +44,14 @@ describe("UNIT — createMenuItem", () => {
       singleCallCount++;
       
       switch (singleCallCount) {
-        case 1: // Check category
+        case 1: 
           return Promise.resolve({
             data: { id: "cat123", establishment_id: "est123" },
             error: null,
           });
-        case 2: // Get max position
+        case 2: 
           return Promise.resolve({
-            data: null, // No existing items
+            data: null,
             error: null,
           });
         default:
@@ -60,7 +59,6 @@ describe("UNIT — createMenuItem", () => {
       }
     });
 
-    // Mock for position query
     mockSupabase.select.mockImplementation((columns?: string) => {
       const lastFromCall = mockSupabase.from.mock.calls.at(-1)?.[0];
       
@@ -77,7 +75,6 @@ describe("UNIT — createMenuItem", () => {
       return mockSupabase;
     });
 
-    // Mock insert
     mockSupabase.insert.mockReturnValue({
       select: jest.fn().mockReturnValue({
         single: jest.fn().mockResolvedValue({
@@ -138,12 +135,12 @@ describe("UNIT — createMenuItem", () => {
         singleCallCount++;
         
         switch (singleCallCount) {
-          case 1: // Check category
+          case 1: 
             return Promise.resolve({
               data: { id: "cat123", establishment_id: "est123" },
               error: null,
             });
-          case 2: // Get max position
+          case 2:
             return Promise.resolve({
               data: { position: 5 },
               error: null,
