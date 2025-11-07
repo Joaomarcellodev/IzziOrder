@@ -7,7 +7,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
   test.beforeEach(async ({ page }) => {
     console.log('🔄 Preparando ambiente de teste...');
 
-    await page.goto('http://localhost:3000/menu');
+    await page.goto('http://localhost:3001/menu');
     await page.waitForTimeout(2000);
 
     if (!itemDeTeste) {
@@ -44,7 +44,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
   // LIMPEZA (executa depois de CADA teste)
   test.afterEach(async ({ page }) => {
     console.log(`🧹 AFTEREACH - Removendo item de teste: ${itemDeTeste}`);
-    await page.goto('http://localhost:3000/menu');
+    await page.goto('http://localhost:3001/menu');
     await page.waitForTimeout(2000);
 
     if (itemDeTeste) {
