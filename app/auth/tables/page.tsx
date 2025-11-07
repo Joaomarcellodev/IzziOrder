@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/organisms/app-shell";
 import { TableMap } from "@/components/organisms/table-map";
 import { getTables } from "@/app/actions/tables";
-import { getMenuItems } from "../actions/menuItem";
-import { getCategories } from "../actions/category";
+import { getMenuItems } from "../../actions/menuItem";
+import { getCategories } from "../../actions/category";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 
 export default async function TablesPage() {

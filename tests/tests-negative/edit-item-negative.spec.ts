@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 
-test.describe('Editar Item do Cardápio - Testes Positivos', () => {
+test.describe('Editar Item do Cardápio - Testes Negativos', () => {
   let itemDeTeste: string = '';
 
   // PREPARAÇÃO (executa antes de CADA teste)
@@ -20,11 +20,10 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       const sufixo = sufixos[Math.floor(Math.random() * sufixos.length)];
       itemDeTeste = `${prefixo} ${sufixo} Compartilhado`;
 
-
       await page.getByRole('button', { name: /Adicionar Item/i }).click();
       await page.waitForTimeout(2000);
       await page.getByRole('textbox', { name: 'Nome do Item' }).fill(itemDeTeste);
-      await page.getByPlaceholder('Escreva a descrição do item').fill('Item compartilhado para todos os testes');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Item compartilhado para testes negativos');
       await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('35.50');
       await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
       await page.waitForTimeout(1000);
@@ -53,101 +52,63 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     }
   });
 
-  // 1. EDITAR NOME DO ITEM
-  test('deve editar nome do item existente', async ({ page }) => {
+  // 1. EDITAR COM NOME VAZIO
+  test('deve bloquear edição com nome vazio', async ({ page }) => {
     test.setTimeout(60000);
-    console.log(`📝 Teste 1 - Editando NOME do item: ${itemDeTeste}`);
-
-    const novosNomes = [
-      'Pizza Especial ',
-      'Hambúrguer Premium ',
-      
-    ];
-    const novoNome = novosNomes[Math.floor(Math.random() * novosNomes.length)];
+    console.log(`❌ Teste 1 - Tentando editar com NOME VAZIO: ${itemDeTeste}`);
 
     const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
+
+    // Limpa o nome completamente
     await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill(novoNome);
+    await page.waitForTimeout(1000);
+
+    // Tenta salvar com nome vazio
     await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(5000);
-    await expect(page.getByText(novoNome).first()).toBeVisible();
-
-    const nomeAnterior = itemDeTeste;
-    itemDeTeste = novoNome;
-    console.log(`✅ NOME EDITADO: ${nomeAnterior} → ${itemDeTeste}`);
-  });
-
-  // 2. EDITAR PREÇO DO ITEM
-  test('deve editar preço do item existente', async ({ page }) => {
-    test.setTimeout(60000);
-    console.log(`💰 Teste 2 - Editando PREÇO do item: ${itemDeTeste}`);
-
-    const novoPreco = (Math.random() * 150 + 50).toFixed(2);
-    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill(novoPreco);
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(5000);
 
-    const precoExibido = novoPreco.endsWith('.00') ? novoPreco.replace('.00', '') : novoPreco;
-    const itemComNovoPreco = page.locator('div, li, article, section')
-      .filter({ hasText: itemDeTeste })
-      .filter({ hasText: new RegExp(`R\\$\\s*${precoExibido.replace('.', '\\.')}`) });
+    // Verifica se ainda está no modal (não salvou) ou se mostra erro
+    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+    const temErro = await page.getByText(/erro|obrigatório|nome deve ter|inválido/i).first().isVisible().catch(() => false);
+    
+    expect(aindaNoModal || temErro).toBeTruthy();
+    console.log('✅ Edição com nome vazio foi bloqueada corretamente');
 
-    await expect(itemComNovoPreco.first()).toBeVisible();
-    console.log(`✅ PREÇO EDITADO: R$ ${novoPreco} no item: ${itemDeTeste}`);
-  });
-
-  // 3. EDITAR DESCRIÇÃO DO ITEM
-  test('deve editar descrição do item existente', async ({ page }) => {
-    test.setTimeout(60000);
-    console.log(`📄 Teste 3 - Editando DESCRIÇÃO do item: ${itemDeTeste}`);
-
-    const novasDescricoes = [
-      'Preparo especial com temperos frescos',
-      'Ingredientes orgânicos e selecionados',
-      'Sabor único e textura incrível'
-    ];
-    const novaDescricao = novasDescricoes[Math.floor(Math.random() * novasDescricoes.length)];
-
-    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    await page.getByPlaceholder('Escreva a descrição do item').clear();
-    await page.getByPlaceholder('Escreva a descrição do item').fill(novaDescricao);
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(5000);
-    await expect(page.getByText(itemDeTeste).first()).toBeVisible();
-    console.log(`✅ DESCRIÇÃO EDITADA no item: ${itemDeTeste}`);
-  });
-
-  // 4. EDITAR CATEGORIA DO ITEM
-  test('deve editar categoria do item existente', async ({ page }) => {
-    test.setTimeout(60000);
-    console.log(`🔄 Teste 4 - Editando CATEGORIA do item: ${itemDeTeste}`);
-
-    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
-    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
-    await page.waitForTimeout(3000);
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+    // Cancela a edição
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
     await page.waitForTimeout(2000);
+  });
 
-    const todasOpcoes = await page.getByRole('option').all();
-    if (todasOpcoes.length > 3) {
-      await todasOpcoes[3].click();
-      await page.waitForTimeout(1000);
-      await page.getByRole('button', { name: 'Salvar' }).click();
-      await page.waitForTimeout(5000);
-      await expect(page.getByText(itemDeTeste).first()).toBeVisible();
-      console.log(`✅ CATEGORIA EDITADA no item: ${itemDeTeste}`);
-    } else {
-      console.log('⚠️  Apenas uma categoria disponível, teste pulado');
-      await page.getByRole('button', { name: /cancelar/i }).click();
-    }
+  // 2. EDITAR COM PREÇO ZERO
+  test('deve bloquear edição com preço zero', async ({ page }) => {
+    test.setTimeout(60000);
+    console.log(`❌ Teste 2 - Tentando editar com PREÇO ZERO: ${itemDeTeste}`);
+
+    const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
+    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+    await page.waitForTimeout(3000);
+
+    // Define preço como zero
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0');
+    await page.waitForTimeout(1000);
+
+    // Tenta salvar com preço zero
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(3000);
+
+    // Verifica se ainda está no modal (não salvou) ou se mostra erro
+    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+    const temErro = await page.getByText(/erro|preço deve ser maior|inválido|zero/i).first().isVisible().catch(() => false);
+    
+    expect(aindaNoModal || temErro).toBeTruthy();
+    console.log('✅ Edição com preço zero foi bloqueada corretamente');
+
+    // Cancela a edição
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
   });
 });
 

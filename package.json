@@ -8,6 +8,9 @@
     "lint": "next lint",
     "start": "next start",
     "test": "NODE_ENV=test jest --runInBand",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --coverage __tests__/unit",
+    "test:unit:orders": "jest --coverage __tests__/unit/orders",
     "test:watch": "NODE_ENV=test jest --watch"
   },
   "dependencies": {
