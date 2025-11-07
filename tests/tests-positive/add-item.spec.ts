@@ -12,20 +12,20 @@
     await page.getByRole('button', { name: /Adicionar Item/i }).click();
     await page.waitForTimeout(3000);
     
-    // Preenche nome
+    
     await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Pizza Teste');
     await page.waitForTimeout(2000);
-    // CORREÇÃO: Preenche descrição
+   
     await page.getByPlaceholder('Escreva a descrição do item').fill('Pizza de teste criada automaticamente');
     await page.waitForTimeout(2000);
-    // Preenche preço
+    
     await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('35.90');
     await page.waitForTimeout(2000);
-    // Seleciona categoria
+    
     await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
     await page.getByRole('option', { name: 'Teste' }).click();
     await page.waitForTimeout(2000);
-    // Salva
+    
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Pizza Teste').first()).toBeVisible();
