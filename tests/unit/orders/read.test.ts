@@ -1,9 +1,8 @@
-
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { getOrders, getOrderById } from "@/app/actions/orders";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 
-jest.mock("@/lib/supabase/server");
+jest.mock("@/utils/supabase/server");
 jest.mock("@/utils/config");
 
 const mockSupabase = {

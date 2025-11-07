@@ -1,8 +1,7 @@
-
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { deleteOrder } from "@/app/actions/orders";
 
-jest.mock("@/lib/supabase/server");
+jest.mock("@/utils/supabase/server");
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn()
 }));
