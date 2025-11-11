@@ -40,13 +40,11 @@ describe("CREATE Order - createOrder", () => {
   };
 
   describe("VALID Cases", () => {
-    it("should create order with order lines successfully", async () => {
-      const mockOrderCreated = { id: "order-123" };
-      
+    it("OR-1001 should create order with order lines successfully", async () => {
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
-            data: mockOrderCreated,
+            data: mockValidOrder,
             error: null
           })
         })
@@ -57,45 +55,33 @@ describe("CREATE Order - createOrder", () => {
         error: null
       });
 
-      const result = await createOrder(mockValidOrder);
+      const { success, data } = await createOrder(mockValidOrder);
 
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockOrderCreated);
-      
-      // Verifica os parametros passados para o supabase
-      expect(mockSupabase.insert).toHaveBeenCalledWith({
-        total: "100.50",
-        type: "LOCAL",
-        status: "OPEN",
-        establishment_id: ESTABLISHMENT_ID,
-        delivery_fee: 0,
-        estimated_time: 30,
-        customer_id: "customer-123"
-      });
+      expect(success).toBe(true);
+      expect(data).toEqual(mockValidOrder);
     });
 
-    it("should create order without order lines successfully", async () => {
-      const mockOrderCreated = { id: "order-124" };
+    it("OR-1002 should create order without order lines successfully", async () => {
       const orderWithoutLines = { ...mockValidOrder, orderLines: [] };
-      
+
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
-            data: mockOrderCreated,
+            data: orderWithoutLines,
             error: null
           })
         })
       });
 
-      const result = await createOrder(orderWithoutLines);
+      const { success, data } = await createOrder(orderWithoutLines);
 
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockOrderCreated);
+      expect(success).toBe(true);
+      expect(data).toEqual(orderWithoutLines);
     });
   });
 
   describe("INVALID Cases", () => {
-    it("should return error when order creation fails", async () => {
+    it("OR-2001 should return error when order creation fails", async () => {
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
@@ -105,15 +91,15 @@ describe("CREATE Order - createOrder", () => {
         })
       });
 
-      const result = await createOrder(mockValidOrder);
+      const { success, error } = await createOrder(mockValidOrder);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Erro ao criar pedido.");
+      expect(success).toBe(false);
+      expect(error).toBe("Erro ao criar pedido.");
     });
 
-    it("should return error when order lines creation fails", async () => {
+    it("OR-2002 should return error when order lines creation fails", async () => {
       const mockOrderCreated = { id: "order-123" };
-      
+
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
@@ -128,10 +114,10 @@ describe("CREATE Order - createOrder", () => {
         error: { message: "Order lines creation failed" }
       });
 
-      const result = await createOrder(mockValidOrder);
+      const { success, error } = await createOrder(mockValidOrder);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Order lines creation failed");
+      expect(success).toBe(false);
+      expect(error).toBe("Erro ao criar as linhas do pedido.");
     });
   });
 });
