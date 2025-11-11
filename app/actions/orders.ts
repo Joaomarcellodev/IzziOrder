@@ -95,7 +95,7 @@ export async function createOrder(
 
     if (orderLinesError) {
       console.error("Erro ao criar itens do pedido:", orderLinesError);
-      return { success: false, error: orderLinesError.message };
+      return { success: false, error: "Erro ao criar as linhas do pedido." };
     }
   }
 
