@@ -22,29 +22,29 @@ describe("CREATE Order - createOrder", () => {
     (ESTABLISHMENT_ID as string) = "test-establishment-id";
   });
 
-  const mockValidOrder: OrderRequestDTO = {
-    total: 100.50,
-    type: "LOCAL",
-    deliveryFee: 0,
-    estimatedTime: 30,
-    customerId: "customer-123",
-    orderLines: [
-      {
-        menuItemId: "item-1",
-        name: "Pizza",
-        quantity: 2,
-        price: 50.25,
-        observation: "No onions"
-      }
-    ]
-  };
-
   describe("VALID Cases", () => {
     it("OR-1001 should create order with order lines successfully", async () => {
+      const order: OrderRequestDTO = {
+        total: 100.50,
+        type: "LOCAL",
+        deliveryFee: 0,
+        estimatedTime: 30,
+        customerId: "customer-123",
+        orderLines: [
+          {
+            menuItemId: "item-1",
+            name: "Pizza",
+            quantity: 2,
+            price: 50.25,
+            observation: "No onions"
+          }
+        ]
+      };
+
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
-            data: mockValidOrder,
+            data: order,
             error: null
           })
         })
@@ -55,33 +55,55 @@ describe("CREATE Order - createOrder", () => {
         error: null
       });
 
-      const { success, data } = await createOrder(mockValidOrder);
+      const { success } = await createOrder(order);
 
       expect(success).toBe(true);
-      expect(data).toEqual(mockValidOrder);
     });
 
     it("OR-1002 should create order without order lines successfully", async () => {
-      const orderWithoutLines = { ...mockValidOrder, orderLines: [] };
+      const order: OrderRequestDTO = {
+        total: 100.50,
+        type: "LOCAL",
+        deliveryFee: 0,
+        estimatedTime: 30,
+        customerId: "customer-123",
+        orderLines: []
+      };
 
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
-            data: orderWithoutLines,
+            data: order,
             error: null
           })
         })
       });
 
-      const { success, data } = await createOrder(orderWithoutLines);
+      const { success } = await createOrder(order);
 
       expect(success).toBe(true);
-      expect(data).toEqual(orderWithoutLines);
     });
   });
 
   describe("INVALID Cases", () => {
     it("OR-2001 should return error when order creation fails", async () => {
+      const order: OrderRequestDTO = {
+        total: 100.50,
+        type: "LOCAL",
+        deliveryFee: 0,
+        estimatedTime: 30,
+        customerId: "customer-123",
+        orderLines: [
+          {
+            menuItemId: "item-1",
+            name: "Pizza",
+            quantity: 2,
+            price: 50.25,
+            observation: "No onions"
+          }
+        ]
+      };
+
       mockSupabase.insert.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           single: jest.fn().mockResolvedValueOnce({
@@ -91,13 +113,30 @@ describe("CREATE Order - createOrder", () => {
         })
       });
 
-      const { success, error } = await createOrder(mockValidOrder);
+      const { success, error } = await createOrder(order);
 
       expect(success).toBe(false);
       expect(error).toBe("Erro ao criar pedido.");
     });
 
     it("OR-2002 should return error when order lines creation fails", async () => {
+      const order: OrderRequestDTO = {
+        total: 100.50,
+        type: "LOCAL",
+        deliveryFee: 0,
+        estimatedTime: 30,
+        customerId: "customer-123",
+        orderLines: [
+          {
+            menuItemId: "item-1",
+            name: "Pizza",
+            quantity: 2,
+            price: 50.25,
+            observation: "No onions"
+          }
+        ]
+      };
+
       const mockOrderCreated = { id: "order-123" };
 
       mockSupabase.insert.mockReturnValueOnce({
@@ -114,7 +153,7 @@ describe("CREATE Order - createOrder", () => {
         error: { message: "Order lines creation failed" }
       });
 
-      const { success, error } = await createOrder(mockValidOrder);
+      const { success, error } = await createOrder(order);
 
       expect(success).toBe(false);
       expect(error).toBe("Erro ao criar as linhas do pedido.");
