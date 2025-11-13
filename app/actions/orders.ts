@@ -20,7 +20,7 @@ export interface Order {
   status: "OPEN" | "CLOSED";
   tableNumber?: number;
   customerName?: string;
-  type: "DELIVERY" | "LOCAL" | "PUCKUP";
+  type: "DELIVERY" | "LOCAL" | "PICKUP";
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<{
@@ -33,7 +33,7 @@ export interface Order {
 
 export interface OrderRequestDTO {
   total: number;
-  type: "DELIVERY" | "LOCAL" | "PUCKUP";
+  type: "DELIVERY" | "LOCAL" | "PICKUP";
   detail?: string;
   deliveryFee?: number;
   estimatedTime?: number;
