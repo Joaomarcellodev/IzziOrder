@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
+import { validateOrder } from "@/lib/validators/order";
 
 // Tipo padrão de resposta
 interface ActionResponse<T = any> {
@@ -57,6 +58,11 @@ export interface OrderLineRequestDTO {
 export async function createOrder(
   order: OrderRequestDTO
 ): Promise<ActionResponse<Order>> {
+  const errors = validateOrder(order);
+  if (errors.length > 0) {
+    return { success: false, error: errors.join("\n") };
+  }
+
   const supabase = createClient();
 
   const { data: orderCreated, error } = await (await supabase)
@@ -67,8 +73,8 @@ export async function createOrder(
       status: "OPEN",
       establishment_id: ESTABLISHMENT_ID,
       detail: order.detail,
-      delivery_fee: order.deliveryFee,
-      estimated_time: order.estimatedTime,
+      delivery_fee: order.deliveryFee ?? 0,
+      estimated_time: order.estimatedTime ?? 0,
       customer_id: order.customerId
     })
     .select("id")
