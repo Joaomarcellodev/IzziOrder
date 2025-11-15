@@ -21,10 +21,7 @@ const config: Config = {
     "!**/coverage/**"
   ],
   coverageReporters: [
-    "text",       
-    "html",       
-    "lcov",       
-    "json-summary" 
+    "text"
   ],
   
 };
