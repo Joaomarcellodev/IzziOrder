@@ -6,7 +6,7 @@ export function validateOrder(order: OrderRequestDTO) {
     if (order.type == "PICKUP") {
         if (order.detail == undefined) {
             errors.push("Pedido do tipo retirada precisa de pelo menos 3 caracteres no nome do cliente.");
-        } else if (order.detail!.trim.length < 3) {
+        } else if (order.detail.trim().length < 3) {
             errors.push("Pedido do tipo retirada precisa de pelo menos 3 caracteres no nome do cliente.");
         }
     }
