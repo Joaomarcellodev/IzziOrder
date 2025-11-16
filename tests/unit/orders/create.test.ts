@@ -30,7 +30,6 @@ describe("CREATE Order - createOrder", () => {
         type: "LOCAL",
         deliveryFee: 0,
         estimatedTime: 30,
-        customerId: "customer-123",
         orderLines: [
           {
             menuItemId: "item-1",
@@ -67,7 +66,6 @@ describe("CREATE Order - createOrder", () => {
         type: "LOCAL",
         deliveryFee: 0,
         estimatedTime: 30,
-        customerId: "customer-123",
         orderLines: []
       };
 
@@ -116,7 +114,6 @@ describe("CREATE Order - createOrder", () => {
         type: "LOCAL",
         deliveryFee: 0,
         estimatedTime: 30,
-        customerId: "customer-123",
         orderLines: [
           {
             menuItemId: "item-1",
@@ -149,7 +146,6 @@ describe("CREATE Order - createOrder", () => {
         type: "LOCAL",
         deliveryFee: 0,
         estimatedTime: 30,
-        customerId: "customer-123",
         orderLines: [
           {
             menuItemId: "item-1",
