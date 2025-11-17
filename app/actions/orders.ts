@@ -14,6 +14,7 @@ interface ActionResponse<T = any> {
 
 // Tipo para a tabela "orders"
 export interface Order {
+  items: any;
   id: string;
   code?: string;
   date: string; // timestamp
