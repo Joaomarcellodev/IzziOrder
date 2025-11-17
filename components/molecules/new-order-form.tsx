@@ -163,8 +163,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOCAL">Local (Mesa)</SelectItem>
-                  <SelectItem value="DELIVERY">Entrega (Delivery)</SelectItem>
+                  <SelectItem value="LOCAL">Local(Mesa)</SelectItem>
+                  <SelectItem value="DELIVERY">Retirada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -197,43 +197,48 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       </Card>
 
       {/* Menu Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar Itens</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {categories.map((category) => {
-            const categoryItems = menuItems.filter(
-              (item) => item.category_id === category.id
-            );
+     <Card>
+  <CardHeader>
+    <CardTitle>Adicionar Itens</CardTitle>
+  </CardHeader>
 
-            if (categoryItems.length === 0) return null;
+  <CardContent className="space-y-4">
+    {categories.map((category) => {
+      const categoryItems = menuItems.filter(
+        (item) => item.category_id === category.id
+      );
 
-            return (
-              <div key={category.id} className="space-y-3">
-                <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
+      if (categoryItems.length === 0) return null;
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {categoryItems.map((item) => (
-                    <Button
-                      key={item.id}
-                      type="button"
-                      variant="outline"
-                      className="justify-start h-auto flex-col items-start p-3 hover:bg-orange-50 hover:border-orange-300 transition-colors"
-                      onClick={() => handleAddItem(item)}
-                    >
-                      <div className="font-medium text-sm">{item.name}</div>
-                      <div className="text-xs text-gray-500">
-                        R$ {item.price.toFixed(2)}
-                      </div>
-                    </Button>
-                  ))}
+      return (
+        <div key={category.id} className="space-y-3">
+          <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {categoryItems.map((item) => (
+              <Button
+                key={item.id}
+                type="button"
+                variant="outline"
+                className="justify-start h-auto flex-col items-start p-3 hover:bg-blue-200 hover:border-blue-500 transition-colors text-left"
+                onClick={() => handleAddItem(item)}
+              >
+                <div className="font-medium text-sm break-words whitespace-normal leading-tight w-full">
+                  {item.name}
                 </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+
+                <div className="text-xs text-gray-500 whitespace-nowrap">
+                  R$ {item.price.toFixed(2)}
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </CardContent>
+</Card>
+
 
       {/* Selected Items */}
       {selectedItems.length > 0 && (
@@ -242,7 +247,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
             <CardTitle className="text-orange-900">Itens Selecionados</CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-5">
             {selectedItems.map((item) => (
               <div
                 key={item.menuItemId}
