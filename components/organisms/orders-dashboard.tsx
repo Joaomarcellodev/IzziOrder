@@ -48,7 +48,7 @@ export default function OrdersDashboard({
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Pedidos</h1>
-        <Button onClick={openNewOrderModal}>Novo Pedido</Button>
+        <Button className=" bg-blue-600 hover:bg-blue-700" onClick={openNewOrderModal}>Novo Pedido</Button>
       </div>
 
       {/* COLUNAS */}

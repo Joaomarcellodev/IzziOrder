@@ -297,7 +297,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       <div className="flex gap-3">
         <Button
           type="submit"
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"
+          className="flex-1  bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Criando pedido..." : "Criar Pedido"}

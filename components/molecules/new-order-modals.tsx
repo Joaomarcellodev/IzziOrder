@@ -31,7 +31,7 @@ export function NewOrderModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Pedido</DialogTitle>
+          <DialogTitle >Novo Pedido</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
           <NewOrderForm
