@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Orders DELETE Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
@@ -117,89 +117,89 @@ describe("Orders DELETE Integration", () => {
   // Casos válidos - DELETE COM DEPENDÊNCIAS
   describe("Valid Cases - DELETE with Dependencies", () => {
     it("should delete order with order_lines (cascade or manual)", async () => {
-  // Primeiro cria um pedido específico para este teste
-  const { data: testOrder, error: createError } = await supabase
-    .from("orders")
-    .insert({
-      total: "200.00",
-      type: "LOCAL",
-      status: "OPEN",
-      establishment_id: testEstablishmentId,
-      table_number: 99
-    })
-    .select()
-    .single();
+      // Primeiro cria um pedido específico para este teste
+      const { data: testOrder, error: createError } = await supabase
+        .from("orders")
+        .insert({
+          total: "200.00",
+          type: "LOCAL",
+          status: "OPEN",
+          establishment_id: testEstablishmentId,
+          table_number: 99
+        })
+        .select()
+        .single();
 
-  expect(createError).toBeNull();
-  expect(testOrder).toBeDefined();
+      expect(createError).toBeNull();
+      expect(testOrder).toBeDefined();
 
-  const testOrderId = testOrder!.id;
+      const testOrderId = testOrder!.id;
 
-  // Cria order lines para este pedido específico
-  const { error: linesError } = await supabase
-    .from("order_lines")
-    .insert([
-      {
-        name: "Pizza Test Cascade",
-        price: "65.00",
-        quantity: 2,
-        order_id: testOrderId,
-        menu_item_id: "d32ed9f9-6b5a-4aa0-a424-bd7f4348e032",
-        observation: "Test cascade"
-      },
-      {
-        name: "Drink Test Cascade",
-        price: "10.00",
-        quantity: 1,
-        order_id: testOrderId,
-        menu_item_id: "ce591dd7-71d8-45f2-8edd-6a3c606e5b29",
-        observation: ""
+      // Cria order lines para este pedido específico
+      const { error: linesError } = await supabase
+        .from("order_lines")
+        .insert([
+          {
+            name: "Pizza Test Cascade",
+            price: "65.00",
+            quantity: 2,
+            order_id: testOrderId,
+            menu_item_id: "d32ed9f9-6b5a-4aa0-a424-bd7f4348e032",
+            observation: "Test cascade"
+          },
+          {
+            name: "Drink Test Cascade",
+            price: "10.00",
+            quantity: 1,
+            order_id: testOrderId,
+            menu_item_id: "ce591dd7-71d8-45f2-8edd-6a3c606e5b29",
+            observation: ""
+          }
+        ]);
+
+      expect(linesError).toBeNull();
+
+      // Verifica que as order_lines foram criadas
+      const { data: linesBefore, error: linesErrorBefore } = await supabase
+        .from("order_lines")
+        .select("*")
+        .eq("order_id", testOrderId);
+
+      console.log('Order lines before deletion:', linesBefore?.length);
+      expect(linesErrorBefore).toBeNull();
+      expect(linesBefore).toHaveLength(2);
+
+      // Deleta o pedido
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", testOrderId);
+
+      expect(error).toBeNull();
+
+      // Verifica se o pedido foi deletado
+      const { data: deletedOrder } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", testOrderId)
+        .maybeSingle();
+
+      expect(deletedOrder).toBeNull();
+
+      // Verifica o comportamento das order_lines
+      const { data: linesAfter, error: linesErrorAfter } = await supabase
+        .from("order_lines")
+        .select("*")
+        .eq("order_id", testOrderId);
+
+      console.log('Order lines after deletion:', linesAfter?.length);
+
+
+      if (!linesErrorAfter) {
+        // Se não há erro, apenas registramos o resultado
+        console.log('Cascade behavior:', linesAfter?.length === 0 ? 'CASCADE ON' : 'CASCADE OFF');
       }
-    ]);
-
-  expect(linesError).toBeNull();
-
-  // Verifica que as order_lines foram criadas
-  const { data: linesBefore, error: linesErrorBefore } = await supabase
-    .from("order_lines")
-    .select("*")
-    .eq("order_id", testOrderId);
-
-  console.log('Order lines before deletion:', linesBefore?.length);
-  expect(linesErrorBefore).toBeNull();
-  expect(linesBefore).toHaveLength(2);
-
-  // Deleta o pedido
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .eq("id", testOrderId);
-
-  expect(error).toBeNull();
-
-  // Verifica se o pedido foi deletado
-  const { data: deletedOrder } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("id", testOrderId)
-    .maybeSingle();
-
-  expect(deletedOrder).toBeNull();
-
-  // Verifica o comportamento das order_lines
-  const { data: linesAfter, error: linesErrorAfter } = await supabase
-    .from("order_lines")
-    .select("*")
-    .eq("order_id", testOrderId);
-
-  console.log('Order lines after deletion:', linesAfter?.length);
-  
- 
-  if (!linesErrorAfter) {
-    // Se não há erro, apenas registramos o resultado
-    console.log('Cascade behavior:', linesAfter?.length === 0 ? 'CASCADE ON' : 'CASCADE OFF');
-  }
-});
+    });
 
     it("should manually delete order_lines before order", async () => {
       // Approach: deleta order_lines primeiro, depois o order
@@ -380,9 +380,9 @@ describe("Orders DELETE Integration", () => {
         .from("orders")
         .delete();
 
-      expect(error).toBeDefined(); 
+      expect(error).toBeDefined();
     });
-    
+
   });
 
   afterAll(async () => {

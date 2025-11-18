@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Orders CREATE Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
@@ -30,7 +30,7 @@ describe("Orders CREATE Integration", () => {
         .from("orders")
         .insert({
           total: "79.50",
-          type: "DELIVERY", 
+          type: "DELIVERY",
           status: "OPEN",
           establishment_id: testEstablishmentId,
           delivery_fee: 5.00,
@@ -52,7 +52,7 @@ describe("Orders CREATE Integration", () => {
         .insert({
           total: "25",
           type: "LOCAL",
-          status: "OPEN", 
+          status: "OPEN",
           establishment_id: testEstablishmentId,
           table_number: 3
         })

@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Orders READ Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
@@ -100,7 +100,7 @@ describe("Orders READ Integration", () => {
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      
+
       // Verifica se está ordenado por data decrescente
       if (data!.length > 1) {
         const firstDate = new Date(data![0].date);
