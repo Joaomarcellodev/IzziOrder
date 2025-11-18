@@ -9,6 +9,10 @@ import { MenuItem } from "@/app/actions/menuItem";
 import { Category } from "@/app/actions/category";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
+// 💡 Novos componentes de modal que você precisará criar/implementar
+import { EditOrderModal } from "../molecules/edit-order-modal";
+import { ViewOrderModal } from "../molecules/ViewOrderModal";
+
 interface OrdersDashboardProps {
   menuItems: MenuItem[];
   categories: Category[];
@@ -21,10 +25,42 @@ export default function OrdersDashboard({
   orders: initialOrders,
 }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
 
+  // --- Estados para o Modal de Novo Pedido
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const openNewOrderModal = () => setIsNewOrderModalOpen(true);
   const closeNewOrderModal = () => setIsNewOrderModalOpen(false);
+
+  // --- Estados para o Modal de Visualização
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // --- Estados para o Modal de Edição
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  // O selectedOrder é usado tanto para visualização quanto para edição
+
+  // Funções de Abertura/Fechamento dos Novos Modais
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedOrder(null); // Limpa o pedido selecionado
+  };
+
+  const handleEditOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedOrder(null); // Limpa o pedido selecionado
+  };
+
+  // --- Funções de Manipulação de Pedidos ---
 
   const handleAddNewOrder = (
     newOrderData: Omit<Order, "id" | "code" | "status">
@@ -45,12 +81,16 @@ export default function OrdersDashboard({
     });
   };
 
-  const handleViewOrder = (order: Order) => {
-    toast(`Visualizando pedido ${order.code}`);
-  };
+  // 💡 Nova função para atualizar o pedido após a edição
+  const handleUpdateOrder = (updatedOrder: Order) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
+    );
+    handleCloseEditModal(); // Fecha o modal de edição
 
-  const handleEditOrder = (order: Order) => {
-    toast(`Editando pedido ${order.code}`);
+    toast.success(`Pedido ${updatedOrder.code} Atualizado`, {
+      description: `O pedido foi salvo com sucesso.`,
+    });
   };
 
   const handleDeleteOrder = (orderId: string) => {
@@ -95,13 +135,14 @@ export default function OrdersDashboard({
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
                   <div className="flex justify-between items-start">
+                    {/* ... (Seu conteúdo de exibição de pedido OPEN) ... */}
                     <div className="flex flex-col">
                       <span className="font-semibold">{o.code}</span>
                       <p className="text-sm text-gray-700 font-medium">
                         {o.customerName}
                       </p>
 
-                      {/* 🔥 Lista de itens detalhada */}
+                      {/* Lista de itens detalhada */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -131,7 +172,7 @@ export default function OrdersDashboard({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewOrder(o)}
+                        onClick={() => handleViewOrder(o)} // 💡 Usando a nova função
                         className="text-blue-600 hover:bg-blue-100"
                       >
                         <Eye className="w-4 h-4" />
@@ -140,7 +181,7 @@ export default function OrdersDashboard({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditOrder(o)}
+                        onClick={() => handleEditOrder(o)} // 💡 Usando a nova função
                         className="text-yellow-600 hover:bg-yellow-100"
                       >
                         <Pencil className="w-4 h-4" />
@@ -177,13 +218,14 @@ export default function OrdersDashboard({
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
                   <div className="flex justify-between items-start">
+                    {/* ... (Seu conteúdo de exibição de pedido CLOSED) ... */}
                     <div className="flex flex-col">
                       <span className="font-semibold">{o.code}</span>
                       <p className="text-sm text-gray-700 font-medium">
                         {o.customerName}
                       </p>
 
-                      {/* 🔥 Lista de itens detalhada */}
+                      {/* Lista de itens detalhada */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -212,7 +254,7 @@ export default function OrdersDashboard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleViewOrder(o)}
+                      onClick={() => handleViewOrder(o)} // 💡 Usando a nova função
                       className="text-blue-600 hover:bg-blue-100"
                     >
                       <Eye className="w-4 h-4" />
@@ -224,6 +266,8 @@ export default function OrdersDashboard({
         </div>
       </div>
 
+      {/* --- Modais --- */}
+
       <NewOrderModal
         isOpen={isNewOrderModalOpen}
         onClose={closeNewOrderModal}
@@ -231,6 +275,27 @@ export default function OrdersDashboard({
         menuItems={menuItems}
         categories={categories}
       />
+
+      {/* 💡 Novo Modal de Visualização */}
+      {selectedOrder && (
+        <ViewOrderModal
+          isOpen={isViewModalOpen}
+          onClose={handleCloseViewModal}
+          order={selectedOrder}
+        />
+      )}
+      
+      {/* 💡 Novo Modal de Edição */}
+      {selectedOrder && (
+        <EditOrderModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          order={selectedOrder}
+          onUpdateOrder={handleUpdateOrder} // Passa a função de atualização
+          menuItems={menuItems}
+          categories={categories}
+        />
+      )}
     </div>
   );
 }
