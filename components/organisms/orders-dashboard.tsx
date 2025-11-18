@@ -192,14 +192,14 @@ export default function OrdersDashboard({
                     </div>
 
                     <div className="flex gap-2">
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewOrder(o)} 
                         className="text-blue-600 hover:bg-blue-100"
                       >
                         <Eye className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
 
                       <Button
                         variant="ghost"
@@ -281,14 +281,14 @@ export default function OrdersDashboard({
                       </p>
                     </div>
 
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleViewOrder(o)} 
                       className="text-blue-600 hover:bg-blue-100"
                     >
                       <Eye className="w-4 h-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               );

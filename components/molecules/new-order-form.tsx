@@ -29,11 +29,13 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   const [orderType, setOrderType] = useState<"LOCAL" | "DELIVERY">("LOCAL");
   const [tableNumber, setTableNumber] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("30");
+  // 1. Novo estado para observações
+  const [notes, setNotes] = useState("");
   const [selectedItems, setSelectedItems] = useState<OrderLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddItem = (menuItem: MenuItem) => {
-    const id = menuItem.id!; // Corrigido: garantir que não é null
+    const id = menuItem.id!; 
 
     const existingItem = selectedItems.find(
       (item) => item.menuItemId === id
@@ -112,6 +114,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
         orderLines: selectedItems,
         total: totalPrice,
         status: "OPEN" as const,
+        // 3. Incluir 'notes' no objeto de dados do pedido
+        notes: notes.trim() || undefined, // Envia 'undefined' se estiver vazio
       };
 
       onSubmit?.(orderData);
@@ -125,6 +129,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       setOrderType("LOCAL");
       setTableNumber("");
       setEstimatedTime("30");
+      setNotes(""); // Resetar o campo de observações
       setSelectedItems([]);
 
     } catch (error) {
@@ -191,6 +196,17 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
               min="1"
               value={estimatedTime}
               onChange={(e) => setEstimatedTime(e.target.value)}
+            />
+          </div>
+
+          {/* 2. Novo campo para observações */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações do Pedido</Label>
+            <Input
+              id="notes"
+              placeholder="Ex: Precisa de talheres e guardanapos."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
             />
           </div>
         </CardContent>
@@ -317,6 +333,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
             setOrderType("LOCAL");
             setTableNumber("");
             setEstimatedTime("30");
+            setNotes(""); // Resetar o campo de observações
             setSelectedItems([]);
           }}
         >
