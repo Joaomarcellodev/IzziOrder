@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../atoms/button";
-import { Order } from "@/app/actions/orders";
+import { Order } from "@/app/actions/orders"; 
 import { NewOrderModal } from "../molecules/new-order-modals";
 import { MenuItem } from "@/app/actions/menuItem";
 import { Category } from "@/app/actions/category";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
-// 💡 Novos componentes de modal que você precisará criar/implementar
+import { OrderLine } from "../molecules/new-order-form"; 
+
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
 
@@ -19,6 +20,16 @@ interface OrdersDashboardProps {
   orders: Order[];
 }
 
+interface NewOrderFormData {
+    customerName: string;
+    type: "LOCAL" | "DELIVERY";
+    tableNumber?: string;
+    estimatedTime: number;
+    orderLines: OrderLine[];
+    total: number;
+    status: "OPEN";
+}
+
 export default function OrdersDashboard({
   menuItems,
   categories,
@@ -26,20 +37,15 @@ export default function OrdersDashboard({
 }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
 
-  // --- Estados para o Modal de Novo Pedido
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const openNewOrderModal = () => setIsNewOrderModalOpen(true);
   const closeNewOrderModal = () => setIsNewOrderModalOpen(false);
 
-  // --- Estados para o Modal de Visualização
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // --- Estados para o Modal de Edição
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  // O selectedOrder é usado tanto para visualização quanto para edição
-
-  // Funções de Abertura/Fechamento dos Novos Modais
+  
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsViewModalOpen(true);
@@ -47,7 +53,7 @@ export default function OrdersDashboard({
 
   const handleCloseViewModal = () => {
     setIsViewModalOpen(false);
-    setSelectedOrder(null); // Limpa o pedido selecionado
+    setSelectedOrder(null); 
   };
 
   const handleEditOrder = (order: Order) => {
@@ -57,20 +63,23 @@ export default function OrdersDashboard({
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
-    setSelectedOrder(null); // Limpa o pedido selecionado
+    setSelectedOrder(null); 
   };
 
-  // --- Funções de Manipulação de Pedidos ---
-
   const handleAddNewOrder = (
-    newOrderData: Omit<Order, "id" | "code" | "status">
+    newOrderData: NewOrderFormData
   ) => {
     const newOrder: Order = {
-      ...newOrderData,
+      customerName: newOrderData.customerName,
+      type: newOrderData.type,
+      tableNumber: newOrderData.tableNumber,
+      estimatedTime: newOrderData.estimatedTime,
+      
       status: "OPEN",
       id: Math.random().toString(36).substring(2, 9),
       code: `#${(orders.length + 1).toString().padStart(3, "0")}`,
-      items: newOrderData.items ?? [],
+      
+      items: newOrderData.orderLines, 
     };
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -81,12 +90,11 @@ export default function OrdersDashboard({
     });
   };
 
-  // 💡 Nova função para atualizar o pedido após a edição
   const handleUpdateOrder = (updatedOrder: Order) => {
     setOrders((prev) =>
       prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
     );
-    handleCloseEditModal(); // Fecha o modal de edição
+    handleCloseEditModal(); 
 
     toast.success(`Pedido ${updatedOrder.code} Atualizado`, {
       description: `O pedido foi salvo com sucesso.`,
@@ -103,8 +111,16 @@ export default function OrdersDashboard({
     });
   };
 
-  // Função para calcular o total e garantir segurança
   const getSafeItems = (items: any[]) => (Array.isArray(items) ? items : []);
+  
+  // 💡 Função para formatar o tipo de pedido
+  const formatOrderType = (type: "LOCAL" | "DELIVERY", tableNumber?: string) => {
+      if (type === "LOCAL") {
+          return tableNumber ? `Mesa: ${tableNumber}` : 'Local';
+      }
+      return 'Retirada';
+  }
+
 
   return (
     <div className="p-6 space-y-6">
@@ -126,23 +142,30 @@ export default function OrdersDashboard({
           {orders
             .filter((o) => o.status === "OPEN")
             .map((o) => {
-              const items = getSafeItems(o.items);
+              const items = getSafeItems(o.items); 
               const total = items.reduce(
                 (sum, item) => sum + item.price * item.quantity,
                 0
               );
+              
+              const orderTypeDisplay = formatOrderType(o.type, o.tableNumber); // 💡 Usando a função auxiliar
 
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
                   <div className="flex justify-between items-start">
-                    {/* ... (Seu conteúdo de exibição de pedido OPEN) ... */}
+                    
                     <div className="flex flex-col">
                       <span className="font-semibold">{o.code}</span>
                       <p className="text-sm text-gray-700 font-medium">
-                        {o.customerName}
+                        Cliente: {o.customerName}
+                      </p>
+                      
+                      {/* 💡 Tipo de Pedido Adicionado */}
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Tipo: <span className="font-medium">{orderTypeDisplay}</span>
                       </p>
 
-                      {/* Lista de itens detalhada */}
+                      {/* Itens do Pedido ABERTO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -172,7 +195,7 @@ export default function OrdersDashboard({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewOrder(o)} // 💡 Usando a nova função
+                        onClick={() => handleViewOrder(o)} 
                         className="text-blue-600 hover:bg-blue-100"
                       >
                         <Eye className="w-4 h-4" />
@@ -181,7 +204,7 @@ export default function OrdersDashboard({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditOrder(o)} // 💡 Usando a nova função
+                        onClick={() => handleEditOrder(o)} 
                         className="text-yellow-600 hover:bg-yellow-100"
                       >
                         <Pencil className="w-4 h-4" />
@@ -215,17 +238,24 @@ export default function OrdersDashboard({
                 0
               );
 
+              const orderTypeDisplay = formatOrderType(o.type, o.tableNumber); // 💡 Usando a função auxiliar
+
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
                   <div className="flex justify-between items-start">
-                    {/* ... (Seu conteúdo de exibição de pedido CLOSED) ... */}
+                    
                     <div className="flex flex-col">
                       <span className="font-semibold">{o.code}</span>
                       <p className="text-sm text-gray-700 font-medium">
-                        {o.customerName}
+                        Cliente: {o.customerName}
+                      </p>
+                      
+                      {/* 💡 Tipo de Pedido Adicionado */}
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Tipo: <span className="font-medium">{orderTypeDisplay}</span>
                       </p>
 
-                      {/* Lista de itens detalhada */}
+                      {/* Itens do Pedido FINALIZADO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -254,7 +284,7 @@ export default function OrdersDashboard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleViewOrder(o)} // 💡 Usando a nova função
+                      onClick={() => handleViewOrder(o)} 
                       className="text-blue-600 hover:bg-blue-100"
                     >
                       <Eye className="w-4 h-4" />
@@ -276,7 +306,6 @@ export default function OrdersDashboard({
         categories={categories}
       />
 
-      {/* 💡 Novo Modal de Visualização */}
       {selectedOrder && (
         <ViewOrderModal
           isOpen={isViewModalOpen}
@@ -285,13 +314,12 @@ export default function OrdersDashboard({
         />
       )}
       
-      {/* 💡 Novo Modal de Edição */}
       {selectedOrder && (
         <EditOrderModal
           isOpen={isEditModalOpen}
           onClose={handleCloseEditModal}
           order={selectedOrder}
-          onUpdateOrder={handleUpdateOrder} // Passa a função de atualização
+          onUpdateOrder={handleUpdateOrder} 
           menuItems={menuItems}
           categories={categories}
         />

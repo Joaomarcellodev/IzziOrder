@@ -25,11 +25,11 @@ export function ViewOrderModal({ isOpen, onClose, order }: ViewOrderModalProps) 
 
         <div className="py-4 space-y-4">
           <p className="text-sm text-gray-600">
-            **Cliente:** <span className="font-medium">{order.customerName}</span>
+            Cliente:<span className="font-medium">{order.customerName}</span>
           </p>
 
           <p className="text-sm text-gray-600">
-            **Status:** <span className="font-medium text-blue-600">{order.status}</span>
+            Status:<span className="font-medium text-blue-600">{order.status}</span>
           </p>
 
           {/* Lista de Itens */}
