@@ -4,7 +4,6 @@ import { put } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 import { revalidatePath } from "next/cache";
 
-// Mocks
 jest.mock("@/utils/supabase/server");
 jest.mock("@vercel/blob");
 jest.mock("@/lib/validators/menuItem", () => ({
@@ -42,14 +41,14 @@ describe("UNIT — createMenuItem", () => {
     // Mock sequence for single() calls
     mockSupabase.single.mockImplementation(() => {
       singleCallCount++;
-      
+
       switch (singleCallCount) {
-        case 1: 
+        case 1:
           return Promise.resolve({
             data: { id: "cat123", establishment_id: "est123" },
             error: null,
           });
-        case 2: 
+        case 2:
           return Promise.resolve({
             data: null,
             error: null,
@@ -61,7 +60,7 @@ describe("UNIT — createMenuItem", () => {
 
     mockSupabase.select.mockImplementation((columns?: string) => {
       const lastFromCall = mockSupabase.from.mock.calls.at(-1)?.[0];
-      
+
       if (lastFromCall === "menu_items" && columns === "position") {
         return {
           order: jest.fn().mockReturnThis(),
@@ -78,12 +77,12 @@ describe("UNIT — createMenuItem", () => {
     mockSupabase.insert.mockReturnValue({
       select: jest.fn().mockReturnValue({
         single: jest.fn().mockResolvedValue({
-          data: { 
-            id: "1", 
-            name: "Pizza", 
-            description: "Cheesy pizza", 
-            price: 25.00, 
-            category_id: "cat123", 
+          data: {
+            id: "1",
+            name: "Pizza",
+            description: "Cheesy pizza",
+            price: 25.00,
+            category_id: "cat123",
             available: true,
             position: 0,
             image: "/camera-off.svg"
@@ -104,7 +103,7 @@ describe("UNIT — createMenuItem", () => {
       formData.append("available", "true");
 
       const result = await createMenuItem(formData);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty("name", "Pizza");
       expect(result.data.image).toBe("/camera-off.svg");
@@ -119,12 +118,12 @@ describe("UNIT — createMenuItem", () => {
       formData.append("price", "25.00");
       formData.append("category_id", "cat123");
       formData.append("available", "true");
-      
+
       const mockFile = new File(["fake-image"], "pizza.jpg", { type: "image/jpeg" });
       formData.append("imageFile", mockFile);
 
       const result = await createMenuItem(formData);
-      
+
       expect(result.success).toBe(true);
       expect(put).toHaveBeenCalledWith("pizza.jpg", mockFile, { access: "public" });
     });
@@ -133,9 +132,9 @@ describe("UNIT — createMenuItem", () => {
       // Mock existing items with position
       mockSupabase.single.mockImplementation(() => {
         singleCallCount++;
-        
+
         switch (singleCallCount) {
-          case 1: 
+          case 1:
             return Promise.resolve({
               data: { id: "cat123", establishment_id: "est123" },
               error: null,
@@ -158,7 +157,7 @@ describe("UNIT — createMenuItem", () => {
       formData.append("available", "true");
 
       const result = await createMenuItem(formData);
-      
+
       expect(result.success).toBe(true);
     });
   });
@@ -179,9 +178,9 @@ describe("UNIT — createMenuItem", () => {
 
     it("should return error for invalid category", async () => {
       mockSupabase.single.mockImplementationOnce(() =>
-        Promise.resolve({ 
-          data: null, 
-          error: { message: "Category not found" } 
+        Promise.resolve({
+          data: null,
+          error: { message: "Category not found" }
         })
       );
 
