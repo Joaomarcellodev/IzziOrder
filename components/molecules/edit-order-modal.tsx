@@ -25,8 +25,9 @@ export interface OrderLine {
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  order: Order | null;
-  onUpdateOrder: (updatedOrder: Order) => void;
+  // A interface Order deve ter sido atualizada para incluir `notes` no seu ambiente
+  order: Order & { notes?: string } | null; 
+  onUpdateOrder: (updatedOrder: Order & { notes?: string }) => void;
   menuItems: MenuItem[];
   categories: Category[];
 }
@@ -46,6 +47,8 @@ export function EditOrderModal({
   const [editedTableNumber, setEditedTableNumber] = useState("");
   const [editedEstimatedTime, setEditedEstimatedTime] = useState("30");
   const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN"); 
+  // 1. Novo estado para observações
+  const [editedNotes, setEditedNotes] = useState(""); 
   const [editedItems, setEditedItems] = useState<OrderLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,6 +60,8 @@ export function EditOrderModal({
         setEditedOrderType(order.type);
         setEditedTableNumber(order.tableNumber || "");
         setEditedEstimatedTime(String(order.estimatedTime || 30));
+        // 2. Sincroniza o novo estado de observações
+        setEditedNotes(order.notes || ""); 
         // Garante que os itens são carregados corretamente
         setEditedItems(order.items as OrderLine[] || []); 
     }
@@ -144,13 +149,15 @@ export function EditOrderModal({
 
 
     try {
-      const updatedOrder: Order = {
+      const updatedOrder: Order & { notes?: string } = {
         ...order,
         customerName: editedCustomerName,
         status: editedStatus, 
         type: editedOrderType,
         tableNumber: editedOrderType === "LOCAL" ? editedTableNumber : undefined,
         estimatedTime: parseInt(editedEstimatedTime),
+        // 4. Inclui as observações atualizadas
+        notes: editedNotes.trim() || undefined, 
         items: editedItems, // Lista de itens atualizada
         total: totalPrice, // Total calculado
       };
@@ -236,7 +243,7 @@ export function EditOrderModal({
                   />
                 </div>
                 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label>Status Atual</Label>
                   <Select value={editedStatus} onValueChange={(value: any) => setEditedStatus(value)}>
                     <SelectTrigger className="font-semibold">
@@ -247,9 +254,19 @@ export function EditOrderModal({
                       <SelectItem value="CLOSED">Finalizado</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
               </div>
 
+              {/* 3. Novo campo para observações */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Observações do Pedido</Label>
+                <Input
+                  id="notes"
+                  placeholder="Ex: Precisa de talheres e guardanapos."
+                  value={editedNotes}
+                  onChange={(e) => setEditedNotes(e.target.value)}
+                />
+              </div>
             </CardContent>
           </Card>
 
