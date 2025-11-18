@@ -209,7 +209,7 @@ describe("UNIT — createMenuItem", () => {
       const result = await createMenuItem(formData);
 
       expect(result.success).toBe(false);
-      expect(result.error).toMatch(/categoria inválida para este estabelecimento/i);
+      expect(result.error).toMatch("Categoria inválida.");
     });
 
     it("U-MI-C-2004 should handle image upload failure", async () => {

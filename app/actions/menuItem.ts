@@ -46,10 +46,6 @@ export async function getMenuItems(establishment_id: string) {
  * @returns Um objeto com a URL da imagem ou um erro.
  */
 async function uploadImage(file: File): Promise<ActionResponse> {
-  if (!file || file.size === 0) {
-    return { success: false, error: "Nenhum arquivo de imagem encontrado." };
-  }
-
   try {
     const { url } = await put(file.name, file, { access: "public" });
     return { success: true, data: { url } };
@@ -69,23 +65,19 @@ async function uploadImage(file: File): Promise<ActionResponse> {
 export async function createMenuItem(
   formData: FormData
 ): Promise<ActionResponse> {
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
-  const price = parseFloat(formData.get("price") as string);
-  const category_id = formData.get("category_id") as string;
-  const available = formData.get("available") === "true";
   const imageFile = formData.get("imageFile") as File | null;
-
-  // Validação dos dados de entrada
-  const item = {
+  const item: MenuItem = {
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     price: parseFloat(formData.get("price") as string),
     category_id: formData.get("category_id") as string,
+    id: null,
+    image: "",
+    available: formData.get("available") == "true"
   };
 
   const errors = validateMenuItem(item);
-  if (errors.length > 0) {
+  if (errors) {
     return { success: false, error: errors.join("\n") };
   }
 
@@ -98,7 +90,7 @@ export async function createMenuItem(
     if (!uploadResult.success) {
       return { success: false, error: uploadResult.error };
     }
-    imageUrl = uploadResult.data.url;
+    item.image = uploadResult.data.url;
   }
 
   // Busca a próxima posição
@@ -118,11 +110,11 @@ export async function createMenuItem(
   const { data: category } = await (await supabase)
     .from("categories")
     .select("establishment_id")
-    .eq("id", category_id)
+    .eq("id", item.category_id)
     .single();
 
   if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
-    return { success: false, error: "Categoria inválida para este estabelecimento." };
+    return { success: false, error: "Categoria inválida." };
   }
 
   const { data, error } = await (
@@ -130,12 +122,12 @@ export async function createMenuItem(
   )
     .from("menu_items")
     .insert({
-      name,
-      description,
-      price,
-      category_id,
-      available,
-      image: imageUrl,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category_id: item.category_id,
+      available: item.available,
+      image: item.image,
       position: nextPosition,
       establishment_id: ESTABLISHMENT_ID
     })
