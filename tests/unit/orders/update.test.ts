@@ -39,7 +39,7 @@ describe("UPDATE Orders", () => {
           observation: "Extra cheese"
         },
         {
-          menuItemId: "item-2", 
+          menuItemId: "item-2",
           name: "New Item",
           quantity: 1,
           price: 25.00,
@@ -49,7 +49,7 @@ describe("UPDATE Orders", () => {
     };
 
     describe("VALID Cases", () => {
-      it("should update order and manage order lines successfully", async () => {
+      it("U-OR-U-1001 should update order and manage order lines successfully", async () => {
         const mockUpdatedOrder = { id: "order-123", ...mockValidUpdates };
 
         mockSupabase.from.mockReturnValueOnce({
@@ -96,7 +96,7 @@ describe("UPDATE Orders", () => {
         expect(result.data).toEqual(mockUpdatedOrder);
       });
 
-      it("should update order WITHOUT order lines successfully", async () => {
+      it("U-OR-U-1002 should update order WITHOUT order lines successfully", async () => {
         const mockUpdatedOrder = { id: "order-123" };
         const updatesWithoutLines = { ...mockValidUpdates, orderLines: [] };
 
@@ -120,14 +120,14 @@ describe("UPDATE Orders", () => {
     });
 
     describe("INVALID Cases", () => {
-      it("should return error when ID is empty", async () => {
+      it("U-OR-U-2001 should return error when ID is empty", async () => {
         const result = await updateOrder("", mockValidUpdates);
 
         expect(result.success).toBe(false);
         expect(result.error).toBe("ID do pedido inválido.");
       });
 
-      it("should return error when order update fails", async () => {
+      it("U-OR-U-2002 should return error when order update fails", async () => {
 
         mockSupabase.from.mockReturnValueOnce({
           update: jest.fn().mockReturnValueOnce({
@@ -148,7 +148,7 @@ describe("UPDATE Orders", () => {
         expect(result.error).toBe("Erro ao atualizar pedido.");
       });
 
-      it("should return error when fetching existing order lines fails", async () => {
+      it("U-OR-U-2003 should return error when fetching existing order lines fails", async () => {
 
         mockSupabase.from.mockReturnValueOnce({
           update: jest.fn().mockReturnValueOnce({
@@ -182,7 +182,7 @@ describe("UPDATE Orders", () => {
 
   describe("updateToClosedOrder - Close order", () => {
     describe("VALID Cases", () => {
-      it("should close order successfully", async () => {
+      it("U-OR-UC-1001 should close order successfully", async () => {
         mockSupabase.from.mockReturnValueOnce({
           update: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockResolvedValueOnce({
@@ -198,7 +198,7 @@ describe("UPDATE Orders", () => {
     });
 
     describe("INVALID Cases", () => {
-      it("should return error when ID is empty", async () => {
+      it("U-OR-UC-2001 should return error when ID is empty", async () => {
 
         const result = await updateToClosedOrder("");
 
@@ -206,7 +206,7 @@ describe("UPDATE Orders", () => {
         expect(result.error).toBe("ID do pedido inválido.");
       });
 
-      it("should return error when closing order fails", async () => {
+      it("U-OR-UC-2002 should return error when closing order fails", async () => {
         mockSupabase.from.mockReturnValueOnce({
           update: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockResolvedValueOnce({

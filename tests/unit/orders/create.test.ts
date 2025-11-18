@@ -24,7 +24,7 @@ describe("CREATE Order - createOrder", () => {
   });
 
   describe("VALID Cases", () => {
-    it("OR-C-1001 should create order with order lines successfully", async () => {
+    it("U-OR-C-1001 should create order with order lines successfully", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "LOCAL",
@@ -60,7 +60,7 @@ describe("CREATE Order - createOrder", () => {
       expect(success).toBe(true);
     });
 
-    it("OR-C-1002 should create order without order lines successfully", async () => {
+    it("U-OR-C-1002 should create order without order lines successfully", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "LOCAL",
@@ -83,7 +83,7 @@ describe("CREATE Order - createOrder", () => {
       expect(success).toBe(true);
     });
 
-    it("OR-C-1003 should create order with type \"PICKUP\" and details successfully", async () => {
+    it("U-OR-C-1003 should create order with type \"PICKUP\" and details successfully", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "PICKUP",
@@ -108,7 +108,7 @@ describe("CREATE Order - createOrder", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("OR-C-2001 should return error when order creation fails", async () => {
+    it("U-OR-C-2001 should return error when order creation fails", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "LOCAL",
@@ -140,7 +140,7 @@ describe("CREATE Order - createOrder", () => {
       expect(error).toBe("Erro ao criar pedido.");
     });
 
-    it("OR-C-2002 should return error when order lines creation fails", async () => {
+    it("U-OR-C-2002 should return error when order lines creation fails", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "LOCAL",
@@ -177,7 +177,7 @@ describe("CREATE Order - createOrder", () => {
       expect(error).toBe("Erro ao criar as linhas do pedido.");
     });
 
-    it("OR-C-2003 should return error when order with type is \"PICKUP\" there is no details", async () => {
+    it("U-OR-C-2003 should return error when order with type is \"PICKUP\" there is no details", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "PICKUP",
@@ -200,7 +200,7 @@ describe("CREATE Order - createOrder", () => {
       expect(error).toBe("Pedido do tipo retirada precisa de pelo menos 3 caracteres no nome do cliente.");
     });
 
-    it("OR-C-2004 should return error when order with type is \"PICKUP\" and details.length < 3 no details", async () => {
+    it("U-OR-C-2004 should return error when order with type is \"PICKUP\" and details.length < 3 no details", async () => {
       const order: OrderRequestDTO = {
         total: 100.50,
         type: "PICKUP",

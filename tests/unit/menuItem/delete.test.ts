@@ -16,9 +16,9 @@ describe("UNIT — deleteMenuItem", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (del as jest.Mock).mockResolvedValue({});
-    
+
     // Silencia console.warn
-    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -27,11 +27,11 @@ describe("UNIT — deleteMenuItem", () => {
   });
 
   describe("VALID Cases", () => {
-    it("should delete menu item successfully with image deletion", async () => {
+    it("U-MI-D-1001 should delete menu item successfully with image deletion", async () => {
       // Mock Supabase
       const mockSingle = jest.fn().mockResolvedValue({
-        data: { 
-          id: "1", 
+        data: {
+          id: "1",
           image: "https://example.com/image.jpg",
           category: { establishment_id: "est123" }
         },
@@ -64,10 +64,10 @@ describe("UNIT — deleteMenuItem", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/menu");
     });
 
-    it("should delete menu item without deleting placeholder image", async () => {
+    it("U-MI-D-1002 should delete menu item without deleting placeholder image", async () => {
       const mockSingle = jest.fn().mockResolvedValue({
-        data: { 
-          id: "1", 
+        data: {
+          id: "1",
           image: "/camera-off.svg",
           category: { establishment_id: "est123" }
         },
@@ -99,10 +99,10 @@ describe("UNIT — deleteMenuItem", () => {
       expect(del).not.toHaveBeenCalledWith("/camera-off.svg");
     });
 
-    it("should handle image deletion failure gracefully", async () => {
+    it("U-MI-D-1003 should handle image deletion failure gracefully", async () => {
       const mockSingle = jest.fn().mockResolvedValue({
-        data: { 
-          id: "1", 
+        data: {
+          id: "1",
           image: "https://example.com/image.jpg",
           category: { establishment_id: "est123" }
         },
@@ -138,7 +138,7 @@ describe("UNIT — deleteMenuItem", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("should return error for invalid ID", async () => {
+    it("U-MI-D-2001 should return error for invalid ID", async () => {
       // Mock básico para evitar erros
       const mockSupabase = {
         from: jest.fn(() => ({
@@ -157,7 +157,7 @@ describe("UNIT — deleteMenuItem", () => {
       expect(result.error).toBe("ID do item de menu inválido.");
     });
 
-    it("should return error when item not found", async () => {
+    it("U-MI-D-2002 should return error when item not found", async () => {
       const mockSingle = jest.fn().mockResolvedValue({
         data: null,
         error: { message: "Item not found" },
@@ -181,10 +181,10 @@ describe("UNIT — deleteMenuItem", () => {
       expect(result.error).toBe("Item de menu não encontrado.");
     });
 
-    it("should handle database deletion error", async () => {
+    it("U-MI-D-2003 should handle database deletion error", async () => {
       const mockSingle = jest.fn().mockResolvedValue({
-        data: { 
-          id: "1", 
+        data: {
+          id: "1",
           image: "/camera-off.svg",
           category: { establishment_id: "est123" }
         },

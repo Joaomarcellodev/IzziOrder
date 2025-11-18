@@ -94,7 +94,7 @@ describe("UNIT — createMenuItem", () => {
   });
 
   describe("VALID Cases", () => {
-    it("should create menu item successfully without image", async () => {
+    it("U-MI-C-1001 should create menu item successfully without image", async () => {
       const formData = new FormData();
       formData.append("name", "Pizza");
       formData.append("description", "Cheesy pizza");
@@ -111,7 +111,7 @@ describe("UNIT — createMenuItem", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/menu");
     });
 
-    it("should create menu item successfully with image upload", async () => {
+    it("U-MI-C-1002 should create menu item successfully with image upload", async () => {
       const formData = new FormData();
       formData.append("name", "Pizza");
       formData.append("description", "Cheesy pizza");
@@ -128,7 +128,7 @@ describe("UNIT — createMenuItem", () => {
       expect(put).toHaveBeenCalledWith("pizza.jpg", mockFile, { access: "public" });
     });
 
-    it("should calculate correct position when items exist", async () => {
+    it("U-MI-C-1003 should calculate correct position when items exist", async () => {
       // Mock existing items with position
       mockSupabase.single.mockImplementation(() => {
         singleCallCount++;
@@ -163,7 +163,7 @@ describe("UNIT — createMenuItem", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("should return validation errors", async () => {
+    it("U-MI-C-2001 should return validation errors", async () => {
       (validateMenuItem as jest.Mock).mockReturnValue(["Name is required", "Price must be positive"]);
 
       const formData = new FormData();
@@ -176,7 +176,7 @@ describe("UNIT — createMenuItem", () => {
       expect(result.error).toContain("Name is required");
     });
 
-    it("should return error for invalid category", async () => {
+    it("U-MI-C-2002 should return error for invalid category", async () => {
       mockSupabase.single.mockImplementationOnce(() =>
         Promise.resolve({
           data: null,
@@ -194,7 +194,7 @@ describe("UNIT — createMenuItem", () => {
       expect(result.error).toMatch(/categoria inválida/i);
     });
 
-    it("should return error for category from different establishment", async () => {
+    it("U-MI-C-2003 should return error for category from different establishment", async () => {
       mockSupabase.single.mockImplementationOnce(() =>
         Promise.resolve({
           data: { id: "cat123", establishment_id: "different-est" },
@@ -212,7 +212,7 @@ describe("UNIT — createMenuItem", () => {
       expect(result.error).toMatch(/categoria inválida para este estabelecimento/i);
     });
 
-    it("should handle image upload failure", async () => {
+    it("U-MI-C-2004 should handle image upload failure", async () => {
       (put as jest.Mock).mockRejectedValueOnce(new Error("Upload failed"));
 
       const formData = new FormData();
@@ -225,7 +225,7 @@ describe("UNIT — createMenuItem", () => {
       expect(result.error).toMatch(/falha no upload/i);
     });
 
-    it("should handle database insertion error", async () => {
+    it("U-MI-C-2005 should handle database insertion error", async () => {
       mockSupabase.insert.mockReturnValue({
         select: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
