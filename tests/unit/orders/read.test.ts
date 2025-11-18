@@ -22,7 +22,7 @@ describe("READ Orders", () => {
 
   describe("getOrders - Get all orders", () => {
     describe("VALID Cases", () => {
-      it("should return orders list with formatted codes and customer names", async () => {
+      it("U-OR-RA-1001 should return orders list with formatted codes and customer names", async () => {
         const mockOrdersData = [
           {
             id: "order-1",
@@ -34,7 +34,7 @@ describe("READ Orders", () => {
             order_lines: [{ id: "line-1", name: "Item 1", quantity: 1 }]
           },
           {
-            id: "order-2", 
+            id: "order-2",
             type: "DELIVERY",
             table_number: null,
             delivery_fee: 5.00,
@@ -62,9 +62,9 @@ describe("READ Orders", () => {
         if (!result.success || !result.data) {
           fail('Expected result to be successful with data');
         }
-        
+
         expect(result.data).toHaveLength(2);
-        
+
 
         expect(result.data[0].code).toContain("#LOC");
         expect(result.data[0].customerName).toBe("Customer 1");
@@ -73,7 +73,7 @@ describe("READ Orders", () => {
         expect(result.data[1].customerName).toBeNull();
       });
 
-      it("should return empty array when no orders exist", async () => {
+      it("U-OR-RA-1002 should return empty array when no orders exist", async () => {
         mockSupabase.from.mockReturnValueOnce({
           select: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockReturnValueOnce({
@@ -92,13 +92,13 @@ describe("READ Orders", () => {
         if (!result.success || !result.data) {
           fail('Expected result to be successful with data');
         }
-        
+
         expect(result.data).toEqual([]);
       });
     });
 
     describe("INVALID Cases", () => {
-      it("should return error when database query fails", async () => {
+      it("U-OR-RA-2001 should return error when database query fails", async () => {
         mockSupabase.from.mockReturnValueOnce({
           select: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockReturnValueOnce({
@@ -120,10 +120,10 @@ describe("READ Orders", () => {
 
   describe("getOrderById - Get order by ID", () => {
     describe("VALID Cases", () => {
-      it("should return order when ID exists", async () => {
-        const mockOrder = { 
-          id: "order-123", 
-          total: 100.50, 
+      it("U-OR-RBI-1001 should return order when ID exists", async () => {
+        const mockOrder = {
+          id: "order-123",
+          total: 100.50,
           status: "OPEN",
           type: "LOCAL"
         };
@@ -146,20 +146,20 @@ describe("READ Orders", () => {
         if (!result.success || !result.data) {
           fail('Expected result to be successful with data');
         }
-        
+
         expect(result.data).toEqual(mockOrder);
       });
     });
 
     describe("INVALID Cases", () => {
-      it("should return error when ID is empty", async () => {
+      it("U-OR-RBI-2001 should return error when ID is empty", async () => {
         const result = await getOrderById("");
 
         expect(result.success).toBe(false);
         expect(result.error).toBe("ID do pedido inválido.");
       });
 
-      it("should return error when order is not found", async () => {
+      it("U-OR-RBI-2002 should return error when order is not found", async () => {
         mockSupabase.from.mockReturnValueOnce({
           select: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockReturnValueOnce({

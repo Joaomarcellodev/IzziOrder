@@ -39,7 +39,6 @@ export interface OrderRequestDTO {
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<OrderLineRequestDTO>;
-  customerId?: string | null;
 }
 
 export interface OrderLineRequestDTO {
@@ -75,7 +74,6 @@ export async function createOrder(
       detail: order.detail,
       delivery_fee: order.deliveryFee ?? 0,
       estimated_time: order.estimatedTime ?? 0,
-      customer_id: order.customerId
     })
     .select("id")
     .single();
@@ -196,7 +194,6 @@ export async function updateOrder(
       detail: updates.detail,
       delivery_fee: updates.deliveryFee,
       estimated_time: updates.estimatedTime,
-      customer_id: updates.customerId
     })
     .eq("id", id)
     .select()

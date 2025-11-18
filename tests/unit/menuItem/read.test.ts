@@ -29,7 +29,7 @@ describe("UNIT — getMenuItems", () => {
   });
 
   describe("VALID Cases", () => {
-    it("should return menu items successfully", async () => {
+    it("U-MI-R-1001 should return menu items successfully", async () => {
       const mockMenuItems = [
         { id: "1", name: "Pizza", price: 25.00, available: true },
         { id: "2", name: "Burger", price: 15.00, available: true },
@@ -42,7 +42,7 @@ describe("UNIT — getMenuItems", () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockMenuItems);
-      
+
       // Verificar a cadeia de chamadas
       expect(mockSupabase.from).toHaveBeenCalledWith("menu_items");
       expect(mockChain.select).toHaveBeenCalledWith();
@@ -50,7 +50,7 @@ describe("UNIT — getMenuItems", () => {
       expect(mockChain.eq).toHaveBeenCalledWith("is_active", true);
     });
 
-    it("should return empty array when no menu items exist", async () => {
+    it("U-MI-R-1002 should return empty array when no menu items exist", async () => {
       mockChain.data = [];
       mockChain.error = null;
 
@@ -62,7 +62,7 @@ describe("UNIT — getMenuItems", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("should return error when database query fails", async () => {
+    it("U-MI-R-2001 should return error when database query fails", async () => {
       mockChain.data = null;
       mockChain.error = { message: "Database error" };
 
