@@ -2,7 +2,7 @@ export function validateMenuItem(item: {
     name: string;
     description: string;
     price: number;
-    category_id: string;
+    categoryId: string;
 }): string[] {
     const errors: string[] = [];
 
@@ -15,7 +15,7 @@ export function validateMenuItem(item: {
     if (item.price <= 0) {
         errors.push("O preço deve ser maior que zero.");
     }
-    if (!item.category_id) {
+    if (!item.categoryId) {
         errors.push("A categoria é obrigatória.");
     }
 

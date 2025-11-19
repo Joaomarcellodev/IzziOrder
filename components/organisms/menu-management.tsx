@@ -34,6 +34,7 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
   MenuItem,
+  MenuItemRequestDTO,
 } from "@/app/actions/menuItem";
 import {
   createCategory,
@@ -49,11 +50,11 @@ interface Category {
 }
 
 interface MenuItemCardProps {
-  item: MenuItem;
+  item: MenuItemRequestDTO;
   index: number;
   moveItem: (dragIndex: number, hoverIndex: number) => void;
   toggleAvailability: (itemId: string) => Promise<void>;
-  openEditModal: (item: MenuItem) => void;
+  openEditModal: (item: MenuItemRequestDTO) => void;
   openDeleteModal: (itemId: string) => void;
   onDrop: (dragIndex: number) => void;
 }
@@ -354,7 +355,7 @@ export function MenuManagement({
   categories: initialCategories,
 }: MenuManagementProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [editingItem, setEditingItem] = useState<MenuItemRequestDTO | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
@@ -382,7 +383,7 @@ export function MenuManagement({
   const filteredItems =
     selectedCategory === "All"
       ? localMenuItems
-      : localMenuItems.filter((item) => item.category_id === selectedCategory);
+      : localMenuItems.filter((item) => item.categoryId === selectedCategory);
 
   const toggleAvailability = async (itemId: string) => {
     const itemToUpdate = localMenuItems.find((item) => item.id === itemId);
@@ -446,7 +447,7 @@ export function MenuManagement({
     setItemToDelete(null);
   };
 
-  const openEditModal = (item: MenuItem) => {
+  const openEditModal = (item: MenuItemRequestDTO) => {
     setEditingItem({ ...item });
     setIsItemModalOpen(true);
     setImageFile(null);
@@ -477,23 +478,16 @@ export function MenuManagement({
       return;
     }
 
-    const formData = new FormData();
-    formData.append("name", editingItem.name);
-    formData.append("description", editingItem.description);
-    formData.append("price", editingItem.price.toString());
-    formData.append("category_id", editingItem.category_id);
-    formData.append("available", editingItem.available.toString());
-
     if (imageFile) {
-      formData.append("imageFile", imageFile);
+      editingItem.imageFile = imageFile;
     } else {
-      formData.append("image", editingItem.image);
+      editingItem.image;
     }
 
     if (editingItem.id) {
       const { success, error, data } = await updateMenuItem(
         editingItem.id,
-        formData
+        editingItem
       );
       if (success && data) {
         setLocalMenuItems((prevItems) =>
@@ -504,7 +498,7 @@ export function MenuManagement({
         toast({ title: `Erro: ${error}` });
       }
     } else {
-      const { success, error, data } = await createMenuItem(formData);
+      const { success, error, data } = await createMenuItem(editingItem);
       if (success && data) {
         setLocalMenuItems((prevItems) => [...prevItems, data]);
         toast({ title: "Item adicionado com sucesso" });
@@ -522,8 +516,9 @@ export function MenuManagement({
       name: "",
       description: "",
       price: 0,
-      category_id: "",
+      categoryId: "",
       image: "/placeholder-img.svg",
+      imageFile: null,
       available: true,
     };
     setEditingItem(newItem);
@@ -828,10 +823,10 @@ export function MenuManagement({
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
                     <Select
-                      value={editingItem.category_id}
+                      value={editingItem.categoryId}
                       onValueChange={(value) =>
                         setEditingItem((prev) =>
-                          prev ? { ...prev, category_id: value } : null
+                          prev ? { ...prev, categoryId: value } : null
                         )
                       }
                     >
