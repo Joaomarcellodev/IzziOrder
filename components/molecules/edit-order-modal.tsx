@@ -373,7 +373,7 @@ export function EditOrderModal({
 
           <DialogFooter>
             <Button variant="outline" onClick={onClose} type="button">Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button className=" bg-blue-600 hover:bg-blue-700" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Salvando..." : "Salvar Edição"}
             </Button>
           </DialogFooter>

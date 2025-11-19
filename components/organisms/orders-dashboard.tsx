@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../atoms/button";
-// Importar Order e OrderLine do caminho correto (assumindo que você as tenha atualizado)
 import { Order } from "@/app/actions/orders"; 
 import { NewOrderModal } from "../molecules/new-order-modals";
 import { MenuItem } from "@/app/actions/menuItem";
@@ -15,19 +14,18 @@ import { OrderLine } from "../molecules/new-order-form";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
 
-// 1. Atualizando a interface Order para incluir 'notes'
-// Nota: Certifique-se de que a interface real em "@/app/actions/orders" também inclua 'notes: string;'
+
+// 1. Interface Order Estendida para incluir 'notes'
 interface CustomOrder extends Order {
-    notes?: string; // Adicionando 'notes'
+    notes?: string; 
 }
 
 interface OrdersDashboardProps {
   menuItems: MenuItem[];
   categories: Category[];
-  orders: CustomOrder[]; // Usando a interface atualizada
+  orders: CustomOrder[];
 }
 
-// 1. Atualizando a interface NewOrderFormData para incluir 'notes'
 interface NewOrderFormData {
     customerName: string;
     type: "LOCAL" | "DELIVERY";
@@ -36,7 +34,7 @@ interface NewOrderFormData {
     orderLines: OrderLine[];
     total: number;
     status: "OPEN";
-    notes?: string; // Adicionado 'notes'
+    notes?: string; // Incluindo 'notes'
 }
 
 export default function OrdersDashboard({
@@ -44,7 +42,6 @@ export default function OrdersDashboard({
   categories,
   orders: initialOrders,
 }: OrdersDashboardProps) {
-  // Usando CustomOrder no estado
   const [orders, setOrders] = useState<CustomOrder[]>(initialOrders);
 
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
@@ -76,7 +73,6 @@ export default function OrdersDashboard({
     setSelectedOrder(null); 
   };
 
-  // 2. Atualizando handleAddNewOrder para receber e armazenar 'notes'
   const handleAddNewOrder = (
     newOrderData: NewOrderFormData
   ) => {
@@ -85,7 +81,7 @@ export default function OrdersDashboard({
       type: newOrderData.type,
       tableNumber: newOrderData.tableNumber,
       estimatedTime: newOrderData.estimatedTime,
-      notes: newOrderData.notes, // Incluindo as notas aqui
+      notes: newOrderData.notes, // Passando as notas
       
       status: "OPEN",
       id: Math.random().toString(36).substring(2, 9),
@@ -112,6 +108,26 @@ export default function OrdersDashboard({
       description: `O pedido foi salvo com sucesso.`,
     });
   };
+  
+  // 2. Nova função para finalizar o pedido
+  const handleFinishOrder = (orderId: string) => {
+    const finishedOrder = orders.find((o) => o.id === orderId);
+
+    if (!finishedOrder) return;
+
+    const updatedOrder: CustomOrder = {
+        ...finishedOrder,
+        status: "CLOSED", // Altera o status para FECHADO
+    };
+
+    setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? updatedOrder : o))
+    );
+
+    toast.success(`Pedido ${finishedOrder.code} Finalizado`, {
+        description: `O pedido foi movido para a lista de finalizados.`,
+    });
+  };
 
   const handleDeleteOrder = (orderId: string) => {
     const deletedOrder = orders.find((o) => o.id === orderId);
@@ -125,7 +141,7 @@ export default function OrdersDashboard({
 
   const getSafeItems = (items: any[]) => (Array.isArray(items) ? items : []);
   
-  // 💡 Função para formatar o tipo de pedido
+  // Função para formatar o tipo de pedido
   const formatOrderType = (type: "LOCAL" | "DELIVERY", tableNumber?: string) => {
       if (type === "LOCAL") {
           return tableNumber ? `Mesa: ${tableNumber}` : 'Local';
@@ -176,7 +192,7 @@ export default function OrdersDashboard({
                         Tipo: <span className="font-medium">{orderTypeDisplay}</span>
                       </p>
                       
-                      {/* 3. Exibir Observações - Abertos */}
+                      {/* Exibir Observações */}
                       {o.notes && (
                           <p className="text-xs text-orange-600 italic mt-1 p-1 bg-orange-50 rounded border border-orange-200">
                               Obs: {o.notes}
@@ -210,11 +226,21 @@ export default function OrdersDashboard({
                     </div>
 
                     <div className="flex gap-2">
+                      {/* 3. Botão Finalizar Pedido */}
+                      <Button
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleFinishOrder(o.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white h-8"
+                      >
+                          Finalizar
+                      </Button>
+                      
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditOrder(o)} 
-                        className="text-yellow-600 hover:bg-yellow-100"
+                        className="text-yellow-600 hover:bg-yellow-100 h-8 w-8 p-0"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -223,7 +249,7 @@ export default function OrdersDashboard({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteOrder(o.id)}
-                        className="text-red-600 hover:bg-red-100"
+                        className="text-red-600 hover:bg-red-100 h-8 w-8 p-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -263,7 +289,7 @@ export default function OrdersDashboard({
                         Tipo: <span className="font-medium">{orderTypeDisplay}</span>
                       </p>
 
-                      {/* 3. Exibir Observações - Finalizados */}
+                      {/* Exibir Observações */}
                       {o.notes && (
                           <p className="text-xs text-orange-600 italic mt-1 p-1 bg-orange-50 rounded border border-orange-200">
                               Obs: {o.notes}
@@ -296,7 +322,6 @@ export default function OrdersDashboard({
                       </p>
                     </div>
 
-                    {/* Removido o botão View, deixando o card apenas como exibição para Finalizados */}
                   </div>
                 </div>
               );
@@ -305,6 +330,7 @@ export default function OrdersDashboard({
       </div>
 
       {/* --- Modais --- */}
+      {/* Certifique-se de que os Modais estão prontos para receber e salvar 'notes' */}
 
       <NewOrderModal
         isOpen={isNewOrderModalOpen}
