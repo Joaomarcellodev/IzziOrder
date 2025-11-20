@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 import { ESTABLISHMENT_ID } from "@/utils/config";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 interface ActionResponse {
   success: boolean;
@@ -30,7 +31,7 @@ export interface MenuItemRequestDTO {
   categoryId: string;
   imageFile?: File | null;
   available: boolean;
-  image?: string;
+  imageUrl?: string;
 }
 
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
@@ -77,12 +78,12 @@ export async function createMenuItem(
   menuItem: MenuItemRequestDTO
 ): Promise<ActionResponse> {
   const errors = validateMenuItem(menuItem);
-  if (errors.length < 0) {
+  if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
   }
 
   const supabase = createClient();
-  menuItem.image = PLACEHOLDER_IMAGE_URL;
+  menuItem.imageUrl = PLACEHOLDER_IMAGE_URL;
 
   // Lógica para upload de imagem, se houver
   if (menuItem.imageFile && menuItem.imageFile.size > 0) {
@@ -90,21 +91,10 @@ export async function createMenuItem(
     if (!uploadResult.success) {
       return { success: false, error: uploadResult.error };
     }
-    menuItem.image = uploadResult.data.url;
+    menuItem.imageUrl = uploadResult.data.url;
   }
 
-  // Busca a próxima posição
-  const { data: maxPositionData } = await (await supabase)
-    .from("menu_items")
-    .select("position")
-    .order("position", { ascending: false })
-    .limit(1)
-    .single();
-
-  const nextPosition =
-    maxPositionData && maxPositionData.position !== null
-      ? maxPositionData.position + 1
-      : 0;
+  const nextPosition = await searchNextPosition(await supabase);
 
   // Verifica se a categoria pertence ao estabelecimento
   const { data: category } = await (await supabase)
@@ -127,7 +117,7 @@ export async function createMenuItem(
       price: menuItem.price,
       category_id: menuItem.categoryId,
       available: menuItem.available,
-      image: menuItem.image,
+      image: menuItem.imageUrl,
       position: nextPosition,
       establishment_id: ESTABLISHMENT_ID
     })
@@ -141,6 +131,20 @@ export async function createMenuItem(
 
   revalidatePath("/menu");
   return { success: true, data };
+}
+
+async function searchNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
+  const { data: maxPositionData } = await (await supabase)
+    .from("menu_items")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .single();
+
+  const nextPosition = maxPositionData && maxPositionData.position !== null
+    ? maxPositionData.position + 1
+    : 0;
+  return nextPosition;
 }
 
 /**
@@ -165,14 +169,14 @@ export async function updateMenuItem(
   }
 
   const imageFile = menuItem.imageFile as File | null;
-  const existingImage = menuItem.image as string;
+  const existingImage = menuItem.imageUrl as string;
 
   if (menuItem.imageFile && menuItem.imageFile.size > 0) {
     const uploadResult = await uploadImage(menuItem.imageFile);
     if (!uploadResult.success) {
       return { success: false, error: uploadResult.error };
     }
-    menuItem.image = uploadResult.data.url;
+    menuItem.imageUrl = uploadResult.data.url;
 
     // Busca e deleta a imagem antiga se não for o placeholder
     if (existingImage && existingImage !== PLACEHOLDER_IMAGE_URL) {
@@ -183,7 +187,7 @@ export async function updateMenuItem(
       }
     }
   } else {
-    menuItem.image = existingImage;
+    menuItem.imageUrl = existingImage;
   }
 
   // Valida categoria

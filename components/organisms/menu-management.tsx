@@ -188,7 +188,7 @@ const MenuItemCard = ({
   // O drag é aplicado no GripVertical
   const dragRef = drag(useRef<HTMLDivElement>(null));
 
-  const hasImage = item.image && item.image !== "/placeholder-img.svg";
+  const hasImage = item.imageUrl && item.imageUrl !== "/placeholder-img.svg";
 
   // Função para abrir/fechar ações no clique (alternativa ao swipe)
   const toggleMobileActions = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -226,7 +226,7 @@ const MenuItemCard = ({
           {/* Coluna 2: Imagem/Placeholder */}
           {hasImage ? (
             <img
-              src={item.image}
+              src={item.imageUrl}
               alt={item.name}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0"
             />
@@ -464,7 +464,7 @@ export function MenuManagement({
       const file = e.target.files[0];
       setImageFile(file);
       setEditingItem((prev) =>
-        prev ? { ...prev, image: URL.createObjectURL(file) } : null
+        prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null
       );
     }
   };
@@ -481,7 +481,7 @@ export function MenuManagement({
     if (imageFile) {
       editingItem.imageFile = imageFile;
     } else {
-      editingItem.image;
+      editingItem.imageUrl;
     }
 
     if (editingItem.id) {
@@ -846,10 +846,10 @@ export function MenuManagement({
                 <div className="space-y-2">
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    {editingItem.image &&
-                      editingItem.image !== "/placeholder-img.svg" ? (
+                    {editingItem.imageUrl &&
+                      editingItem.imageUrl !== "/placeholder-img.svg" ? (
                       <img
-                        src={editingItem.image}
+                        src={editingItem.imageUrl}
                         alt="Pré-visualização da imagem"
                         className="w-32 h-32 object-cover rounded-lg mx-auto mb-2"
                       />
