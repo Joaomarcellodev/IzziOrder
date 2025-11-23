@@ -94,7 +94,7 @@ export async function createMenuItem(
     menuItem.imageUrl = uploadResult.data.url;
   }
 
-  const nextPosition = await searchNextPosition(await supabase);
+  const nextPosition = await calculateNextPosition(await supabase);
 
   // Verifica se a categoria pertence ao estabelecimento
   const { data: category } = await (await supabase)
@@ -133,7 +133,7 @@ export async function createMenuItem(
   return { success: true, data };
 }
 
-async function searchNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
+export async function calculateNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
   const { data: maxPositionData } = await (await supabase)
     .from("menu_items")
     .select("position")
