@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 import { ESTABLISHMENT_ID } from "@/utils/config";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 interface ActionResponse {
   success: boolean;
@@ -17,9 +18,20 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category_id: string;
+  categoryId: string;
   image: string;
   available: boolean;
+}
+
+export interface MenuItemRequestDTO {
+  id: string | null;
+  name: string;
+  description: string;
+  price: number;
+  categoryId: string;
+  imageFile?: File | null;
+  available: boolean;
+  imageUrl?: string;
 }
 
 const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
@@ -46,10 +58,6 @@ export async function getMenuItems(establishment_id: string) {
  * @returns Um objeto com a URL da imagem ou um erro.
  */
 async function uploadImage(file: File): Promise<ActionResponse> {
-  if (!file || file.size === 0) {
-    return { success: false, error: "Nenhum arquivo de imagem encontrado." };
-  }
-
   try {
     const { url } = await put(file.name, file, { access: "public" });
     return { success: true, data: { url } };
@@ -67,62 +75,36 @@ async function uploadImage(file: File): Promise<ActionResponse> {
  * @param formData FormData contendo os dados do item e a imagem.
  */
 export async function createMenuItem(
-  formData: FormData
+  menuItem: MenuItemRequestDTO
 ): Promise<ActionResponse> {
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
-  const price = parseFloat(formData.get("price") as string);
-  const category_id = formData.get("category_id") as string;
-  const available = formData.get("available") === "true";
-  const imageFile = formData.get("imageFile") as File | null;
-
-  // Validação dos dados de entrada
-  const item = {
-    name: formData.get("name") as string,
-    description: formData.get("description") as string,
-    price: parseFloat(formData.get("price") as string),
-    category_id: formData.get("category_id") as string,
-  };
-
-  const errors = validateMenuItem(item);
+  const errors = validateMenuItem(menuItem);
   if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
   }
 
   const supabase = createClient();
-  let imageUrl = PLACEHOLDER_IMAGE_URL;
+  menuItem.imageUrl = PLACEHOLDER_IMAGE_URL;
 
   // Lógica para upload de imagem, se houver
-  if (imageFile && imageFile.size > 0) {
-    const uploadResult = await uploadImage(imageFile);
+  if (menuItem.imageFile && menuItem.imageFile.size > 0) {
+    const uploadResult = await uploadImage(menuItem.imageFile);
     if (!uploadResult.success) {
       return { success: false, error: uploadResult.error };
     }
-    imageUrl = uploadResult.data.url;
+    menuItem.imageUrl = uploadResult.data.url;
   }
 
-  // Busca a próxima posição
-  const { data: maxPositionData } = await (await supabase)
-    .from("menu_items")
-    .select("position")
-    .order("position", { ascending: false })
-    .limit(1)
-    .single();
-
-  const nextPosition =
-    maxPositionData && maxPositionData.position !== null
-      ? maxPositionData.position + 1
-      : 0;
+  const nextPosition = await calculateNextPosition(await supabase);
 
   // Verifica se a categoria pertence ao estabelecimento
   const { data: category } = await (await supabase)
     .from("categories")
     .select("establishment_id")
-    .eq("id", category_id)
+    .eq("id", menuItem.categoryId)
     .single();
 
   if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
-    return { success: false, error: "Categoria inválida para este estabelecimento." };
+    return { success: false, error: "Categoria inválida." };
   }
 
   const { data, error } = await (
@@ -130,12 +112,12 @@ export async function createMenuItem(
   )
     .from("menu_items")
     .insert({
-      name,
-      description,
-      price,
-      category_id,
-      available,
-      image: imageUrl,
+      name: menuItem.name,
+      description: menuItem.description,
+      price: menuItem.price,
+      category_id: menuItem.categoryId,
+      available: menuItem.available,
+      image: menuItem.imageUrl,
       position: nextPosition,
       establishment_id: ESTABLISHMENT_ID
     })
@@ -151,14 +133,28 @@ export async function createMenuItem(
   return { success: true, data };
 }
 
+export async function calculateNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
+  const { data: maxPositionData } = await (await supabase)
+    .from("menu_items")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .single();
+
+  const nextPosition = maxPositionData && maxPositionData.position !== null
+    ? maxPositionData.position + 1
+    : 0;
+  return nextPosition;
+}
+
 /**
  * Atualiza um item de menu existente.
  * @param id O ID do item a ser atualizado.
- * @param formData FormData contendo os dados a serem atualizados.
+ * @param menuItem FormData contendo os dados a serem atualizados.
  */
 export async function updateMenuItem(
   id: string,
-  formData: FormData
+  menuItem: MenuItemRequestDTO
 ): Promise<ActionResponse> {
   const supabase = createClient();
 
@@ -166,29 +162,21 @@ export async function updateMenuItem(
     return { success: false, error: "ID do item de menu inválido." };
   }
 
-  const updates: any = {
-    name: formData.get("name") as string,
-    description: formData.get("description") as string,
-    price: parseFloat(formData.get("price") as string),
-    category_id: formData.get("category_id") as string,
-    available: formData.get("available") === "true",
-  };
-
   // valida antes de atualizar
-  const errors = validateMenuItem(updates);
+  const errors = validateMenuItem(menuItem);
   if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
   }
 
-  const imageFile = formData.get("imageFile") as File | null;
-  const existingImage = formData.get("image") as string;
+  const imageFile = menuItem.imageFile as File | null;
+  const existingImage = menuItem.imageUrl as string;
 
-  if (imageFile && imageFile.size > 0) {
-    const uploadResult = await uploadImage(imageFile);
+  if (menuItem.imageFile && menuItem.imageFile.size > 0) {
+    const uploadResult = await uploadImage(menuItem.imageFile);
     if (!uploadResult.success) {
       return { success: false, error: uploadResult.error };
     }
-    updates.image = uploadResult.data.url;
+    menuItem.imageUrl = uploadResult.data.url;
 
     // Busca e deleta a imagem antiga se não for o placeholder
     if (existingImage && existingImage !== PLACEHOLDER_IMAGE_URL) {
@@ -199,14 +187,14 @@ export async function updateMenuItem(
       }
     }
   } else {
-    updates.image = existingImage;
+    menuItem.imageUrl = existingImage;
   }
 
   // Valida categoria
   const { data: category } = await (await supabase)
     .from("categories")
     .select("establishment_id")
-    .eq("id", updates.category_id)
+    .eq("id", menuItem.categoryId)
     .single();
 
   if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
@@ -215,7 +203,7 @@ export async function updateMenuItem(
 
   const { data, error } = await (await supabase)
     .from("menu_items")
-    .update(updates)
+    .update(menuItem)
     .eq("id", id)
     .select()
     .single();

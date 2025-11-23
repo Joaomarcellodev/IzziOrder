@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Menu DELETE Integration", () => {
   const testCategoryId = "c1d8bc12-dfce-463c-914a-91265b8aaf0b";

@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Orders UPDATE Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
@@ -67,7 +67,7 @@ describe("Orders UPDATE Integration", () => {
 
       expect(error).toBeNull();
       expect(data.table_number).toBe(15);
-      expect(data.total).toBe(100.00); 
+      expect(data.total).toBe(100.00);
     });
 
     it("should update status from OPEN to CLOSED", async () => {
