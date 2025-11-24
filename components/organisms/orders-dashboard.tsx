@@ -1,16 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "../atoms/button";
-import { createOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
+import { createOrder, deleteOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
 import { NewOrderModal } from "../molecules/new-order-modals";
 import { MenuItem } from "@/app/actions/menuItem";
 import { Category } from "@/app/actions/category";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-
-import { OrderLine } from "../molecules/new-order-form";
-
+import { Pencil, Trash2 } from "lucide-react";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +69,11 @@ export default function OrdersDashboard({
       return;
     }
 
-    setOrders((prev) => [createdOrder!, ...prev]);
+    console.log(createdOrder);
+
+    setOrders((prev) => [...prev, createdOrder!]);
+    console.log(orders)
+
     closeNewOrderModal();
 
     toast({
@@ -115,11 +115,20 @@ export default function OrdersDashboard({
     });
   };
 
-  const handleDeleteOrder = (orderId: string) => {
+  const handleDeleteOrder = async (orderId: string) => {
     const deletedOrder = orders.find((o) => o.id === orderId);
 
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    const { success, error } = await deleteOrder(orderId);
 
+    if (!success) {
+      toast({
+        title: "Erro ao remover pedido",
+        description: error,
+      });
+      return;
+    }
+
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
     toast({
       title: "Pedido removido",
       description: `O pedido ${deletedOrder?.code} foi excluído com sucesso.`,

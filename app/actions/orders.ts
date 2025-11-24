@@ -12,7 +12,6 @@ interface ActionResponse<T = any> {
   data?: T;
 }
 
-// Tipo para a tabela "orders"
 export interface Order {
   items: any;
   id: string;
@@ -51,13 +50,9 @@ export interface OrderLineRequestDTO {
   observation?: string;
 }
 
-/**
- * Cria um novo pedido.
- * @param orderData Dados do pedido.
- */
 export async function createOrder(
   order: OrderRequestDTO
-): Promise<ActionResponse<Order>> {
+) {
   const errors = validateOrder(order);
   if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
@@ -258,7 +253,7 @@ export async function updateOrder(
  * Deleta um pedido.
  * @param id ID do pedido.
  */
-export async function deleteOrder(id: string): Promise<ActionResponse> {
+export async function deleteOrder(id: string) {
   const supabase = createClient();
 
   if (!id) {
