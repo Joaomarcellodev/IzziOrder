@@ -65,7 +65,7 @@ export async function createOrder(
 
   const supabase = createClient();
 
-  const { data: orderCreated, error } = await (await supabase)
+  const { data: createdOrder, error } = await (await supabase)
     .from("orders")
     .insert({
       total: order.total.toFixed(2),
@@ -89,7 +89,7 @@ export async function createOrder(
       name: line.name,
       price: line.price,
       quantity: line.quantity,
-      order_id: orderCreated.id,
+      order_id: createdOrder.id,
       menu_item_id: line.menuItemId,
       observation: line.observation
     }));
@@ -105,7 +105,7 @@ export async function createOrder(
   }
 
   revalidatePath("/orders");
-  return { success: true, data: orderCreated as Order };
+  return { success: true, data: createdOrder as Order };
 }
 
 /*Busca todos os pedidos.*/
