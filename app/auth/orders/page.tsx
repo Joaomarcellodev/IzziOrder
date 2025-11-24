@@ -1,9 +1,9 @@
 import { AppShell } from "@/components/organisms/app-shell";
-import { OrdersDashboard } from "@/components/organisms/orders-dashboard";
 import { getOrders } from "@/app/actions/orders";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { getMenuItems } from "@/app/actions/menuItem";
 import { getCategories } from "@/app/actions/category";
+import OrdersDashboard from "@/components/organisms/orders-dashboard";
 
 
 export default async function OrdersPage() {
