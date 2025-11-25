@@ -59,27 +59,21 @@ export default function OrdersDashboard({
   const handleAddNewOrder = async (
     newOrder: OrderRequestDTO
   ) => {
-    const { success, error, data: createdOrder } = await createOrder(newOrder);
+    const { success, error, data } = await createOrder(newOrder);
 
-    if (!success) {
+    if (success && data) {
+      setOrders((prev) => [...prev, data]);
+      toast({
+        title: `Novo Pedido Adicionado`,
+        description: `O pedido foi criado com sucesso.`,
+      });
+    } else {
       toast({
         title: "Erro ao criar o novo pedido:",
         description: error,
       });
-      return;
     }
-
-    console.log(createdOrder);
-
-    setOrders((prev) => [...prev, createdOrder!]);
-    console.log(orders)
-
     closeNewOrderModal();
-
-    toast({
-      title: `Novo Pedido Adicionado`,
-      description: `O pedido foi criado com sucesso.`,
-    });
   };
 
   const handleUpdateOrder = (updatedOrder: Order) => {
@@ -166,7 +160,7 @@ export default function OrdersDashboard({
           {orders
             .filter((o) => o.status === "OPEN")
             .map((o) => {
-              const items = getSafeItems(o.items);
+              const items = getSafeItems(o.orderLines);
               const total = items.reduce(
                 (sum, item) => sum + item.price * item.quantity,
                 0
@@ -201,7 +195,7 @@ export default function OrdersDashboard({
                           const subtotal = i.price * i.quantity;
                           return (
                             <div
-                              key={i.menuItemId}
+                              key={o.id + i.menuItemId!}
                               className="flex justify-between"
                             >
                               <span>
@@ -263,7 +257,7 @@ export default function OrdersDashboard({
           {orders
             .filter((o) => o.status === "CLOSED")
             .map((o) => {
-              const items = getSafeItems(o.items);
+              const items = getSafeItems(o.orderLines);
               const total = items.reduce(
                 (sum, item) => sum + item.price * item.quantity,
                 0
