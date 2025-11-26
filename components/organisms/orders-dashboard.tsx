@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { Button } from "../atoms/button";
-import { createOrder, deleteOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
-import { NewOrderModal } from "../molecules/new-order-modals";
+import { createOrder, deleteOrder, Order, OrderRequestDTO, updateOrder } from "@/app/actions/orders";
+import { NewOrderModal } from "../molecules/new-order-modal";
 import { MenuItem } from "@/app/actions/menuItem";
 import { Category } from "@/app/actions/category";
 import { Pencil, Trash2 } from "lucide-react";
@@ -35,11 +35,6 @@ export default function OrdersDashboard({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { toast } = useToast();
-
-  const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setIsViewModalOpen(true);
-  };
 
   const handleCloseViewModal = () => {
     setIsViewModalOpen(false);
@@ -77,16 +72,25 @@ export default function OrdersDashboard({
     closeNewOrderModal();
   };
 
-  const handleUpdateOrder = (updatedOrder: Order) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
-    );
-    handleCloseEditModal();
+  const handleUpdateOrder = async (updatedOrderData: OrderRequestDTO) => {
+    const { success, data, error } = await updateOrder(updatedOrderData);
 
-    toast({
-      title: `Pedido ${updatedOrder.code} Atualizado`,
-      description: `O pedido foi salvo com sucesso.`,
-    });
+    if (success && data) {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === data.id ? data : o))
+      );
+      toast({
+        title: `Pedido ${data!.code} Atualizado`,
+        description: `O pedido foi salvo com sucesso.`,
+      });
+    } else {
+      toast({
+        title: "Erro ao editar o  pedido:",
+        description: error,
+      });
+    }
+
+    handleCloseEditModal();
   };
 
   // 2. Nova função para finalizar o pedido

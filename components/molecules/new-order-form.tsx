@@ -10,7 +10,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
 import { Category } from "@/app/actions/category";
 import { MenuItem } from "@/app/actions/menuItem";
-import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/orders";
+import { OrderLine, OrderRequestDTO } from "@/app/actions/orders";
 
 interface NewOrderFormProps {
   menuItems: MenuItem[];
@@ -23,7 +23,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   const [orderType, setOrderType] = useState<"LOCAL" | "PICKUP">("LOCAL");
   const [orderDetail, setOrderDetail] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("");
-  const [selectedItems, setSelectedItems] = useState<OrderLineRequestDTO[]>([]);
+  const [selectedItems, setSelectedItems] = useState<OrderLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
 

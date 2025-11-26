@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Order } from "@/app/actions/orders";
+import { Order, OrderLine, OrderRequestDTO } from "@/app/actions/orders";
 import { MenuItem } from "@/app/actions/menuItem";
 import { Category } from "@/app/actions/category";
 // Componentes UI do seu sistema
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../molecules/card";
 import { Input } from "../atoms/input";
 import { Label } from "../atoms/label";
@@ -14,56 +14,44 @@ import { Button } from "../atoms/button";
 import { toast } from "sonner";
 import { Trash2 } from 'lucide-react';
 
-// Reutilizando a interface de linha de pedido (OrderLine)
-export interface OrderLine {
-  menuItemId: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // A interface Order deve ter sido atualizada para incluir `notes` no seu ambiente
-  order: Order & { notes?: string } | null; 
-  onUpdateOrder: (updatedOrder: Order & { notes?: string }) => void;
+  order: Order;
+  onUpdateOrder: (updatedOrder: OrderRequestDTO) => void;
   menuItems: MenuItem[];
   categories: Category[];
 }
 
-export function EditOrderModal({ 
-    isOpen, 
-    onClose, 
-    order, 
-    onUpdateOrder, 
-    menuItems, 
-    categories 
+export function EditOrderModal({
+  isOpen,
+  onClose,
+  order,
+  onUpdateOrder,
+  menuItems,
+  categories
 }: EditOrderModalProps) {
-  
+
   // --- Estados do Formulário de Edição ---
-  const [editedCustomerName, setEditedCustomerName] = useState("");
-  const [editedOrderType, setEditedOrderType] = useState<"LOCAL" | "DELIVERY">("LOCAL");
-  const [editedTableNumber, setEditedTableNumber] = useState("");
-  const [editedEstimatedTime, setEditedEstimatedTime] = useState("30");
-  const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN"); 
-  // 1. Novo estado para observações
-  const [editedNotes, setEditedNotes] = useState(""); 
+  const [editedOrderType, setEditedOrderType] = useState<"LOCAL" | "DELIVERY" | "PICKUP">("LOCAL");
+  const [editedDetail, setEditedDetail] = useState<string>();
+  const [editedEstimatedTime, setEditedEstimatedTime] = useState("");
+  const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN");
   const [editedItems, setEditedItems] = useState<OrderLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 💡 SINCRONIZAÇÃO: Carrega dados do 'order' para o estado interno ---
   useEffect(() => {
     if (order) {
-        setEditedCustomerName(order.customerName);
-        setEditedStatus(order.status);
-        setEditedOrderType(order.type);
-        setEditedTableNumber(order.tableNumber || "");
-        setEditedEstimatedTime(String(order.estimatedTime || 30));
-        // 2. Sincroniza o novo estado de observações
-        setEditedNotes(order.notes || ""); 
-        // Garante que os itens são carregados corretamente
-        setEditedItems(order.items as OrderLine[] || []); 
+      setEditedStatus(order.status);
+      setEditedOrderType(order.type);
+      if (order.type == "LOCAL") {
+        setEditedDetail(order.tableNumber?.toString());
+      } else if (order.type == "PICKUP") {
+        setEditedDetail(order.customerName);
+      }
+      setEditedEstimatedTime(String(order.estimatedTime || ""));
+      setEditedItems(order.orderLines);
     }
   }, [order]);
 
@@ -112,7 +100,7 @@ export function EditOrderModal({
       );
     }
   };
-  
+
   // --- Cálculo do Total ---
   const totalPrice = editedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -129,14 +117,19 @@ export function EditOrderModal({
       setIsSubmitting(false);
       return;
     }
-    
+
     // Validações
-    if (!editedCustomerName.trim()) {
+    if (editedOrderType === "PICKUP" && !editedDetail) {
       toast.error("Por favor, insira o nome do cliente");
       setIsSubmitting(false);
       return;
     }
-    if (editedOrderType === "LOCAL" && !editedTableNumber.trim()) {
+    if (editedOrderType === "PICKUP" && !editedDetail!.trim()) {
+      toast.error("Por favor, insira o nome do cliente");
+      setIsSubmitting(false);
+      return;
+    }
+    if (editedOrderType === "LOCAL" && !editedDetail) {
       toast.error("Por favor, insira o número da mesa");
       setIsSubmitting(false);
       return;
@@ -149,34 +142,31 @@ export function EditOrderModal({
 
 
     try {
-      const updatedOrder: Order & { notes?: string } = {
+      const updatedOrder: OrderRequestDTO = {
         ...order,
-        customerName: editedCustomerName,
-        status: editedStatus, 
+        detail: editedDetail,
+        status: editedStatus,
         type: editedOrderType,
-        tableNumber: editedOrderType === "LOCAL" ? editedTableNumber : undefined,
         estimatedTime: parseInt(editedEstimatedTime),
-        // 4. Inclui as observações atualizadas
-        notes: editedNotes.trim() || undefined, 
-        items: editedItems, // Lista de itens atualizada
-        total: totalPrice, // Total calculado
+        orderLines: editedItems,
+        total: totalPrice,
       };
-  
+
       onUpdateOrder(updatedOrder);
       // O toast de sucesso é emitido pelo componente pai (OrdersDashboard)
     } catch (error) {
-        toast.error("Erro ao salvar edição", {
-          description: "Tente novamente mais tarde.",
-        });
+      toast.error("Erro ao salvar edição", {
+        description: "Tente novamente mais tarde.",
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
-  
+
   if (!order) {
-      return null;
+    return null;
   }
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -185,24 +175,13 @@ export function EditOrderModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           {/* Customer Info */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Informações do Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Nome do Cliente</Label>
-                <Input
-                  id="customerName"
-                  placeholder="Ex: João Silva"
-                  value={editedCustomerName}
-                  onChange={(e) => setEditedCustomerName(e.target.value)}
-                  required
-                />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo de Pedido</Label>
@@ -211,8 +190,8 @@ export function EditOrderModal({
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="LOCAL">Local (Mesa)</SelectItem>
-                      <SelectItem value="DELIVERY">Retirada</SelectItem>
+                      <SelectItem value="LOCAL">Local</SelectItem>
+                      <SelectItem value="PICKUP">Retirada</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -223,8 +202,21 @@ export function EditOrderModal({
                     <Input
                       type="number"
                       placeholder="Ex: 5"
-                      value={editedTableNumber}
-                      onChange={(e) => setEditedTableNumber(e.target.value)}
+                      value={editedDetail}
+                      onChange={(e) => setEditedDetail(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {editedOrderType === "PICKUP" && (
+                  <div className="space-y-2">
+                    <Label>Nome do Cliente</Label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: João"
+                      value={editedDetail}
+                      onChange={(e) => setEditedDetail(e.target.value)}
                       required
                     />
                   </div>
@@ -237,35 +229,12 @@ export function EditOrderModal({
                   <Input
                     id="estimatedTime"
                     type="number"
+                    placeholder="(opcional)"
                     min="1"
                     value={editedEstimatedTime}
                     onChange={(e) => setEditedEstimatedTime(e.target.value)}
                   />
                 </div>
-                
-                {/* <div className="space-y-2">
-                  <Label>Status Atual</Label>
-                  <Select value={editedStatus} onValueChange={(value: any) => setEditedStatus(value)}>
-                    <SelectTrigger className="font-semibold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="OPEN">Aberto</SelectItem>
-                      <SelectItem value="CLOSED">Finalizado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div> */}
-              </div>
-
-              {/* 3. Novo campo para observações */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações do Pedido</Label>
-                <Input
-                  id="notes"
-                  placeholder="Ex: Precisa de talheres e guardanapos."
-                  value={editedNotes}
-                  onChange={(e) => setEditedNotes(e.target.value)}
-                />
               </div>
             </CardContent>
           </Card>
@@ -278,7 +247,7 @@ export function EditOrderModal({
             <CardContent className="space-y-4">
               {categories.map((category) => {
                 const categoryItems = menuItems.filter(
-                  (item) => item.category_id === category.id
+                  (item) => item.categoryId === category.id
                 );
 
                 if (categoryItems.length === 0) return null;
@@ -321,43 +290,45 @@ export function EditOrderModal({
               </CardHeader>
 
               <CardContent className="space-y-5">
-                {editedItems.map((item) => (
-                  <div
-                    key={item.menuItemId}
-                    className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
+                {editedItems.map((item) => {
+                  return (
+                    <div
+                      key={item.menuItemId}
+                      className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
+                          }
+                          className="w-12 px-2 py-1 text-sm border rounded text-center"
+                        />
+
+                        <span className="text-sm font-semibold min-w-20 text-right">
+                          R$ {(item.price * item.quantity).toFixed(2)}
+                        </span>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
+                          onClick={() => handleRemoveItem(item.menuItemId)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
-                        }
-                        className="w-12 px-2 py-1 text-sm border rounded text-center"
-                      />
-
-                      <span className="text-sm font-semibold min-w-20 text-right">
-                        R$ {(item.price * item.quantity).toFixed(2)}
-                      </span>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
-                        onClick={() => handleRemoveItem(item.menuItemId)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
 
                 <div className="border-t border-orange-200 pt-3">
                   <div className="flex items-center justify-between">

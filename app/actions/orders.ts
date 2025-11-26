@@ -23,24 +23,21 @@ export interface Order {
   type: "DELIVERY" | "LOCAL" | "PICKUP";
   deliveryFee?: number;
   estimatedTime?: number;
-  orderLines: Array<{
-    id?: string;
-    name: string;
-    quantity: number;
-    observation: string
-  }>;
+  orderLines: Array<OrderLine>;
 }
 
 export interface OrderRequestDTO {
+  id?: string;
   total: number;
+  status?: "OPEN" | "CLOSED";
   type: "DELIVERY" | "LOCAL" | "PICKUP";
   detail?: string;
   deliveryFee?: number;
   estimatedTime?: number;
-  orderLines: Array<OrderLineRequestDTO>;
+  orderLines: Array<OrderLine>;
 }
 
-export interface OrderLineRequestDTO {
+export interface OrderLine {
   id?: string,
   menuItemId: string,
   name: string,
@@ -104,15 +101,13 @@ export async function createOrder(
   return { success: true, data: createdOrder };
 }
 
-/*Busca todos os pedidos.*/
 export async function getOrders(establishment_id: string) {
   const supabase = createClient();
 
   const { data, error } = await (await supabase)
     .from("orders")
     .select("*, order_lines(*)")
-    .eq("establishment_id", establishment_id)
-    .order("date", { ascending: false });
+    .eq("establishment_id", establishment_id);
 
   if (error) {
     console.error("Erro ao buscar pedidos:", error);
@@ -144,7 +139,20 @@ function mapDataToOrder(orderData: any): Order {
 
   order.deliveryFee = orderData.delivery_fee;
   order.estimatedTime = orderData.estimated_time;
-  order.orderLines = orderData.order_lines;
+
+  const orderLines = [];
+  for (const orderLineData of orderData.order_lines) {
+    const orderLine: OrderLine = {
+      id: orderLineData.id,
+      menuItemId: orderLineData.menu_item_id,
+      name: orderLineData.name,
+      quantity: orderLineData.quantity,
+      price: orderLineData.price,
+      observation: orderLineData.observation
+    }
+    orderLines.push(orderLine)
+  }
+  order.orderLines = orderLines;
   return order;
 }
 
@@ -178,30 +186,29 @@ export async function getOrderById(
 /**
  * Atualiza um pedido existente.
  * @param id ID do pedido.
- * @param updates Campos a serem atualizados.
+ * @param order Campos a serem atualizados.
  */
 export async function updateOrder(
-  id: string,
-  updates: Omit<OrderRequestDTO, "id" | "date">
-): Promise<ActionResponse<Order>> {
+  order: OrderRequestDTO
+) {
   const supabase = createClient();
 
-  if (!id) {
+  if (!order.id) {
     return { success: false, error: "ID do pedido inválido." };
   }
 
   const { data, error } = await (await supabase)
     .from("orders")
     .update({
-      total: updates.total!.toFixed(2),
-      type: updates.type,
+      total: order.total!.toFixed(2),
+      type: order.type,
       status: "OPEN",
-      detail: updates.detail,
-      delivery_fee: updates.deliveryFee,
-      estimated_time: updates.estimatedTime,
+      detail: order.detail,
+      delivery_fee: order.deliveryFee,
+      estimated_time: order.estimatedTime,
     })
-    .eq("id", id)
-    .select()
+    .eq("id", order.id)
+    .select("*, order_lines(*)")
     .single();
 
   if (error) {
@@ -209,11 +216,11 @@ export async function updateOrder(
     return { success: false, error: "Erro ao atualizar pedido." };
   }
 
-  if (updates.orderLines.length > 0) {
+  if (order.orderLines.length > 0) {
     const { data: existingLines, error: fetchError } = await (await supabase)
       .from("order_lines")
       .select("id")
-      .eq("order_id", id);
+      .eq("order_id", order.id);
 
     if (fetchError) {
       console.error("Erro ao buscar linhas do pedido:", fetchError);
@@ -224,7 +231,7 @@ export async function updateOrder(
     const existingIds = (existingLines ?? []).map(line => line.id);
 
     // Pega apenas as linhas que ainda existem ou foram editadas
-    const updatedIds = updates.orderLines
+    const updatedIds = order.orderLines
       .filter(line => line.id)
       .map(line => line.id);
 
@@ -243,19 +250,31 @@ export async function updateOrder(
       }
     }
 
-    for (const line of updates.orderLines) {
+    for (const line of order.orderLines) {
+      const lineData = {
+        name: line.name,
+        price: line.price,
+        quantity: line.quantity,
+        order_id: order.id,
+        menu_item_id: line.menuItemId,
+        observation: line.observation
+      };
+
       if (line.id) {
         // Atualiza linha existente
-        await (await supabase).from("order_lines").update(line).eq("id", line.id);
+        await (await supabase).from("order_lines").update(lineData).eq("id", line.id);
       } else {
         // Insere nova
-        await (await supabase).from("order_lines").insert({ ...line, order_id: id });
+        await (await supabase).from("order_lines").insert({ ...lineData, order_id: order.id });
       }
     }
   }
 
+  const updatedOrder = mapDataToOrder(data);
+  updatedOrder.orderLines = order.orderLines;
+
   revalidatePath("/orders");
-  return { success: true, data: data as Order };
+  return { success: true, data: updatedOrder };
 }
 
 /**
