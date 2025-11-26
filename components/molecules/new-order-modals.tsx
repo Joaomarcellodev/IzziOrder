@@ -22,7 +22,7 @@ export function NewOrderModal({
   menuItems,
   categories,
 }: NewOrderModalProps) {
-  const handleSubmit = (orderData: any) => {
+  const handleSubmit = (orderData: OrderRequestDTO) => {
     onAddOrder(orderData);
     onClose();
   };

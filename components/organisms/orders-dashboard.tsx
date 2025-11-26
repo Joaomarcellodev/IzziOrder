@@ -73,6 +73,7 @@ export default function OrdersDashboard({
         description: error,
       });
     }
+
     closeNewOrderModal();
   };
 
@@ -168,26 +169,37 @@ export default function OrdersDashboard({
 
               const orderTypeDisplay = formatOrderType(o.type, o.tableNumber);
 
-              return (
-                <div key={o.id} className="p-3 border rounded-lg mb-2">
-                  <div className="flex justify-between items-start">
-
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{o.code}</span>
+              function renderTypeAndDetails(o: Order): React.ReactNode {
+                if (o.type == "LOCAL") {
+                  return (
+                    <>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Tipo: <span className="font-medium">LOCAL</span>
+                      </p>
+                      <p className="text-sm text-gray-700 font-medium">
+                        Mesa: {o.tableNumber}
+                      </p>
+                    </>);
+                } else if (o.type == "PICKUP") {
+                  return (
+                    <>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Tipo: <span className="font-medium">RETIRADA</span>
+                      </p>
                       <p className="text-sm text-gray-700 font-medium">
                         Cliente: {o.customerName}
                       </p>
+                    </>);
+                }
+              }
 
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Tipo: <span className="font-medium">{orderTypeDisplay}</span>
-                      </p>
+              return (
+                <div key={o.id} className="p-3 border rounded-lg mb-2">
+                  <div className="flex flex-col">
 
-                      {/* Exibir Observações
-                      {o.notes && (
-                        <p className="text-xs text-orange-600 italic mt-1 p-1 bg-orange-50 rounded border border-orange-200">
-                          Obs: {o.notes}
-                        </p>
-                      )} */}
+                    <div className="flex flex-col w-full">
+                      <span className="font-semibold">{o.code}</span>
+                      {renderTypeAndDetails(o)}
 
                       {/* Itens do Pedido ABERTO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
@@ -209,13 +221,19 @@ export default function OrdersDashboard({
                           );
                         })}
                       </div>
-
-                      <p className="font-semibold text-gray-700 mt-2">
-                        Total: R$ {total.toFixed(2)}
-                      </p>
+                      <div
+                        className="flex justify-between"
+                      >
+                        <p className="font-semibold text-gray-700 mt-2">
+                          Total:
+                        </p>
+                        <p className="font-semibold text-gray-700 mt-2">
+                          R$ {total.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-3 self-end">
                       {/* 3. Botão Finalizar Pedido */}
                       <Button
                         variant="default"
@@ -330,24 +348,28 @@ export default function OrdersDashboard({
         categories={categories}
       />
 
-      {selectedOrder && (
-        <ViewOrderModal
-          isOpen={isViewModalOpen}
-          onClose={handleCloseViewModal}
-          order={selectedOrder}
-        />
-      )}
+      {
+        selectedOrder && (
+          <ViewOrderModal
+            isOpen={isViewModalOpen}
+            onClose={handleCloseViewModal}
+            order={selectedOrder}
+          />
+        )
+      }
 
-      {selectedOrder && (
-        <EditOrderModal
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          order={selectedOrder}
-          onUpdateOrder={handleUpdateOrder}
-          menuItems={menuItems}
-          categories={categories}
-        />
-      )}
-    </div>
+      {
+        selectedOrder && (
+          <EditOrderModal
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            order={selectedOrder}
+            onUpdateOrder={handleUpdateOrder}
+            menuItems={menuItems}
+            categories={categories}
+          />
+        )
+      }
+    </div >
   );
 }
