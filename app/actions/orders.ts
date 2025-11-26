@@ -134,12 +134,14 @@ function mapDataToOrder(orderData: any): Order {
   const order = orderData as Order;
   if (order.type == "LOCAL") {
     order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
+    order.tableNumber = orderData.detail;
   } else if (order.type == "DELIVERY") {
     order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
+  } else if (order.type == "PICKUP") {
+    order.code = "#PIC" + "-" + order.id.slice(0, 6).toUpperCase();
+    order.customerName = orderData.detail;
   }
 
-  order.customerName = orderData.customer ? orderData.customer.name : null;
-  order.tableNumber = orderData.table_number;
   order.deliveryFee = orderData.delivery_fee;
   order.estimatedTime = orderData.estimated_time;
   order.orderLines = orderData.order_lines;
