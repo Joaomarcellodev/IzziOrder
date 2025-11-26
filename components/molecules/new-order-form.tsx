@@ -6,36 +6,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/molecules
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/organisms/select";
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
 import { Category } from "@/app/actions/category";
 import { MenuItem } from "@/app/actions/menuItem";
-
-export interface OrderLine {
-  menuItemId: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
+import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/orders";
 
 interface NewOrderFormProps {
   menuItems: MenuItem[];
   categories: Category[];
-  onSubmit?: (orderData: any) => void;
+  onSubmit?: (orderData: OrderRequestDTO) => void;
 }
 
 export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormProps) {
   const [customerName, setCustomerName] = useState("");
-  const [orderType, setOrderType] = useState<"LOCAL" | "DELIVERY">("LOCAL");
-  const [tableNumber, setTableNumber] = useState("");
-  const [estimatedTime, setEstimatedTime] = useState("30");
-  // 1. Novo estado para observações
-  const [notes, setNotes] = useState("");
-  const [selectedItems, setSelectedItems] = useState<OrderLine[]>([]);
+  const [orderType, setOrderType] = useState<"LOCAL" | "PICKUP">("LOCAL");
+  const [orderDetail, setOrderDetail] = useState("");
+  const [estimatedTime, setEstimatedTime] = useState("");
+  const [selectedItems, setSelectedItems] = useState<OrderLineRequestDTO[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
 
   const handleAddItem = (menuItem: MenuItem) => {
-    const id = menuItem.id!; 
+    const id = menuItem.id!;
 
     const existingItem = selectedItems.find(
       (item) => item.menuItemId === id
@@ -88,12 +81,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerName.trim()) {
-      toast.error("Por favor, insira o nome do cliente");
-      return;
-    }
-
-    if (orderType === "LOCAL" && !tableNumber.trim()) {
+    if (orderType === "LOCAL" && !orderDetail.trim()) {
       toast.error("Por favor, insira o número da mesa");
       return;
     }
@@ -106,16 +94,12 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     setIsSubmitting(true);
 
     try {
-      const orderData = {
-        customerName,
-        type: orderType,
-        tableNumber: orderType === "LOCAL" ? tableNumber : undefined,
-        estimatedTime: parseInt(estimatedTime),
-        orderLines: selectedItems,
+      const orderData: OrderRequestDTO = {
         total: totalPrice,
-        status: "OPEN" as const,
-        // 3. Incluir 'notes' no objeto de dados do pedido
-        notes: notes.trim() || undefined, // Envia 'undefined' se estiver vazio
+        type: orderType,
+        detail: orderDetail,
+        estimatedTime: parseInt(estimatedTime),
+        orderLines: selectedItems
       };
 
       onSubmit?.(orderData);
@@ -127,9 +111,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       // Reset form
       setCustomerName("");
       setOrderType("LOCAL");
-      setTableNumber("");
-      setEstimatedTime("30");
-      setNotes(""); // Resetar o campo de observações
+      setOrderDetail("");
+      setEstimatedTime("");
       setSelectedItems([]);
 
     } catch (error) {
@@ -141,6 +124,17 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     }
   };
 
+  const handleUpdateObservation = (id: string, value: string) => {
+    setSelectedItems(prev =>
+      prev.map(item =>
+        item.menuItemId === id
+          ? { ...item, observation: value }
+          : item
+      )
+    );
+  };
+
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Customer Info */}
@@ -149,17 +143,6 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
           <CardTitle>Informações do Cliente</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="customerName">Nome do Cliente</Label>
-            <Input
-              id="customerName"
-              placeholder="Ex: João Silva"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              required
-            />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tipo de Pedido</Label>
@@ -168,8 +151,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOCAL">Local(Mesa)</SelectItem>
-                  <SelectItem value="DELIVERY">Retirada</SelectItem>
+                  <SelectItem value="LOCAL">Local</SelectItem>
+                  <SelectItem value="PICKUP">Retirada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -180,8 +163,21 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                 <Input
                   type="number"
                   placeholder="Ex: 5"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
+                  value={orderDetail}
+                  onChange={(e) => setOrderDetail(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            {orderType === "PICKUP" && (
+              <div className="space-y-2">
+                <Label>Nome do Cliente</Label>
+                <Input
+                  type="text"
+                  placeholder="Ex: João"
+                  value={orderDetail}
+                  onChange={(e) => setOrderDetail(e.target.value)}
                   required
                 />
               </div>
@@ -193,67 +189,57 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
             <Input
               id="estimatedTime"
               type="number"
+              placeholder="(opcional)"
               min="1"
               value={estimatedTime}
               onChange={(e) => setEstimatedTime(e.target.value)}
-            />
-          </div>
-
-          {/* 2. Novo campo para observações */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações do Pedido</Label>
-            <Input
-              id="notes"
-              placeholder="Ex: Precisa de talheres e guardanapos."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Menu Items */}
-     <Card>
-  <CardHeader>
-    <CardTitle>Adicionar Itens</CardTitle>
-  </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adicionar Itens</CardTitle>
+        </CardHeader>
 
-  <CardContent className="space-y-4">
-    {categories.map((category) => {
-      const categoryItems = menuItems.filter(
-        (item) => item.category_id === category.id
-      );
+        <CardContent className="space-y-4">
+          {categories.map((category) => {
+            const categoryItems = menuItems.filter(
+              (item) => item.categoryId === category.id
+            );
 
-      if (categoryItems.length === 0) return null;
+            if (categoryItems.length === 0) return null;
 
-      return (
-        <div key={category.id} className="space-y-3">
-          <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
+            return (
+              <div key={category.id} className="space-y-3">
+                <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {categoryItems.map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                variant="outline"
-                className="justify-start h-auto flex-col items-start p-3 hover:bg-blue-200 hover:border-blue-500 transition-colors text-left"
-                onClick={() => handleAddItem(item)}
-              >
-                <div className="font-medium text-sm break-words whitespace-normal leading-tight w-full">
-                  {item.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {categoryItems.map((item) => (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      variant="outline"
+                      className="justify-start h-auto flex-col items-start p-3 hover:bg-blue-200 hover:border-blue-500 transition-colors text-left"
+                      onClick={() => handleAddItem(item)}
+                    >
+                      <div className="font-medium text-sm break-words whitespace-normal leading-tight w-full">
+                        {item.name}
+                      </div>
+
+                      <div className="text-xs text-gray-500 whitespace-nowrap">
+                        R$ {item.price.toFixed(2)}
+                      </div>
+                    </Button>
+                  ))}
                 </div>
-
-                <div className="text-xs text-gray-500 whitespace-nowrap">
-                  R$ {item.price.toFixed(2)}
-                </div>
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    })}
-  </CardContent>
-</Card>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
 
 
       {/* Selected Items */}
@@ -267,40 +253,66 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
             {selectedItems.map((item) => (
               <div
                 key={item.menuItemId}
-                className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{item.name}</p>
-                  <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
-                    }
-                    className="w-12 px-2 py-1 text-sm border rounded text-center"
-                  />
-
-                  <span className="text-sm font-semibold min-w-20 text-right">
-                    R$ {(item.price * item.quantity).toFixed(2)}
-                  </span>
+                className="flex-col">
+                <div
+                  className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{item.name}</p>
+                    <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
+                  </div>
 
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
-                    onClick={() => handleRemoveItem(item.menuItemId)}
+                    onClick={() =>
+                      setObservationOpen((prev) => ({
+                        ...prev,
+                        [item.menuItemId]: true
+                      }))}
+                    className="text-yellow-600 hover:bg-yellow-100 h-8 w-8 p-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Pencil className="w-4 h-4" />
                   </Button>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
+                      }
+                      className="w-12 px-2 py-1 text-sm border rounded text-center"
+                    />
+
+                    <span className="text-sm font-semibold min-w-20 text-right">
+                      R$ {(item.price * item.quantity).toFixed(2)}
+                    </span>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
+                      onClick={() => handleRemoveItem(item.menuItemId)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+                {observationOpen[item.menuItemId] && (<div className="space-y-2">
+                  <Input
+                    type="text"
+                    placeholder="Observação"
+                    value={item.observation ?? ""}
+                    onChange={(e) => handleUpdateObservation(item.menuItemId, e.target.value)}
+                  />
+                </div>)}
               </div>
-            ))}
+            )
+            )}
 
             <div className="border-t border-orange-200 pt-3">
               <div className="flex items-center justify-between">
@@ -331,9 +343,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
           onClick={() => {
             setCustomerName("");
             setOrderType("LOCAL");
-            setTableNumber("");
-            setEstimatedTime("30");
-            setNotes(""); // Resetar o campo de observações
+            setOrderDetail("");
+            setEstimatedTime("");
             setSelectedItems([]);
           }}
         >

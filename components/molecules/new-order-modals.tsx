@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/molecules/dialog";
-import { MenuItem} from "@/app/actions/menuItem";
-import { Order } from "@/app/actions/orders";
+import { MenuItem } from "@/app/actions/menuItem";
+import { Order, OrderRequestDTO } from "@/app/actions/orders";
 import { NewOrderForm } from "./new-order-form";
 import { Category } from "@/app/actions/category";
 
 interface NewOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddOrder: (orderData: Omit<Order, 'id' | 'code'>) => void;
+  onAddOrder: (orderData: OrderRequestDTO) => void;
   menuItems: MenuItem[];
   categories: Category[];
 }
@@ -22,7 +22,7 @@ export function NewOrderModal({
   menuItems,
   categories,
 }: NewOrderModalProps) {
-  const handleSubmit = (orderData: any) => {
+  const handleSubmit = (orderData: OrderRequestDTO) => {
     onAddOrder(orderData);
     onClose();
   };
