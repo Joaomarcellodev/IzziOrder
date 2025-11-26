@@ -49,7 +49,14 @@ export async function getMenuItems(establishment_id: string) {
     return { success: false, error: "Erro ao recuperar as itens do menu." };
   }
 
-  return { success: true, data: data };
+  const menuItems: MenuItem[] = [];
+  for (const orderData of data) {
+    const menuItem = mapDataToMenuItem(orderData);
+
+    menuItems.push(menuItem);
+  }
+
+  return { success: true, data: menuItems };
 }
 
 /**
@@ -203,7 +210,14 @@ export async function updateMenuItem(
 
   const { data, error } = await (await supabase)
     .from("menu_items")
-    .update(menuItem)
+    .update({
+      name: menuItem.name,
+      description: menuItem.description,
+      price: menuItem.price,
+      category_id: menuItem.categoryId,
+      available: menuItem.available,
+      image: menuItem.imageUrl,
+    })
     .eq("id", id)
     .select()
     .single();
@@ -330,4 +344,18 @@ export async function updateMenuItemAvailability(
 
   revalidatePath("/menu");
   return { success: true };
+}
+
+function mapDataToMenuItem(orderData: any): MenuItem {
+  const menuItem: MenuItem = {
+    id: orderData.id,
+    name: orderData.name,
+    description: orderData.description,
+    price: orderData.price,
+    categoryId: orderData.category_id,
+    image: orderData.image,
+    available: orderData.available
+  }
+
+  return menuItem;
 }
