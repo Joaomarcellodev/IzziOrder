@@ -167,8 +167,6 @@ export default function OrdersDashboard({
                 0
               );
 
-              const orderTypeDisplay = formatOrderType(o.type, o.tableNumber);
-
               function renderTypeAndDetails(o: Order): React.ReactNode {
                 if (o.type == "LOCAL") {
                   return (
@@ -207,11 +205,15 @@ export default function OrdersDashboard({
                           const subtotal = i.price * i.quantity;
                           return (
                             <div
-                              key={o.id + i.menuItemId!}
+                              key={o.id + i.id}
                               className="flex justify-between"
                             >
                               <span>
                                 {i.quantity}x {i.name} — R$ {i.price.toFixed(2)}
+                                {i.observation && (<p>
+
+                                  OBS: {i.observation}
+                                </p>)}
                               </span>
 
                               <span className="font-medium">
