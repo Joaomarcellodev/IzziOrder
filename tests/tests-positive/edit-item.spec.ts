@@ -3,7 +3,6 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Editar Item do Cardápio - Testes Positivos', () => {
   let itemDeTeste: string = '';
 
-// Preparar teste
   test.beforeEach(async ({ page }) => {
     console.log('Preparando ambiente de teste...');
 
@@ -56,7 +55,6 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     }
   });
 
-  // Limpeza depois de cada teste
   test.afterEach(async ({ page }) => {
     console.log(`AFTEREACH - Removendo item de teste: ${itemDeTeste}`);
     
@@ -174,7 +172,6 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
   });
 });
 
-// FUNÇÕES AUXILIARES SIMPLIFICADAS
 async function encontrarItemRecemCriado(page: Page, nomeItem: string) {
 
   const itens = page.locator('div, li, article, section')

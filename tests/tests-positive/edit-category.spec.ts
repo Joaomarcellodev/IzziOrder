@@ -7,7 +7,6 @@ test.describe('Editar Categoria - Testes Positivos', () => {
   test.beforeEach(async ({ page }) => {
     console.log('Preparando ambiente de teste para categorias...');
 
-    // FAZER LOGIN
     await page.goto('http://localhost:3000/login');
     await page.waitForTimeout(2000);
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
@@ -16,11 +15,10 @@ test.describe('Editar Categoria - Testes Positivos', () => {
     await page.waitForURL('**/auth/**', { timeout: 15000 });
     await page.waitForTimeout(3000);
 
-    // IR PARA O MENU
+
     await page.goto('http://localhost:3000/auth/menu');
     await page.waitForTimeout(2000);
 
-    // CRIAR CATEGORIA
     categoriaDeTeste = 'Categoria Para Editar';
 
     await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
@@ -35,7 +33,7 @@ test.describe('Editar Categoria - Testes Positivos', () => {
     console.log('Categoria criada: ' + categoriaDeTeste);
   });
 
-  // LIMPEZA
+
   test.afterEach(async ({ page }) => {
     console.log('Limpando categoria: ' + categoriaDeTeste);
     

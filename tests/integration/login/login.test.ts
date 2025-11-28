@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 import { AuthValidator } from "@/lib/validators/authValidator";
 
 describe("Login Integration", () => {

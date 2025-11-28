@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 
 describe("Tables UPDATE Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520"; // ID de teste
