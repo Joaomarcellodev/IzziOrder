@@ -19,7 +19,7 @@ describe("DELETE Order - deleteOrder", () => {
   });
 
   describe("VALID Cases", () => {
-    it("should delete order successfully", async () => {
+    it("U-OR-D-1001 should delete order successfully", async () => {
       mockSupabase.from.mockReturnValueOnce({
         delete: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockResolvedValueOnce({
@@ -35,14 +35,14 @@ describe("DELETE Order - deleteOrder", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("should return error when ID is empty", async () => {
+    it("U-OR-D-2001 should return error when ID is empty", async () => {
       const result = await deleteOrder("");
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("ID do pedido inválido.");
     });
 
-    it("should return error when deletion fails", async () => {
+    it("U-OR-D-2002 should return error when deletion fails", async () => {
       mockSupabase.from.mockReturnValueOnce({
         delete: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockResolvedValueOnce({

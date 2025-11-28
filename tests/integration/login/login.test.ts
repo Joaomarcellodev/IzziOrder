@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/utils/supabase/supabaseClient";
 import { AuthValidator } from "@/lib/validators/authValidator";
 
 describe("Login Integration", () => {
@@ -42,7 +42,7 @@ describe("Login Integration", () => {
   describe("Valid Cases - Validation + Login", () => {
     it("should validate credentials before sending to Supabase", () => {
       const validation = AuthValidator.validateCredentials(
-        usuarioTeste.email, 
+        usuarioTeste.email,
         usuarioTeste.password
       );
 
@@ -114,7 +114,7 @@ describe("Login Integration", () => {
 
       // Segundo login
       const { data: secondLoginData, error: secondLoginError } = await supabase.auth.signInWithPassword(usuarioTeste);
-      
+
       expect(secondLoginError).toBeNull();
       expect(secondLoginData.user).toBeDefined();
     });
@@ -155,7 +155,7 @@ describe("Login Integration", () => {
 
     it("should fail login with non-existent email", async () => {
       const emailInexistente = `nao.existe.${Date.now()}@exemplo.com`;
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailInexistente,
         password: "QualquerSenha123"
@@ -204,7 +204,7 @@ describe("Login Integration", () => {
   describe("Invalid Cases - Sequences", () => {
     it("should reject numeric sequences", () => {
       const senhasInvalidas = ["Senha123", "ABC456def", "Teste789X"];
-      
+
       senhasInvalidas.forEach(senha => {
         const result = AuthValidator.validatePassword(senha);
         expect(result.isValid).toBe(false);
@@ -214,7 +214,7 @@ describe("Login Integration", () => {
 
     it("should reject alphabetic sequences", () => {
       const senhasInvalidas = ["Abcdefg1", "XYZteste2", "MinhaMNO3"];
-      
+
       senhasInvalidas.forEach(senha => {
         const result = AuthValidator.validatePassword(senha);
         expect(result.isValid).toBe(false);
@@ -224,7 +224,7 @@ describe("Login Integration", () => {
 
     it("should reject repeated characters", () => {
       const senhasInvalidas = ["AAAbbb123", "Testeee1", "Senha444"];
-      
+
       senhasInvalidas.forEach(senha => {
         const result = AuthValidator.validatePassword(senha);
         expect(result.isValid).toBe(false);

@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
+import { validateOrder } from "@/lib/validators/order";
 
 // Tipo padrão de resposta
 interface ActionResponse<T = any> {
@@ -11,7 +12,6 @@ interface ActionResponse<T = any> {
   data?: T;
 }
 
-// Tipo para a tabela "orders"
 export interface Order {
   id: string;
   code?: string;
@@ -20,7 +20,7 @@ export interface Order {
   status: "OPEN" | "CLOSED";
   tableNumber?: number;
   customerName?: string;
-  type: "DELIVERY" | "LOCAL" | "PUCKUP";
+  type: "DELIVERY" | "LOCAL" | "PICKUP";
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<{
@@ -33,12 +33,11 @@ export interface Order {
 
 export interface OrderRequestDTO {
   total: number;
-  type: "DELIVERY" | "LOCAL" | "PUCKUP";
+  type: "DELIVERY" | "LOCAL" | "PICKUP";
   detail?: string;
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<OrderLineRequestDTO>;
-  customerId?: string | null;
 }
 
 export interface OrderLineRequestDTO {
@@ -50,16 +49,17 @@ export interface OrderLineRequestDTO {
   observation?: string;
 }
 
-/**
- * Cria um novo pedido.
- * @param orderData Dados do pedido.
- */
 export async function createOrder(
   order: OrderRequestDTO
-): Promise<ActionResponse<Order>> {
+) {
+  const errors = validateOrder(order);
+  if (errors.length > 0) {
+    return { success: false, error: errors.join("\n") };
+  }
+
   const supabase = createClient();
 
-  const { data: orderCreated, error } = await (await supabase)
+  const { data, error } = await (await supabase)
     .from("orders")
     .insert({
       total: order.total.toFixed(2),
@@ -67,9 +67,8 @@ export async function createOrder(
       status: "OPEN",
       establishment_id: ESTABLISHMENT_ID,
       detail: order.detail,
-      delivery_fee: order.deliveryFee,
-      estimated_time: order.estimatedTime,
-      customer_id: order.customerId
+      delivery_fee: order.deliveryFee ?? 0,
+      estimated_time: order.estimatedTime ?? 0,
     })
     .select("id")
     .single();
@@ -84,7 +83,7 @@ export async function createOrder(
       name: line.name,
       price: line.price,
       quantity: line.quantity,
-      order_id: orderCreated.id,
+      order_id: data.id,
       menu_item_id: line.menuItemId,
       observation: line.observation
     }));
@@ -95,12 +94,14 @@ export async function createOrder(
 
     if (orderLinesError) {
       console.error("Erro ao criar itens do pedido:", orderLinesError);
-      return { success: false, error: orderLinesError.message };
+      return { success: false, error: "Erro ao criar as linhas do pedido." };
     }
   }
 
+  const { data: createdOrder } = await getOrderById(data.id);
+
   revalidatePath("/orders");
-  return { success: true, data: orderCreated as Order };
+  return { success: true, data: createdOrder };
 }
 
 /*Busca todos os pedidos.*/
@@ -120,23 +121,31 @@ export async function getOrders(establishment_id: string) {
 
   const orders: Order[] = [];
   for (const orderData of data) {
-    const order = orderData as Order;
-    if (order.type == "LOCAL") {
-      order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
-    } else if (order.type == "DELIVERY") {
-      order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
-    }
-
-    order.customerName = orderData.customer ? orderData.customer.name : null;
-    order.tableNumber = orderData.table_number;
-    order.deliveryFee = orderData.delivery_fee;
-    order.estimatedTime = orderData.estimated_time;
-    order.orderLines = orderData.order_lines;
+    const order = mapDataToOrder(orderData);
 
     orders.push(order);
   }
 
   return { success: true, data: orders };
+
+}
+
+function mapDataToOrder(orderData: any): Order {
+  const order = orderData as Order;
+  if (order.type == "LOCAL") {
+    order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
+    order.tableNumber = orderData.detail;
+  } else if (order.type == "DELIVERY") {
+    order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
+  } else if (order.type == "PICKUP") {
+    order.code = "#PIC" + "-" + order.id.slice(0, 6).toUpperCase();
+    order.customerName = orderData.detail;
+  }
+
+  order.deliveryFee = orderData.delivery_fee;
+  order.estimatedTime = orderData.estimated_time;
+  order.orderLines = orderData.order_lines;
+  return order;
 }
 
 /**
@@ -154,7 +163,7 @@ export async function getOrderById(
 
   const { data, error } = await (await supabase)
     .from("orders")
-    .select("*")
+    .select("*, order_lines(*)")
     .eq("id", id)
     .single();
 
@@ -163,7 +172,7 @@ export async function getOrderById(
     return { success: false, error: "Pedido não encontrado." };
   }
 
-  return { success: true, data: data as Order };
+  return { success: true, data: mapDataToOrder(data) };
 }
 
 /**
@@ -190,7 +199,6 @@ export async function updateOrder(
       detail: updates.detail,
       delivery_fee: updates.deliveryFee,
       estimated_time: updates.estimatedTime,
-      customer_id: updates.customerId
     })
     .eq("id", id)
     .select()
@@ -254,7 +262,7 @@ export async function updateOrder(
  * Deleta um pedido.
  * @param id ID do pedido.
  */
-export async function deleteOrder(id: string): Promise<ActionResponse> {
+export async function deleteOrder(id: string) {
   const supabase = createClient();
 
   if (!id) {

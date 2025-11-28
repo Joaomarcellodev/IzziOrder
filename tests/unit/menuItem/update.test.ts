@@ -38,7 +38,7 @@ describe("UNIT — updateMenuItem", () => {
   });
 
   describe("VALID Cases", () => {
-    it("should update menu item successfully without image change", async () => {
+    it("U-MI-U-1001 should update menu item successfully without image change", async () => {
       mockSupabase.single
         .mockResolvedValueOnce({ // Check category
           data: { id: "cat123", establishment_id: "est123" },
@@ -64,7 +64,7 @@ describe("UNIT — updateMenuItem", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/menu");
     });
 
-    it("should update menu item with new image and delete old one", async () => {
+    it("U-MI-U-1002 should update menu item with new image and delete old one", async () => {
       mockSupabase.single
         .mockResolvedValueOnce({ // Check category
           data: { id: "cat123", establishment_id: "est123" },
@@ -87,7 +87,7 @@ describe("UNIT — updateMenuItem", () => {
       expect(del).toHaveBeenCalledWith("https://old-image.com/old.jpg");
     });
 
-    it("should not delete placeholder image when updating", async () => {
+    it("U-MI-U-1003 should not delete placeholder image when updating", async () => {
       mockSupabase.single
         .mockResolvedValueOnce({ // Check category
           data: { id: "cat123", establishment_id: "est123" },
@@ -111,14 +111,14 @@ describe("UNIT — updateMenuItem", () => {
   });
 
   describe("INVALID Cases", () => {
-    it("should return error for invalid ID", async () => {
+    it("U-MI-U-2001 should return error for invalid ID", async () => {
       const result = await updateMenuItem("", new FormData());
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("ID do item de menu inválido.");
     });
 
-    it("should return validation errors", async () => {
+    it("U-MI-U-2002 should return validation errors", async () => {
       (validateMenuItem as jest.Mock).mockReturnValue(["Invalid price"]);
 
       const formData = new FormData();
@@ -130,7 +130,7 @@ describe("UNIT — updateMenuItem", () => {
       expect(result.error).toBe("Invalid price");
     });
 
-    it("should return error for invalid category", async () => {
+    it("U-MI-U-2003 should return error for invalid category", async () => {
       mockSupabase.single.mockResolvedValueOnce({
         data: null,
         error: { message: "Category not found" },
@@ -145,7 +145,7 @@ describe("UNIT — updateMenuItem", () => {
       expect(result.error).toMatch(/categoria inválida/i);
     });
 
-    it("should handle image upload failure", async () => {
+    it("U-MI-U-2004 should handle image upload failure", async () => {
       mockSupabase.single.mockResolvedValueOnce({
         data: { id: "cat123", establishment_id: "est123" },
         error: null,
@@ -178,7 +178,7 @@ describe("UNIT — updateMenuItemAvailability", () => {
     (createClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
-  it("should update availability successfully", async () => {
+  it("U-MI-UA-1001 should update availability successfully", async () => {
     mockSupabase.eq.mockResolvedValueOnce({
       error: null,
     });
@@ -190,14 +190,14 @@ describe("UNIT — updateMenuItemAvailability", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/menu");
   });
 
-  it("should return error for invalid ID", async () => {
+  it("U-MI-UA-1002 should return error for invalid ID", async () => {
     const result = await updateMenuItemAvailability("", true);
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("ID do item de menu inválido.");
   });
 
-  it("should handle database error", async () => {
+  it("U-MI-UA-1003 should handle database error", async () => {
     mockSupabase.eq.mockResolvedValueOnce({
       error: { message: "Update failed" },
     });
@@ -224,7 +224,7 @@ describe("UNIT — updateMenuOrdernation", () => {
     (createClient as jest.Mock).mockResolvedValue(mockSupabase);
   });
 
-  it("should update menu order successfully", async () => {
+  it("U-MI-UO-1001 should update menu order successfully", async () => {
     mockSupabase.eq.mockResolvedValue({ error: null });
 
     const result = await updateMenuOrdernation(["1", "2", "3"]);
@@ -234,7 +234,7 @@ describe("UNIT — updateMenuOrdernation", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/menu");
   });
 
-  it("should handle empty array as valid input", async () => {
+  it("U-MI-UO-1002 should handle empty array as valid input", async () => {
     // Array vazio é considerado válido pela função
     mockSupabase.eq.mockResolvedValue({ error: null });
 
@@ -245,21 +245,21 @@ describe("UNIT — updateMenuOrdernation", () => {
     // mas ainda retorna success: true
   });
 
-  it("should return error for null IDs", async () => {
+  it("U-MI-UO-1003 should return error for null IDs", async () => {
     const result = await updateMenuOrdernation(null as any);
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("IDs de ordenação inválidos.");
   });
 
-  it("should return error for non-array IDs", async () => {
+  it("U-MI-UO-1004 should return error for non-array IDs", async () => {
     const result = await updateMenuOrdernation("not-an-array" as any);
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("IDs de ordenação inválidos.");
   });
 
-  it("should handle database error", async () => {
+  it("U-MI-UO-1005 should handle database error", async () => {
     mockSupabase.eq.mockResolvedValue({ error: { message: "Update failed" } });
 
     const result = await updateMenuOrdernation(["1", "2"]);

@@ -34,6 +34,7 @@ import {
   deleteMenuItem as serverDeleteMenuItem,
   updateMenuOrdernation,
   MenuItem,
+  MenuItemRequestDTO,
 } from "@/app/actions/menuItem";
 import {
   createCategory,
@@ -49,11 +50,11 @@ interface Category {
 }
 
 interface MenuItemCardProps {
-  item: MenuItem;
+  item: MenuItemRequestDTO;
   index: number;
   moveItem: (dragIndex: number, hoverIndex: number) => void;
   toggleAvailability: (itemId: string) => Promise<void>;
-  openEditModal: (item: MenuItem) => void;
+  openEditModal: (item: MenuItemRequestDTO) => void;
   openDeleteModal: (itemId: string) => void;
   onDrop: (dragIndex: number) => void;
 }
@@ -187,7 +188,7 @@ const MenuItemCard = ({
   // O drag é aplicado no GripVertical
   const dragRef = drag(useRef<HTMLDivElement>(null));
 
-  const hasImage = item.image && item.image !== "/placeholder-img.svg";
+  const hasImage = item.imageUrl && item.imageUrl !== "/placeholder-img.svg";
 
   // Função para abrir/fechar ações no clique (alternativa ao swipe)
   const toggleMobileActions = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -225,7 +226,7 @@ const MenuItemCard = ({
           {/* Coluna 2: Imagem/Placeholder */}
           {hasImage ? (
             <img
-              src={item.image}
+              src={item.imageUrl}
               alt={item.name}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0"
             />
@@ -354,7 +355,7 @@ export function MenuManagement({
   categories: initialCategories,
 }: MenuManagementProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [editingItem, setEditingItem] = useState<MenuItemRequestDTO | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
@@ -382,7 +383,7 @@ export function MenuManagement({
   const filteredItems =
     selectedCategory === "All"
       ? localMenuItems
-      : localMenuItems.filter((item) => item.category_id === selectedCategory);
+      : localMenuItems.filter((item) => item.categoryId === selectedCategory);
 
   const toggleAvailability = async (itemId: string) => {
     const itemToUpdate = localMenuItems.find((item) => item.id === itemId);
@@ -446,7 +447,7 @@ export function MenuManagement({
     setItemToDelete(null);
   };
 
-  const openEditModal = (item: MenuItem) => {
+  const openEditModal = (item: MenuItemRequestDTO) => {
     setEditingItem({ ...item });
     setIsItemModalOpen(true);
     setImageFile(null);
@@ -463,7 +464,7 @@ export function MenuManagement({
       const file = e.target.files[0];
       setImageFile(file);
       setEditingItem((prev) =>
-        prev ? { ...prev, image: URL.createObjectURL(file) } : null
+        prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null
       );
     }
   };
@@ -477,23 +478,16 @@ export function MenuManagement({
       return;
     }
 
-    const formData = new FormData();
-    formData.append("name", editingItem.name);
-    formData.append("description", editingItem.description);
-    formData.append("price", editingItem.price.toString());
-    formData.append("category_id", editingItem.category_id);
-    formData.append("available", editingItem.available.toString());
-
     if (imageFile) {
-      formData.append("imageFile", imageFile);
+      editingItem.imageFile = imageFile;
     } else {
-      formData.append("image", editingItem.image);
+      editingItem.imageUrl;
     }
 
     if (editingItem.id) {
       const { success, error, data } = await updateMenuItem(
         editingItem.id,
-        formData
+        editingItem
       );
       if (success && data) {
         setLocalMenuItems((prevItems) =>
@@ -504,7 +498,7 @@ export function MenuManagement({
         toast({ title: `Erro: ${error}` });
       }
     } else {
-      const { success, error, data } = await createMenuItem(formData);
+      const { success, error, data } = await createMenuItem(editingItem);
       if (success && data) {
         setLocalMenuItems((prevItems) => [...prevItems, data]);
         toast({ title: "Item adicionado com sucesso" });
@@ -522,8 +516,9 @@ export function MenuManagement({
       name: "",
       description: "",
       price: 0,
-      category_id: "",
+      categoryId: "",
       image: "/placeholder-img.svg",
+      imageFile: null,
       available: true,
     };
     setEditingItem(newItem);
@@ -828,10 +823,10 @@ export function MenuManagement({
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
                     <Select
-                      value={editingItem.category_id}
+                      value={editingItem.categoryId}
                       onValueChange={(value) =>
                         setEditingItem((prev) =>
-                          prev ? { ...prev, category_id: value } : null
+                          prev ? { ...prev, categoryId: value } : null
                         )
                       }
                     >
@@ -851,10 +846,10 @@ export function MenuManagement({
                 <div className="space-y-2">
                   <Label>Imagem</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    {editingItem.image &&
-                      editingItem.image !== "/placeholder-img.svg" ? (
+                    {editingItem.imageUrl &&
+                      editingItem.imageUrl !== "/placeholder-img.svg" ? (
                       <img
-                        src={editingItem.image}
+                        src={editingItem.imageUrl}
                         alt="Pré-visualização da imagem"
                         className="w-32 h-32 object-cover rounded-lg mx-auto mb-2"
                       />

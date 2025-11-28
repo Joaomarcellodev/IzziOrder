@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/supabaseClient';
+import { supabase } from '@/utils/supabase/supabaseClient';
 
 describe('Supabase Connection ', () => {
   it('should fetch tables without errors', async () => {
@@ -7,7 +7,7 @@ describe('Supabase Connection ', () => {
       .select()
       .limit(1);
 
-    expect(error).toBeNull(); 
-    expect(data).toBeDefined(); 
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
   });
 });

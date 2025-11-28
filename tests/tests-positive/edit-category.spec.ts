@@ -1,101 +1,121 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 test.describe('Editar Categoria - Testes Positivos', () => {
-  
+  let categoriaDeTeste: string = '';
+
+  // PREPARAÇÃO (executa antes de CADA teste)
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000/menu');
+    console.log('Preparando ambiente de teste para categorias...');
+
+    await page.goto('http://localhost:3000/login');
     await page.waitForTimeout(2000);
+    await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
+    await page.getByRole('textbox', { name: /senha/i }).fill('senhateste');
+    await page.locator('button.bg-blue-600').click();
+    await page.waitForURL('**/auth/**', { timeout: 15000 });
+    await page.waitForTimeout(3000);
+
+
+    await page.goto('http://localhost:3000/auth/menu');
+    await page.waitForTimeout(2000);
+
+    categoriaDeTeste = 'Categoria Para Editar';
+
+    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
+    await page.waitForTimeout(2000);
+    await page.getByRole('textbox', { name: /nome da categoria/i }).fill(categoriaDeTeste);
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
+    await page.waitForTimeout(3000);
+
+    // VERIFICAR SE CATEGORIA FOI CRIADA
+    await expect(page.getByText(categoriaDeTeste).first()).toBeVisible({ timeout: 5000 });
+    console.log('Categoria criada: ' + categoriaDeTeste);
+  });
+
+
+  test.afterEach(async ({ page }) => {
+    console.log('Limpando categoria: ' + categoriaDeTeste);
+    
+    if (!page.url().includes('/auth/menu')) {
+      await page.goto('http://localhost:3000/auth/menu');
+      await page.waitForTimeout(2000);
+    }
+
+    if (categoriaDeTeste) {
+      try {
+        await page.locator('button:has(svg.lucide-trash)').last().click();
+        await page.waitForTimeout(1000);
+        
+        const botaoConfirmar = page.getByRole('button', { name: /excluir|confirmar|sim/i });
+        if (await botaoConfirmar.isVisible({ timeout: 2000 })) {
+          await botaoConfirmar.click();
+          await page.waitForTimeout(1000);
+          console.log('Ultima categoria excluída: ' + categoriaDeTeste);
+        }
+      } catch (error) {
+        console.log('Categoria não encontrada para exclusão: ' + categoriaDeTeste);
+      }
+    }
   });
 
   // 1. EDITAR NOME DA CATEGORIA
   test('deve editar nome da categoria existente', async ({ page }) => {
-    // Primeiro cria uma categoria para editar
-    const categoriaOriginal = `Categoria Editar ${Date.now()}`;
-    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
-    await page.waitForTimeout(2000);
-    
-    await page.getByRole('textbox', { name: /nome da categoria/i }).fill(categoriaOriginal);
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
-    await page.waitForTimeout(3000);
+    test.setTimeout(60000);
+    const novoNome = 'Categoria Editada Com Sucesso';
 
-    // Agora edita a categoria
-    const novoNome = `Categoria Editada ${Date.now()}`;
-    
-    // Encontra e clica no botão de editar da categoria criada
-    const categoriaItem = page.locator('div').filter({ hasText: categoriaOriginal }).first();
-    await categoriaItem.getByRole('button', { name: /editar/i }).click();
+    await page.locator('button:has(svg.lucide-square-pen)').last().click();
     await page.waitForTimeout(2000);
     
-    // Altera o nome
+    await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
     await page.getByRole('textbox', { name: /nome da categoria/i }).fill(novoNome);
     await page.waitForTimeout(1000);
     
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
     
-    // Verifica se o nome foi atualizado
     await expect(page.getByText(novoNome).first()).toBeVisible();
-    await expect(page.getByText(categoriaOriginal)).not.toBeVisible();
+    await expect(page.locator('span.text-sm.font-medium').getByText(categoriaDeTeste)).not.toBeVisible();
+
+    console.log('Editada: ' + categoriaDeTeste + ' -> ' + novoNome);
   });
 
   // 2. EDITAR CATEGORIA COM NOME LONGO
   test('deve editar categoria com nome longo', async ({ page }) => {
-    // Cria categoria temporária
-    const categoriaOriginal = `Cat ${Date.now()}`;
-    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
-    await page.waitForTimeout(2000);
-    
-    await page.getByRole('textbox', { name: /nome da categoria/i }).fill(categoriaOriginal);
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
-    await page.waitForTimeout(3000);
+    test.setTimeout(60000);
+    const nomeLongo = 'Categoria Com Nome Extremamente Longo Para Teste';
 
-    // Edita para nome longo
-    const nomeLongo = 'Categoria com Nome Muito Longo para Teste de Edição';
-    
-    const categoriaItem = page.locator('div').filter({ hasText: categoriaOriginal }).first();
-    await categoriaItem.getByRole('button', { name: /editar/i }).click();
+    await page.locator('button:has(svg.lucide-square-pen)').last().click();
     await page.waitForTimeout(2000);
     
+    await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
     await page.getByRole('textbox', { name: /nome da categoria/i }).fill(nomeLongo);
     await page.waitForTimeout(1000);
     
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
     
-    // Verifica se aceitou o nome longo
     await expect(page.getByText(nomeLongo).first()).toBeVisible();
+    console.log('Nome longo editado: ' + nomeLongo);
   });
 
-  // 3. CANCELAR EDIÇÃO DE CATEGORIA
+  // 3. CANCELAR EDIÇÃO
   test('deve cancelar edição sem salvar alterações', async ({ page }) => {
-    // Cria categoria temporária
-    const categoriaOriginal = `Categoria Cancelar ${Date.now()}`;
-    await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
-    await page.waitForTimeout(2000);
-    
-    await page.getByRole('textbox', { name: /nome da categoria/i }).fill(categoriaOriginal);
-    await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: /salvar|criar|adicionar/i }).click();
-    await page.waitForTimeout(3000);
+    test.setTimeout(60000);
 
-    // Abre edição e cancela
-    const categoriaItem = page.locator('div').filter({ hasText: categoriaOriginal }).first();
-    await categoriaItem.getByRole('button', { name: /editar/i }).click();
+    await page.locator('button:has(svg.lucide-square-pen)').last().click();
     await page.waitForTimeout(2000);
     
+    await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
     await page.getByRole('textbox', { name: /nome da categoria/i }).fill('Nome Alterado Cancelado');
     await page.waitForTimeout(1000);
     
     await page.getByRole('button', { name: /cancelar/i }).click();
     await page.waitForTimeout(2000);
     
-    // Verifica que o nome original permanece
-    await expect(page.getByText(categoriaOriginal).first()).toBeVisible();
+    await expect(page.getByText(categoriaDeTeste).first()).toBeVisible();
     await expect(page.getByText('Nome Alterado Cancelado')).not.toBeVisible();
+    
+    console.log('Edição cancelada - nome mantido: ' + categoriaDeTeste);
   });
 });
