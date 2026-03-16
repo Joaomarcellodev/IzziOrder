@@ -1,3 +1,5 @@
+import { StackId } from "recharts/types/util/ChartUtils"
+
 export class User {
     name: string
     email: string
@@ -10,7 +12,7 @@ export class User {
         this.password = password
         this.password_confirmation = password_confirmation
 
-        this.validateCredentials()
+        User.validateCredentials(this.email, this.password, this.password_confirmation)
     }
 
     static fromFormData(formData: FormData): User {
@@ -20,46 +22,46 @@ export class User {
             formData.get('password_confirmation') as string)
     }
 
-    validateCredentials() {
-        this.validateEmail()
-        this.validatePassword()
-        this.verifyPasswordConfirmation()
+    static validateCredentials(email: string, password: string, password_confirmation: string) {
+        User.validateEmail(email)
+        User.validatePassword(password)
+        User.verifyPasswordConfirmation(password, password_confirmation)
     }
 
-    verifyPasswordConfirmation() {
-        if (this.password !== this.password_confirmation) {
-            throw new Error("Senhas não batem")
+    static verifyPasswordConfirmation(password: string, password_confirmation: string) {
+        if (password !== password_confirmation) {
+            throw new Error("As senhas não batem")
         }
     }
 
-    validateEmail() {
-        if (!this.email || this.email.trim() === '') {
+    static validateEmail(email: string) {
+        if (!email || email.trim() === '') {
             throw new Error('Email é obrigatório')
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(this.email)) {
+        if (!emailRegex.test(email)) {
             throw new Error('Formato de email inválido')
         }
     }
 
-    validatePassword() {
-        if (!this.password || this.password.trim() === '') {
+    static validatePassword(password: string) {
+        if (!password || password.trim() === '') {
             throw new Error('Senha é obrigatória');
         }
 
         // Mínimo 8 caracteres
-        if (this.password.length < 8) {
+        if (password.length < 8) {
             throw new Error('Senha deve ter no mínimo 8 caracteres');
         }
 
         // Pelo menos uma letra maiúscula
-        if (!/[A-Z]/.test(this.password)) {
+        if (!/[A-Z]/.test(password)) {
             throw new Error('Senha deve ter pelo menos uma letra maiúscula');
         }
 
         // Pelo menos um número
-        if (!/\d/.test(this.password)) {
+        if (!/\d/.test(password)) {
             throw new Error('Senha deve ter pelo menos um número');
         }
     }
