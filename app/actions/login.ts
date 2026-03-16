@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
 import { User } from '@/lib/user'
+import { Session, SupabaseClient } from '@supabase/supabase-js'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -34,17 +35,26 @@ export async function signup(formData: FormData) {
 
     const user = User.fromFormData(formData)
 
-    const data = {
+    const { error, data } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
-    }
-
-    const { error } = await supabase.auth.signUp(data)
+    })
 
     if (error) {
         redirect('/error')
     }
 
+    await saveUserName(data, supabase, user)
+
     revalidatePath('/', 'layout')
     redirect('/')
+}
+
+async function saveUserName(data: any, supabase: SupabaseClient, user: User) {
+    if (data.user) {
+        await supabase.from("profiles").insert({
+            id: data.user.id,
+            user_name: user.name as string
+        })
+    }
 }
