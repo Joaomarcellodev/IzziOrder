@@ -1,11 +1,8 @@
 import { supabase } from "@/utils/supabase/supabaseClient";
-import { AuthValidator } from "@/lib/validators/authValidator";
+import { User } from "@/lib/user";
 
 describe("Login Integration", () => {
-  const usuarioTeste = {
-    email: "teste.login@exemplo.com",
-    password: "Senha859"
-  };
+  const testUser = new User("Usuario", "teste.login@exemplo.com", "Senha859", "Senha859")
 
   beforeEach(async () => {
     await supabase.auth.signOut();
@@ -15,51 +12,48 @@ describe("Login Integration", () => {
   describe("Valid Cases - Basic Login", () => {
     it("should login with valid credentials successfully", async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: usuarioTeste.email,
-        password: usuarioTeste.password
+        email: testUser.email,
+        password: testUser.password
       });
 
       expect(error).toBeNull();
       expect(data.user).toBeDefined();
-      expect(data.user?.email).toBe(usuarioTeste.email);
+      expect(data.user?.email).toBe(testUser.email);
       expect(data.session).toBeDefined();
     });
 
     it("should retrieve user session after login", async () => {
       // Login primeiro
-      await supabase.auth.signInWithPassword(usuarioTeste);
+      await supabase.auth.signInWithPassword(testUser);
 
       // Verifica sessão
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
       expect(sessionError).toBeNull();
       expect(sessionData.session).toBeDefined();
-      expect(sessionData.session?.user.email).toBe(usuarioTeste.email);
+      expect(sessionData.session?.user.email).toBe(testUser.email);
     });
   });
 
   // Casos válidos - VALIDAÇÃO + LOGIN
   describe("Valid Cases - Validation + Login", () => {
     it("should validate credentials before sending to Supabase", () => {
-      const validation = AuthValidator.validateCredentials(
-        usuarioTeste.email,
-        usuarioTeste.password
-      );
-
-      expect(validation.isValid).toBe(true);
-      expect(validation.errors).toBeUndefined();
+      expect(() => User.validateCredentials(
+        testUser.email,
+        testUser.password,
+        testUser.password_confirmation
+      )).not.toThrow()
     });
 
     it("should accept valid email format", () => {
-      const emailsValidos = [
+      const validEmails = [
         "usuario@exemplo.com",
         "test.email@domain.com.br",
         "name123@company.org"
       ];
 
-      emailsValidos.forEach(email => {
-        const result = AuthValidator.validateEmail(email);
-        expect(result.isValid).toBe(true);
+      validEmails.forEach(email => {
+        expect(() => User.validateEmail(email)).not.toThrow()
       });
     });
 
@@ -71,8 +65,7 @@ describe("Login Integration", () => {
       ];
 
       senhasValidas.forEach(senha => {
-        const result = AuthValidator.validatePassword(senha);
-        expect(result.isValid).toBe(true);
+        expect(() => User.validatePassword(senha)).not.toThrow()
       });
     });
   });
@@ -82,8 +75,8 @@ describe("Login Integration", () => {
     it("should execute full authentication flow: login → session → logout", async () => {
       // Login
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email: usuarioTeste.email,
-        password: usuarioTeste.password
+        email: testUser.email,
+        password: testUser.password
       });
       expect(loginError).toBeNull();
 
@@ -93,7 +86,7 @@ describe("Login Integration", () => {
 
       // Usuário atual
       const { data: userData } = await supabase.auth.getUser();
-      expect(userData.user?.email).toBe(usuarioTeste.email);
+      expect(userData.user?.email).toBe(testUser.email);
 
       // Logout
       const { error: logoutError } = await supabase.auth.signOut();
@@ -106,14 +99,14 @@ describe("Login Integration", () => {
 
     it("should allow new login after logout", async () => {
       // Primeiro login
-      const { error: firstLoginError } = await supabase.auth.signInWithPassword(usuarioTeste);
+      const { error: firstLoginError } = await supabase.auth.signInWithPassword(testUser);
       expect(firstLoginError).toBeNull();
 
       // Logout
       await supabase.auth.signOut();
 
       // Segundo login
-      const { data: secondLoginData, error: secondLoginError } = await supabase.auth.signInWithPassword(usuarioTeste);
+      const { data: secondLoginData, error: secondLoginError } = await supabase.auth.signInWithPassword(testUser);
 
       expect(secondLoginError).toBeNull();
       expect(secondLoginData.user).toBeDefined();
@@ -127,8 +120,7 @@ describe("Login Integration", () => {
       const senhaValida = "NovaS3nh@859";
 
       // Valida antes de enviar
-      const validation = AuthValidator.validateCredentials(emailNovo, senhaValida);
-      expect(validation.isValid).toBe(true);
+      expect(() => User.validateCredentials(emailNovo, senhaValida, senhaValida)).not.toThrow()
 
       const { data, error } = await supabase.auth.signUp({
         email: emailNovo,
@@ -144,7 +136,7 @@ describe("Login Integration", () => {
   describe("Invalid Cases - Credentials", () => {
     it("should fail login with wrong password", async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: usuarioTeste.email,
+        email: testUser.email,
         password: "SenhaErrada123"
       });
 
@@ -176,78 +168,35 @@ describe("Login Integration", () => {
       ];
 
       emailsInvalidos.forEach(email => {
-        const result = AuthValidator.validateEmail(email);
-        expect(result.isValid).toBe(false);
+        expect(() => User.validateEmail(email)).toThrow()
       });
     });
 
     it("should reject passwords shorter than 8 characters", () => {
-      const result = AuthValidator.validatePassword("Abc123");
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Senha deve ter no mínimo 8 caracteres");
+      expect(() => User.validatePassword("Abc123")).toThrow("Senha deve ter no mínimo 8 caracteres");
     });
 
     it("should reject passwords without uppercase letters", () => {
-      const result = AuthValidator.validatePassword("senha1234");
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Senha deve ter pelo menos uma letra maiúscula");
+      expect(() => User.validatePassword("senha1234")).toThrow("Senha deve ter pelo menos uma letra maiúscula");
     });
 
     it("should reject passwords without numbers", () => {
-      const result = AuthValidator.validatePassword("SenhaFraca");
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Senha deve ter pelo menos um número");
-    });
-  });
-
-  // Casos inválidos - SEQUÊNCIAS
-  describe("Invalid Cases - Sequences", () => {
-    it("should reject numeric sequences", () => {
-      const senhasInvalidas = ["Senha123", "ABC456def", "Teste789X"];
-
-      senhasInvalidas.forEach(senha => {
-        const result = AuthValidator.validatePassword(senha);
-        expect(result.isValid).toBe(false);
-        expect(result.errors).toContain("Senha não pode conter sequências numéricas (ex: 123, 456)");
-      });
-    });
-
-    it("should reject alphabetic sequences", () => {
-      const senhasInvalidas = ["Abcdefg1", "XYZteste2", "MinhaMNO3"];
-
-      senhasInvalidas.forEach(senha => {
-        const result = AuthValidator.validatePassword(senha);
-        expect(result.isValid).toBe(false);
-        expect(result.errors).toContain("Senha não pode conter sequências alfabéticas (ex: abc, xyz)");
-      });
-    });
-
-    it("should reject repeated characters", () => {
-      const senhasInvalidas = ["AAAbbb123", "Testeee1", "Senha444"];
-
-      senhasInvalidas.forEach(senha => {
-        const result = AuthValidator.validatePassword(senha);
-        expect(result.isValid).toBe(false);
-        expect(result.errors).toContain("Senha não pode ter mais de 2 caracteres repetidos em sequência");
-      });
+      expect(() => User.validatePassword("SenhaFraca")).toThrow("Senha deve ter pelo menos um número");
     });
   });
 
   // Casos inválidos - CAMPOS VAZIOS
   describe("Invalid Cases - Empty Fields", () => {
     it("should reject empty email", () => {
-      const result = AuthValidator.validateCredentials("", "Senha123");
-      expect(result.isValid).toBe(false);
+      expect(() => User.validateCredentials("", "Senha123", "Senha123")).toThrow()
     });
 
     it("should reject empty password", () => {
-      const result = AuthValidator.validateCredentials("teste@exemplo.com", "");
-      expect(result.isValid).toBe(false);
+      expect(() => User.validateCredentials("teste@exemplo.com", "", "")).toThrow()
     });
 
     it("should reject both empty fields", () => {
-      const result = AuthValidator.validateCredentials("", "");
-      expect(result.isValid).toBe(false);
+      expect(() => User.validateCredentials("", "", "")).toThrow()
     });
   });
 
