@@ -91,6 +91,11 @@ export default function LoginPage() {
                   Esqueceu a senha?
                 </Link>
               </div>
+              <div className="flex items-center justify-between">
+                <Link href="/sign-up" className="text-sm text-primary hover:text-primary/80 transition-colors">
+                  Não tem conta?
+                </Link>
+              </div>
 
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
                 Entrar
