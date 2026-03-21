@@ -1,8 +1,8 @@
 import { supabase } from "@/utils/supabase/supabaseClient";
-import { User } from "@/lib/user";
+import { SignUpUser } from "@/lib/entity/sign-up-user";
 
 describe("Login Integration", () => {
-  const testUser = new User("Usuario", "teste.login@exemplo.com", "Senha859", "Senha859")
+  const testUser = new SignUpUser("Usuario", "teste.login@exemplo.com", "Senha859", "Senha859")
 
   beforeEach(async () => {
     await supabase.auth.signOut();
@@ -38,7 +38,7 @@ describe("Login Integration", () => {
   // Casos válidos - VALIDAÇÃO + LOGIN
   describe("Valid Cases - Validation + Login", () => {
     it("should validate credentials before sending to Supabase", () => {
-      expect(() => User.validateCredentials(
+      expect(() => SignUpUser.validateCredentials(
         testUser.email,
         testUser.password,
         testUser.password_confirmation
@@ -53,7 +53,7 @@ describe("Login Integration", () => {
       ];
 
       validEmails.forEach(email => {
-        expect(() => User.validateEmail(email)).not.toThrow()
+        expect(() => SignUpUser.validateEmail(email)).not.toThrow()
       });
     });
 
@@ -65,7 +65,7 @@ describe("Login Integration", () => {
       ];
 
       senhasValidas.forEach(senha => {
-        expect(() => User.validatePassword(senha)).not.toThrow()
+        expect(() => SignUpUser.validatePassword(senha)).not.toThrow()
       });
     });
   });
@@ -120,7 +120,7 @@ describe("Login Integration", () => {
       const senhaValida = "NovaS3nh@859";
 
       // Valida antes de enviar
-      expect(() => User.validateCredentials(emailNovo, senhaValida, senhaValida)).not.toThrow()
+      expect(() => SignUpUser.validateCredentials(emailNovo, senhaValida, senhaValida)).not.toThrow()
 
       const { data, error } = await supabase.auth.signUp({
         email: emailNovo,
@@ -168,35 +168,35 @@ describe("Login Integration", () => {
       ];
 
       emailsInvalidos.forEach(email => {
-        expect(() => User.validateEmail(email)).toThrow()
+        expect(() => SignUpUser.validateEmail(email)).toThrow()
       });
     });
 
     it("should reject passwords shorter than 8 characters", () => {
-      expect(() => User.validatePassword("Abc123")).toThrow("Senha deve ter no mínimo 8 caracteres");
+      expect(() => SignUpUser.validatePassword("Abc123")).toThrow("Senha deve ter no mínimo 8 caracteres");
     });
 
     it("should reject passwords without uppercase letters", () => {
-      expect(() => User.validatePassword("senha1234")).toThrow("Senha deve ter pelo menos uma letra maiúscula");
+      expect(() => SignUpUser.validatePassword("senha1234")).toThrow("Senha deve ter pelo menos uma letra maiúscula");
     });
 
     it("should reject passwords without numbers", () => {
-      expect(() => User.validatePassword("SenhaFraca")).toThrow("Senha deve ter pelo menos um número");
+      expect(() => SignUpUser.validatePassword("SenhaFraca")).toThrow("Senha deve ter pelo menos um número");
     });
   });
 
   // Casos inválidos - CAMPOS VAZIOS
   describe("Invalid Cases - Empty Fields", () => {
     it("should reject empty email", () => {
-      expect(() => User.validateCredentials("", "Senha123", "Senha123")).toThrow()
+      expect(() => SignUpUser.validateCredentials("", "Senha123", "Senha123")).toThrow()
     });
 
     it("should reject empty password", () => {
-      expect(() => User.validateCredentials("teste@exemplo.com", "", "")).toThrow()
+      expect(() => SignUpUser.validateCredentials("teste@exemplo.com", "", "")).toThrow()
     });
 
     it("should reject both empty fields", () => {
-      expect(() => User.validateCredentials("", "", "")).toThrow()
+      expect(() => SignUpUser.validateCredentials("", "", "")).toThrow()
     });
   });
 

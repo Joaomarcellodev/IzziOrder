@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
-import { User } from '@/lib/user'
+import { SignUpUser } from '@/lib/entity/sign-up-user'
 import { Session, SupabaseClient } from '@supabase/supabase-js'
 
 export async function login(formData: FormData) {
@@ -33,7 +33,7 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
-    const user = User.fromFormData(formData)
+    const user = SignUpUser.fromFormData(formData)
 
     const { error } = await supabase.auth.signUp({
         email: user.email,
