@@ -11,12 +11,13 @@ import {
   LogOut,
   Menu,
   X,
+  User,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { User } from "@/lib/entities/user";
+import { logout } from "@/app/actions/login-actions";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -108,8 +109,9 @@ export function AppShell({
 
             >
               <Avatar className="w-10 h-10">
-                <AvatarImage src="/manager-avatar.png" />
-                <AvatarFallback>CM</AvatarFallback>
+                <AvatarFallback>
+                  <User className="w-5 h-5" />
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900 truncate">
@@ -188,15 +190,13 @@ export function AppShell({
               >
                 Cancelar
               </Button>
-              <Button
-                className=" bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  router.push("/login");
-                  setIsLogoutModalOpen(false);
-                }}
-              >
-                Sair
-              </Button>
+              <form action={logout}>
+                <Button
+                  className=" bg-blue-600 hover:bg-blue-700"
+                >
+                  Sair
+                </Button>
+              </form>
             </div>
           </div>
         </div>
