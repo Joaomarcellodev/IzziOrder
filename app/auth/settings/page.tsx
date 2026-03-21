@@ -16,12 +16,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/molecules/dialog"
 import { Checkbox } from "@/components/atoms/checkbox"
 import { Search, Plus, MoreVertical, Trash2, Edit } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/molecules/dropdown-menu"
 import { Toaster, toast } from "sonner"
+import { getUser } from "@/app/actions/user-actions"
 
 type Permission = {
   id: string
@@ -62,7 +62,9 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
   viewer: ["read", "view_analytics"],
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await getUser()
+
   const [users, setUsers] = useState<User[]>([
     {
       id: "1",
@@ -199,7 +201,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <AppShell currentPage="Configurações de Usuários" breadcrumb="Painel > Configurações">
+    <AppShell currentPage="Configurações de Usuários" breadcrumb="Painel > Configurações" user={user}
+    >
       <Toaster position="top-right" richColors />
 
       <div className="min-h-screen bg-background">
@@ -274,7 +277,7 @@ export default function SettingsPage() {
                     {PERMISSIONS.map((p) => (
                       <div key={p.id} className="flex items-center space-x-2">
                         <Checkbox
-                          
+
                           checked={formData.permissions.includes(p.id)}
                           onCheckedChange={() => togglePermission(p.id)}
                         />

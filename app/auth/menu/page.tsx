@@ -1,15 +1,14 @@
 import { AppShell } from "@/components/organisms/app-shell";
 import { MenuManagement } from "@/components/organisms/menu-management";
-import { createClient } from "@/utils/supabase/server";
-import { getCategories } from "../../actions/category";
-import { getMenuItems } from "../../actions/menuItem";
+import { getCategories } from "../../actions/category-actions";
+import { getMenuItems } from "../../actions/menu-item-actions";
 import { ESTABLISHMENT_ID } from "@/utils/config";
+import { getUser } from "@/app/actions/user-actions";
 
 export default async function MenuPage() {
-  const supabaseClient = createClient()
-
   const { data: menuItems, error: errorItems } = await getMenuItems(ESTABLISHMENT_ID);
   const { data: categories, error: errorCategory } = await getCategories(ESTABLISHMENT_ID);
+  const user = await getUser()
 
   if (errorItems) {
     console.error('Error fetching menuItems:', errorItems);
@@ -25,6 +24,7 @@ export default async function MenuPage() {
     <AppShell
       currentPage="Gerenciamento de cardápio"
       breadcrumb="Painel > Gerenciamento de Cardápio"
+      user={user}
     >
       <MenuManagement menuItems={menuItems!} categories={categories!} />
     </AppShell>

@@ -35,12 +35,12 @@ import {
   updateMenuOrdernation,
   MenuItem,
   MenuItemRequestDTO,
-} from "@/app/actions/menuItem";
+} from "@/app/actions/menu-item-actions";
 import {
   createCategory,
   deleteCategory,
   updateCategory,
-} from "@/app/actions/category";
+} from "@/app/actions/category-actions";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 
 // Interfaces (Mantidas as originais)

@@ -1,5 +1,5 @@
 import { supabase } from "@/utils/supabase/supabaseClient";
-import { SignUpUser } from "@/lib/entity/sign-up-user";
+import { SignUpUser } from "@/lib/entities/sign-up-user";
 
 describe("Login Integration", () => {
   const testUser = new SignUpUser("Usuario", "teste.login@exemplo.com", "Senha859", "Senha859")

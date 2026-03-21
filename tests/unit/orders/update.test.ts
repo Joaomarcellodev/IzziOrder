@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { updateOrder, updateToClosedOrder } from "@/app/actions/orders";
+import { updateOrder, updateToClosedOrder } from "@/app/actions/order-actions";
 
 jest.mock("@/utils/supabase/server");
 jest.mock("next/cache", () => ({

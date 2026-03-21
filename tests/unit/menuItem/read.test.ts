@@ -1,4 +1,4 @@
-import { getMenuItems } from "@/app/actions/menuItem";
+import { getMenuItems } from "@/app/actions/menu-item-actions";
 import { createClient } from "@/utils/supabase/server";
 
 // Mocks

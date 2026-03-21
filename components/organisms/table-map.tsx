@@ -39,11 +39,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/molecules/dropdown-menu";
-import { createTable, deleteTable, updateTable } from "@/app/actions/tables";
+import { createTable, deleteTable, updateTable } from "@/app/actions/table-actions";
 
 // Importar o componente Textarea (necessário para o modal de observações)
 import { Textarea } from "@/components/atoms/textarea";
-import { createOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
+import { createOrder, Order, OrderRequestDTO } from "@/app/actions/order-actions";
 // Supondo que você tenha um componente Textarea em '@/components/atoms/textarea'
 
 // --- Interfaces ---

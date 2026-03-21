@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Order } from "@/app/actions/orders";
-import { MenuItem } from "@/app/actions/menuItem";
-import { Category } from "@/app/actions/category";
+import { Order } from "@/app/actions/order-actions";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Category } from "@/app/actions/category-actions";
 // Componentes UI do seu sistema
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../molecules/card";
 import { Input } from "../atoms/input";
 import { Label } from "../atoms/label";
@@ -26,44 +26,44 @@ interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   // A interface Order deve ter sido atualizada para incluir `notes` no seu ambiente
-  order: Order & { notes?: string } | null; 
+  order: Order & { notes?: string } | null;
   onUpdateOrder: (updatedOrder: Order & { notes?: string }) => void;
   menuItems: MenuItem[];
   categories: Category[];
 }
 
-export function EditOrderModal({ 
-    isOpen, 
-    onClose, 
-    order, 
-    onUpdateOrder, 
-    menuItems, 
-    categories 
+export function EditOrderModal({
+  isOpen,
+  onClose,
+  order,
+  onUpdateOrder,
+  menuItems,
+  categories
 }: EditOrderModalProps) {
-  
+
   // --- Estados do Formulário de Edição ---
   const [editedCustomerName, setEditedCustomerName] = useState("");
   const [editedOrderType, setEditedOrderType] = useState<"LOCAL" | "DELIVERY">("LOCAL");
   const [editedTableNumber, setEditedTableNumber] = useState("");
   const [editedEstimatedTime, setEditedEstimatedTime] = useState("30");
-  const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN"); 
+  const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN");
   // 1. Novo estado para observações
-  const [editedNotes, setEditedNotes] = useState(""); 
+  const [editedNotes, setEditedNotes] = useState("");
   const [editedItems, setEditedItems] = useState<OrderLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 💡 SINCRONIZAÇÃO: Carrega dados do 'order' para o estado interno ---
   useEffect(() => {
     if (order) {
-        setEditedCustomerName(order.customerName);
-        setEditedStatus(order.status);
-        setEditedOrderType(order.type);
-        setEditedTableNumber(order.tableNumber || "");
-        setEditedEstimatedTime(String(order.estimatedTime || 30));
-        // 2. Sincroniza o novo estado de observações
-        setEditedNotes(order.notes || ""); 
-        // Garante que os itens são carregados corretamente
-        setEditedItems(order.items as OrderLine[] || []); 
+      setEditedCustomerName(order.customerName);
+      setEditedStatus(order.status);
+      setEditedOrderType(order.type);
+      setEditedTableNumber(order.tableNumber || "");
+      setEditedEstimatedTime(String(order.estimatedTime || 30));
+      // 2. Sincroniza o novo estado de observações
+      setEditedNotes(order.notes || "");
+      // Garante que os itens são carregados corretamente
+      setEditedItems(order.items as OrderLine[] || []);
     }
   }, [order]);
 
@@ -112,7 +112,7 @@ export function EditOrderModal({
       );
     }
   };
-  
+
   // --- Cálculo do Total ---
   const totalPrice = editedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -129,7 +129,7 @@ export function EditOrderModal({
       setIsSubmitting(false);
       return;
     }
-    
+
     // Validações
     if (!editedCustomerName.trim()) {
       toast.error("Por favor, insira o nome do cliente");
@@ -152,31 +152,31 @@ export function EditOrderModal({
       const updatedOrder: Order & { notes?: string } = {
         ...order,
         customerName: editedCustomerName,
-        status: editedStatus, 
+        status: editedStatus,
         type: editedOrderType,
         tableNumber: editedOrderType === "LOCAL" ? editedTableNumber : undefined,
         estimatedTime: parseInt(editedEstimatedTime),
         // 4. Inclui as observações atualizadas
-        notes: editedNotes.trim() || undefined, 
+        notes: editedNotes.trim() || undefined,
         items: editedItems, // Lista de itens atualizada
         total: totalPrice, // Total calculado
       };
-  
+
       onUpdateOrder(updatedOrder);
       // O toast de sucesso é emitido pelo componente pai (OrdersDashboard)
     } catch (error) {
-        toast.error("Erro ao salvar edição", {
-          description: "Tente novamente mais tarde.",
-        });
+      toast.error("Erro ao salvar edição", {
+        description: "Tente novamente mais tarde.",
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
-  
+
   if (!order) {
-      return null;
+    return null;
   }
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -185,7 +185,7 @@ export function EditOrderModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           {/* Customer Info */}
           <Card>
             <CardHeader>
@@ -242,7 +242,7 @@ export function EditOrderModal({
                     onChange={(e) => setEditedEstimatedTime(e.target.value)}
                   />
                 </div>
-                
+
                 {/* <div className="space-y-2">
                   <Label>Status Atual</Label>
                   <Select value={editedStatus} onValueChange={(value: any) => setEditedStatus(value)}>

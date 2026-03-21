@@ -1,9 +1,9 @@
 // File: src/components/molecules/view-order-modal.tsx
 
 import React from "react";
-import { Order } from "@/app/actions/orders";
+import { Order } from "@/app/actions/order-actions";
 // Supondo que você tenha um componente de Modal base (ex: usando Shadcn)
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../molecules/dialog"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../molecules/dialog";
 import { Button } from "../atoms/button";
 
 interface ViewOrderModalProps {

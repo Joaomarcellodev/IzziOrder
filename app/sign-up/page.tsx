@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/atoms/label"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
 import Link from "next/link"
-import { signup } from "../actions/login"
+import { signup } from "../actions/login-actions"
 import { useToast } from "@/hooks/use-toast"
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const { toast } = useToast();
   const [userName, setUserName] = useState("")
   const [email, setEmail] = useState("")

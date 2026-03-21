@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import { Button } from "../atoms/button";
-import { createOrder, deleteOrder, Order, OrderRequestDTO } from "@/app/actions/orders";
+import { createOrder, deleteOrder, Order, OrderRequestDTO } from "@/app/actions/order-actions";
 import { NewOrderModal } from "../molecules/new-order-modals";
-import { MenuItem } from "@/app/actions/menuItem";
-import { Category } from "@/app/actions/category";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Category } from "@/app/actions/category-actions";
 import { Pencil, Trash2 } from "lucide-react";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
