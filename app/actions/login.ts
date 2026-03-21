@@ -35,26 +35,21 @@ export async function signup(formData: FormData) {
 
     const user = User.fromFormData(formData)
 
-    const { error, data } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
+        options: {
+            data: {
+                user_name: user.name
+            }
+        }
     })
 
     if (error) {
-        redirect('/error')
+        console.log(error.code)
+        throw Error(error.message)
     }
-
-    await saveUserName(data, supabase, user)
 
     revalidatePath('/', 'layout')
     redirect('/')
-}
-
-async function saveUserName(data: any, supabase: SupabaseClient, user: User) {
-    if (data.user) {
-        await supabase.from("profiles").insert({
-            id: data.user.id,
-            user_name: user.name as string
-        })
-    }
 }
