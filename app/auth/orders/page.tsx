@@ -22,7 +22,7 @@ export default async function OrdersPage() {
     <AppShell
       currentPage="Painel de Pedidos"
       breadcrumb="Painel > Painel de Pedidos"
-      user={user}
+      user={user.toJSON()}
     >
       <OrdersDashboard orders={orders!} categories={categories!} menuItems={menuItems!} />
     </AppShell>

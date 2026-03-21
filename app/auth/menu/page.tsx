@@ -24,7 +24,7 @@ export default async function MenuPage() {
     <AppShell
       currentPage="Gerenciamento de cardápio"
       breadcrumb="Painel > Gerenciamento de Cardápio"
-      user={user}
+      user={user.toJSON()}
     >
       <MenuManagement menuItems={menuItems!} categories={categories!} />
     </AppShell>

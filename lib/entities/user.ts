@@ -6,4 +6,11 @@ export class User {
         this.name = name
         this.email = email
     }
+
+    toJSON() {
+        return {
+            name: this.name,
+            email: this.email,
+        };
+    }
 }
