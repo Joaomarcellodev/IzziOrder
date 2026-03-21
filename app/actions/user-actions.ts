@@ -2,7 +2,6 @@
 
 import { User } from "@/lib/entities/user";
 import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/dist/server/api-utils";
 
 export async function getUser() {
     const supabase = await createClient()
