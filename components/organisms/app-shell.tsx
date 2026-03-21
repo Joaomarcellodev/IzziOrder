@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import {
-  Bell,
   BarChart3,
   Calendar,
   Settings,
@@ -17,12 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { User } from "@/lib/entities/user";
 
 interface AppShellProps {
   children: React.ReactNode;
   currentPage: string;
   breadcrumb: string;
   hasNewNotifications?: boolean;
+  user: User
 }
 
 const navigationItems = [
@@ -36,24 +37,18 @@ export function AppShell({
   children,
   currentPage,
   breadcrumb,
-  hasNewNotifications = false,
+  user
 }: AppShellProps) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const getActiveItem = () => {
-    const item = navigationItems.find((item) => item.label === currentPage);
-    return item?.id || "orders";
-  };
-
   const handleNavigation = () => {
     if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
   const router = useRouter();
-
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -119,7 +114,7 @@ export function AppShell({
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900 truncate">
-                  getUserName()
+                  {user.name}
                 </div>
                 <div className="text-xs text-gray-500 truncate">Ver perfil</div>
               </div>
@@ -173,23 +168,6 @@ export function AppShell({
                 {breadcrumb}
               </div>
             </div>
-
-            {/* <div className="flex items-center gap-4 ml-auto">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notificações"
-                className="relative hover:bg-gray-100 transition"
-              >
-                <Bell className="w-6 h-6 text-gray-800" />
-                {hasNewNotifications && (
-                  <span
-                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
-                    style={{ backgroundColor: "#FD7E14" }}
-                  />
-                )}
-              </Button>
-            </div> */}
           </div>
         </header>
 
@@ -211,13 +189,13 @@ export function AppShell({
               </Avatar>
               <div>
                 <p className="text-lg font-semibold text-gray-800">
-                  Carlos Mendes
+                  {user.name}
                 </p>
                 <p className="text-sm text-gray-500">Gerente do Restaurante</p>
               </div>
             </div>
             <p className="text-sm text-gray-600">
-              Email: carlos.mendes@izziorder.com.br
+              Email: {user.email}
             </p>
             <p className="text-sm text-gray-600 mt-1">
               Cargo: <span className="font-medium">Manager</span>

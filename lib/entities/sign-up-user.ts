@@ -1,3 +1,5 @@
+import { User } from "./user"
+
 export class SignUpUser extends User {
     password: string
     password_confirmation: string
