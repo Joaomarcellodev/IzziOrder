@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/atoms/label"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
 import Link from "next/link"
-import { signup } from "../actions/login"
+import { signup } from "../actions/auth-actions"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
