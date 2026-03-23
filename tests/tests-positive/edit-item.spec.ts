@@ -10,10 +10,10 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
-    await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
+    await page.getByRole('textbox', { name: /senha/i }).fill('senhateste');
     await page.locator('button.bg-blue-600').click();
-
-
+    
+    
     await page.waitForURL('**/auth/**', { timeout: 15000 });
     await page.waitForTimeout(3000);
 
@@ -29,12 +29,12 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       await page.waitForTimeout(2000);
     }
 
-
+    
     if (!itemDeTeste) {
       console.log('PRIMEIRA EXECUÇÃO - Criando item compartilhado');
       await limparItensDeTesteAnteriores(page);
 
-
+    
       itemDeTeste = `Item Teste`;
 
       await page.getByRole('button', { name: /Adicionar Item/i }).click();
@@ -49,7 +49,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       await page.waitForTimeout(5000);
 
       await expect(page.getByText(itemDeTeste).first()).toBeVisible({ timeout: 10000 });
-
+      
     } else {
       await expect(page.getByText(itemDeTeste).first()).toBeVisible({ timeout: 10000 });
     }
@@ -57,7 +57,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
 
   test.afterEach(async ({ page }) => {
     console.log(`AFTEREACH - Removendo item de teste: ${itemDeTeste}`);
-
+    
     if (!page.url().includes('/auth/menu')) {
       await page.goto('http://localhost:3000/auth/menu');
       await page.waitForTimeout(2000);
@@ -65,7 +65,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
 
     if (itemDeTeste) {
       await excluirItemEspecifico(page, itemDeTeste);
-      itemDeTeste = '';
+      itemDeTeste = ''; 
     }
   });
 
@@ -105,11 +105,11 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(5000);
 
-
+    
     const itemAtualizado = page.locator('div, li, article, section')
       .filter({ hasText: itemDeTeste })
       .filter({ hasText: new RegExp(`R\\$\\s*${novoPreco}`) });
-
+    
     await expect(itemAtualizado.first()).toBeVisible();
     console.log(`PREÇO EDITADO: R$ ${novoPreco} no item: ${itemDeTeste}`);
   });
@@ -128,14 +128,14 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     await page.getByPlaceholder('Escreva a descrição do item').fill(novaDescricao);
     await page.getByRole('button', { name: 'Salvar' }).click();
     await page.waitForTimeout(5000);
-
-
+    
+    
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
-
+    
     const descricaoSalva = await page.getByPlaceholder('Escreva a descrição do item').inputValue();
     await page.getByRole('button', { name: 'Cancelar' }).click();
-
+    
     expect(descricaoSalva).toBe(novaDescricao);
     console.log(`DESCRIÇÃO EDITADA no item: ${itemDeTeste}`);
   });
@@ -148,21 +148,21 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
     await page.waitForTimeout(3000);
-
-
+    
+  
     await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
     await page.waitForTimeout(2000);
 
-
+    
     const todasOpcoes = await page.getByRole('option').all();
-
+    
     if (todasOpcoes.length > 1) {
-
+    
       await todasOpcoes[1].click();
       await page.waitForTimeout(1000);
       await page.getByRole('button', { name: 'Salvar' }).click();
       await page.waitForTimeout(5000);
-
+      
       await expect(page.getByText(itemDeTeste).first()).toBeVisible();
       console.log(`CATEGORIA EDITADA no item: ${itemDeTeste}`);
     } else {
@@ -177,7 +177,7 @@ async function encontrarItemRecemCriado(page: Page, nomeItem: string) {
   const itens = page.locator('div, li, article, section')
     .filter({ hasText: nomeItem })
     .filter({ has: page.locator('button:has(svg.lucide-square-pen)') });
-
+  
 
   const quantidade = await itens.count();
   return itens.nth(quantidade - 1);
@@ -185,19 +185,19 @@ async function encontrarItemRecemCriado(page: Page, nomeItem: string) {
 
 async function excluirItemEspecifico(page: Page, nomeItem: string) {
   console.log(`Excluindo item: ${nomeItem}`);
-
-
+  
+  
   const item = page.locator('div, li, article, section')
     .filter({ hasText: nomeItem })
     .filter({ has: page.locator('button:has(svg.lucide-trash)') })
     .last();
-
+  
 
   if (await item.isVisible()) {
     await item.locator('button:has(svg.lucide-trash)').click();
     await page.waitForTimeout(1000);
-
-
+    
+  
     const botaoConfirmar = page.getByRole('button', { name: /excluir/i });
     if (await botaoConfirmar.isVisible({ timeout: 2000 })) {
       await botaoConfirmar.click();
@@ -208,8 +208,8 @@ async function excluirItemEspecifico(page: Page, nomeItem: string) {
 
 async function limparItensDeTesteAnteriores(page: Page) {
   console.log('Limpando itens de teste antigos');
-
-
+  
+  
   await excluirItemEspecifico(page, 'Item Teste');
   await excluirItemEspecifico(page, 'Item Editado');
 }
