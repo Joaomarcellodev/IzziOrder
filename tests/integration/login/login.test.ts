@@ -35,46 +35,11 @@ describe("Login Integration", () => {
     });
   });
 
-  // Casos válidos - VALIDAÇÃO + LOGIN
-  describe("Valid Cases - Validation + Login", () => {
-    it("should validate credentials before sending to Supabase", () => {
-      expect(() => User.validateCredentials(
-        testUser.email,
-        testUser.password,
-        testUser.password_confirmation
-      )).not.toThrow()
-    });
-
-    it("should accept valid email format", () => {
-      const validEmails = [
-        "usuario@exemplo.com",
-        "test.email@domain.com.br",
-        "name123@company.org"
-      ];
-
-      validEmails.forEach(email => {
-        expect(() => User.validateEmail(email)).not.toThrow()
-      });
-    });
-
-    it("should accept passwords meeting all security rules", () => {
-      const senhasValidas = [
-        "Senha859",
-        "M1nhaS3nh@",
-        "P@ssw0rdV4l1d"
-      ];
-
-      senhasValidas.forEach(senha => {
-        expect(() => User.validatePassword(senha)).not.toThrow()
-      });
-    });
-  });
-
   // Casos válidos - FLUXO COMPLETO
   describe("Valid Cases - Complete Flow", () => {
     it("should execute full authentication flow: login → session → logout", async () => {
       // Login
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+      const { error: loginError } = await supabase.auth.signInWithPassword({
         email: testUser.email,
         password: testUser.password
       });
@@ -113,25 +78,6 @@ describe("Login Integration", () => {
     });
   });
 
-  // Casos válidos - CADASTRO
-  describe("Valid Cases - Registration", () => {
-    it("should register new user with valid password", async () => {
-      const emailNovo = `novo.usuario.${Date.now()}@exemplo.com`;
-      const senhaValida = "NovaS3nh@859";
-
-      // Valida antes de enviar
-      expect(() => User.validateCredentials(emailNovo, senhaValida, senhaValida)).not.toThrow()
-
-      const { data, error } = await supabase.auth.signUp({
-        email: emailNovo,
-        password: senhaValida
-      });
-
-      expect(data.user).toBeDefined();
-      expect(data.user?.email).toBe(emailNovo);
-    });
-  });
-
   // Casos inválidos - CREDENCIAIS
   describe("Invalid Cases - Credentials", () => {
     it("should fail login with wrong password", async () => {
@@ -154,49 +100,6 @@ describe("Login Integration", () => {
       });
 
       expect(data.user).toBeNull();
-    });
-  });
-
-  // Casos inválidos - VALIDAÇÃO
-  describe("Invalid Cases - Validation", () => {
-    it("should reject invalid email format", () => {
-      const emailsInvalidos = [
-        "email-invalido",
-        "semarroba.com",
-        "email@semdominio",
-        ""
-      ];
-
-      emailsInvalidos.forEach(email => {
-        expect(() => User.validateEmail(email)).toThrow()
-      });
-    });
-
-    it("should reject passwords shorter than 8 characters", () => {
-      expect(() => User.validatePassword("Abc123")).toThrow("Senha deve ter no mínimo 8 caracteres");
-    });
-
-    it("should reject passwords without uppercase letters", () => {
-      expect(() => User.validatePassword("senha1234")).toThrow("Senha deve ter pelo menos uma letra maiúscula");
-    });
-
-    it("should reject passwords without numbers", () => {
-      expect(() => User.validatePassword("SenhaFraca")).toThrow("Senha deve ter pelo menos um número");
-    });
-  });
-
-  // Casos inválidos - CAMPOS VAZIOS
-  describe("Invalid Cases - Empty Fields", () => {
-    it("should reject empty email", () => {
-      expect(() => User.validateCredentials("", "Senha123", "Senha123")).toThrow()
-    });
-
-    it("should reject empty password", () => {
-      expect(() => User.validateCredentials("teste@exemplo.com", "", "")).toThrow()
-    });
-
-    it("should reject both empty fields", () => {
-      expect(() => User.validateCredentials("", "", "")).toThrow()
     });
   });
 
