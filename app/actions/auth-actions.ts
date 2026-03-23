@@ -37,7 +37,7 @@ export async function signup(formData: FormData) {
     await signupService(user)
 
     revalidatePath('/', 'layout')
-    redirect('/')
+    redirect('/auth/menu')
 }
 
 export async function signupService(user: User) {
