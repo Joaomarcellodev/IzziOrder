@@ -31,30 +31,31 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-    const supabase = await createClient()
 
     const user = User.fromFormData(formData)
 
-    const { error, data } = await supabase.auth.signUp({
+    await signupService(user)
+
+    revalidatePath('/', 'layout')
+    redirect('/auth/menu')
+}
+
+export async function signupService(user: User) {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
+        options: {
+            data: {
+                user_name: user.name
+            }
+        }
     })
 
     if (error) {
-        redirect('/error')
+        throw new Error(error.message)
     }
 
-    await saveUserName(data, supabase, user)
-
-    revalidatePath('/', 'layout')
-    redirect('/')
-}
-
-async function saveUserName(data: any, supabase: SupabaseClient, user: User) {
-    if (data.user) {
-        await supabase.from("profiles").insert({
-            id: data.user.id,
-            user_name: user.name as string
-        })
-    }
+    return data
 }

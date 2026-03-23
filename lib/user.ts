@@ -1,5 +1,3 @@
-import { StackId } from "recharts/types/util/ChartUtils"
-
 export class User {
     name: string
     email: string
