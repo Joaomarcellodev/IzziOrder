@@ -1,10 +1,10 @@
 import { signupService } from "@/app/actions/auth-actions"
 import { User } from "@/lib/user"
-import { createTestClient } from "@/utils/supabase/test/test-server-client"
+import { createClient } from "@/utils/supabase/server"
 
 describe("User sign up", () => {
     let createdUserIds: string[] = []
-    const supabase = createTestClient()
+    const supabase = createClient()
 
     afterEach(async () => {
         for (const id of createdUserIds) {

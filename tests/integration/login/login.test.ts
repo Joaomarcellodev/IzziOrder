@@ -1,11 +1,11 @@
 import { User } from "@/lib/user";
-import { createTestClient } from "@/utils/supabase/test/test-server-client";
 import { signupService } from "@/app/actions/auth-actions";
+import { createClient } from "@/utils/supabase/server";
 
 describe("Login Integration", () => {
   let createdUserId: string
   let createdUser: User
-  const supabase = createTestClient()
+  const supabase = createClient()
 
   beforeEach(async () => {
     const email = `test_${Date.now()}@email.com`
@@ -27,7 +27,7 @@ describe("Login Integration", () => {
   describe("Valid Cases", () => {
     describe("Basic Login", () => {
       it("should login with valid credentials successfully", async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await (await supabase).auth.signInWithPassword({
           email: createdUser.email,
           password: createdUser.password
         });
@@ -40,10 +40,10 @@ describe("Login Integration", () => {
 
       it("should retrieve user session after login", async () => {
         // Login primeiro
-        await supabase.auth.signInWithPassword(createdUser);
+        await (await supabase).auth.signInWithPassword(createdUser);
 
         // Verifica sessão
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await (await supabase).auth.getSession();
 
         expect(sessionError).toBeNull();
         expect(sessionData.session).toBeDefined();
@@ -55,39 +55,39 @@ describe("Login Integration", () => {
     describe("Complete Flow", () => {
       it("should execute full authentication flow: login → session → logout", async () => {
         // Login
-        const { error: loginError } = await supabase.auth.signInWithPassword({
+        const { error: loginError } = await (await supabase).auth.signInWithPassword({
           email: createdUser.email,
           password: createdUser.password
         });
         expect(loginError).toBeNull();
 
         // Sessão
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData } = await (await supabase).auth.getSession();
         expect(sessionData.session).toBeDefined();
 
         // Usuário atual
-        const { data: userData } = await supabase.auth.getUser();
+        const { data: userData } = await (await supabase).auth.getUser();
         expect(userData.user?.email).toBe(createdUser.email);
 
         // Logout
-        const { error: logoutError } = await supabase.auth.signOut();
+        const { error: logoutError } = await (await supabase).auth.signOut();
         expect(logoutError).toBeNull();
 
         // Verifica logout
-        const { data: userAfterLogout } = await supabase.auth.getUser();
+        const { data: userAfterLogout } = await (await supabase).auth.getUser();
         expect(userAfterLogout.user).toBeNull();
       });
 
       it("should allow new login after logout", async () => {
         // Primeiro login
-        const { error: firstLoginError } = await supabase.auth.signInWithPassword(createdUser);
+        const { error: firstLoginError } = await (await supabase).auth.signInWithPassword(createdUser);
         expect(firstLoginError).toBeNull();
 
         // Logout
-        await supabase.auth.signOut();
+        await (await supabase).auth.signOut();
 
         // Segundo login
-        const { data: secondLoginData, error: secondLoginError } = await supabase.auth.signInWithPassword(createdUser);
+        const { data: secondLoginData, error: secondLoginError } = await (await supabase).auth.signInWithPassword(createdUser);
 
         expect(secondLoginError).toBeNull();
         expect(secondLoginData.user).toBeDefined();
@@ -99,7 +99,7 @@ describe("Login Integration", () => {
 
     describe("Credentials", () => {
       it("should fail login with wrong password", async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await (await supabase).auth.signInWithPassword({
           email: createdUser.email,
           password: "SenhaErrada123"
         });
@@ -112,7 +112,7 @@ describe("Login Integration", () => {
       it("should fail login with non-existent email", async () => {
         const emailInexistente = `nao.existe.${Date.now()}@exemplo.com`;
 
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await (await supabase).auth.signInWithPassword({
           email: emailInexistente,
           password: "QualquerSenha123"
         });

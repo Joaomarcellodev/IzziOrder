@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import dotenv from 'dotenv'
 
-dotenv.config({ path: '.env.test' })
+dotenv.config({ path: '.env.test-integration' })
 
 const originalError = console.error;
 
