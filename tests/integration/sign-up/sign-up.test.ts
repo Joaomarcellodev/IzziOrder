@@ -2,7 +2,7 @@ import { signupService } from "@/app/actions/auth-actions"
 import { User } from "@/lib/user"
 import { createTestClient } from "@/utils/supabase/test/test-server-client"
 
-describe("Cadastro de usuário", () => {
+describe("User sign up", () => {
     let createdUserIds: string[] = []
     const supabase = createTestClient()
 
@@ -13,30 +13,35 @@ describe("Cadastro de usuário", () => {
         createdUserIds = []
     })
 
-    it("deve criar um usuário com sucesso", async () => {
-        const email = `teste@email.com`
-        const password = "12345678A"
+    describe("Valid cases", () => {
+        it("should create user with success", async () => {
+            const email = `test_${Date.now()}@email.com`
+            const password = "12345678A"
 
-        const user = new User("nome teste", email, password, password)
+            const user = new User("test name", email, password, password)
 
-        const result = await signupService(user)
-        createdUserIds.push(result.user!.id)
+            const result = await signupService(user)
+            createdUserIds.push(result.user!.id)
 
-        expect(result.user).toBeDefined()
-        expect(result.user!.email).toBe(email)
+            expect(result.user).toBeDefined()
+            expect(result.user!.email).toBe(email)
+        })
+
     })
 
-    it("não deve permitir email duplicado", async () => {
-        const email = `teste@email.com`
-        const password = "12345678A"
+    describe("Invalid cases", () => {
+        it("should not let duplicated emails", async () => {
+            const email = `test_${Date.now()}@email.com`
+            const password = "12345678A"
 
-        const user = new User("nome teste dup", email, password, password)
+            const user = new User("test dup name", email, password, password)
 
-        const result = await signupService(user)
-        createdUserIds.push(result.user!.id)
+            const result = await signupService(user)
+            createdUserIds.push(result.user!.id)
 
-        await expect(signupService(user))
-            .rejects
-            .toThrow()
+            await expect(signupService(user))
+                .rejects
+                .toThrow("User already registered")
+        })
     })
 })
