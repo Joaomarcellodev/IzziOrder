@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/atoms/label"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-import { login } from "../actions/auth-actions"
+import { login } from "../actions/login"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
@@ -89,11 +89,6 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <Link href="/reset-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
                   Esqueceu a senha?
-                </Link>
-              </div>
-              <div className="flex items-center justify-between">
-                <Link href="/sign-up" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                  Não tem conta?
                 </Link>
               </div>
 
