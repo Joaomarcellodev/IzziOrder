@@ -1,7 +1,20 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createClient as createClientJs } from '@supabase/supabase-js'
 
 export async function createClient() {
+    if (process.env.TEST_CONTEXT === "integration") {
+        return createClientJs(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+    } else if (process.env.TEST_CONTEXT === "e2e") {
+        return createClientJs(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+        )
+    }
+
     const cookieStore = await cookies()
 
     return createServerClient(
