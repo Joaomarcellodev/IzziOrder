@@ -1,78 +1,100 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
 import { Label } from "@/components/atoms/label"
-import { Mail, ArrowLeft } from "lucide-react"
+import { Mail, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const inputClasses = "pl-10 bg-slate-50/50 border-slate-200 focus:bg-white transition-all"
+  const iconClasses = "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement password reset logic
+    setIsLoading(true)
+    
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    
     console.log("Password reset requested for:", email)
     setIsSubmitted(true)
+    setIsLoading(false)
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Logo Section */}
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center mb-4">
-            <img className="w-20 h-20" src="/android-chrome-512x512.png" alt="Logo principal" />
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="w-full max-w-[400px] space-y-8">
+        
+        <div className="text-center space-y-2">
+          <div className="mx-auto flex items-center justify-center mb-6">
+            <div className="p-3 rounded-2xl bg-slate-50 shadow-sm border border-slate-100">
+              <img className="w-16 h-16 object-contain" src="/android-chrome-512x512.png" alt="Logo" />
+            </div>
           </div>
-          <div className="text-4xl font-bold text-gray-900">
-            <span style={{ color: "#007BFF" }}>izzi</span>
-            <span style={{ color: "#FD7E14" }}>Order</span>
-          </div>
-          <p className="text-muted-foreground mt-2">Recupere o acesso à sua conta.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            <span className="text-blue-600">izzi</span>
+            <span className="text-orange-500">Order</span>
+          </h1>
+          <p className="text-slate-500 text-sm">Recupere o acesso à sua conta</p>
         </div>
 
-        {/* Forgot Password Form */}
-        <Card className="border-border shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Esqueceu sua senha?</CardTitle>
-            <CardDescription className="text-center">
+        <Card className="border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold text-slate-800">
+              {isSubmitted ? "E-mail enviado!" : "Esqueceu sua senha?"}
+            </CardTitle>
+            <CardDescription>
               {isSubmitted
-                ? "Verifique seu e-mail para instruções de recuperação."
-                : "Insira seu e-mail e enviaremos um link para redefinir sua senha."}
+                ? "Instruções de recuperação enviadas com sucesso."
+                : "Insira seu e-mail cadastrado para receber o link de redefinição."}
             </CardDescription>
           </CardHeader>
+          
           <CardContent>
             {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="email" className="text-slate-700 font-medium">E-mail</Label>
+                  <div className="relative group">
+                    <Mail className={iconClasses} />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Insira seu e-mail"
+                      placeholder="seu-email@restaurante.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      className={inputClasses}
+                      disabled={isLoading}
                       required
                     />
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                  Enviar link de recuperação
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 rounded-xl transition-all active:scale-[0.98]"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar link de recuperação"
+                  )}
                 </Button>
 
-                <div className="text-center">
+                <div className="text-center pt-2">
                   <Link
                     href="/login"
-                    className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-2"
+                    className="text-sm text-slate-500 hover:text-blue-600 transition-colors inline-flex items-center gap-2 font-medium"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Voltar para o login
@@ -80,30 +102,41 @@ export default function ForgotPasswordPage() {
                 </div>
               </form>
             ) : (
-              <div className="space-y-4">
-                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    Um e-mail foi enviado para <strong>{email}</strong> com instruções para redefinir sua senha.
+              <div className="space-y-6 text-center">
+                <div className="flex flex-col items-center justify-center space-y-3 py-4">
+                  <div className="h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="h-7 w-7" />
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Enviamos um link para <span className="font-semibold text-slate-800">{email}</span>. 
+                    Por favor, verifique sua caixa de entrada e a pasta de spam.
                   </p>
                 </div>
 
-                <Button onClick={() => setIsSubmitted(false)} variant="outline" className="w-full">
-                  Enviar novamente
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    onClick={() => setIsSubmitted(false)} 
+                    variant="outline" 
+                    className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
+                  >
+                    Tentar outro e-mail
+                  </Button>
 
-                <div className="text-center">
                   <Link
                     href="/login"
-                    className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-2"
+                    className="w-full flex items-center justify-center text-sm font-medium text-blue-600 hover:underline"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Voltar para o login
+                    Ir para o login
                   </Link>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
+
+        <p className="text-center text-xs text-slate-400">
+          © {new Date().getFullYear()} izziOrder - Suporte ao Restaurante
+        </p>
       </div>
     </div>
   )
