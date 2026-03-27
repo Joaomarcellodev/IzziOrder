@@ -3,8 +3,8 @@
 import { User } from "@/lib/entities/user";
 import { createClient } from "@/utils/supabase/server"
 
-export async function getUser() {
-    const supabase = await createClient()
+export async function getUser(supabaseClient?: any) {
+    const supabase = supabaseClient ?? await createClient()
     const user = await getUserAuthenticated(supabase)
     const name = await getUserName(supabase, user)
     return new User(name, user.email)
