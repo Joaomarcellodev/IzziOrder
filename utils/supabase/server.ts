@@ -8,11 +8,6 @@ export async function createClient() {
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
-    } else if (process.env.TEST_CONTEXT === "e2e") {
-        return createClientJs(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-        )
     }
 
     const cookieStore = await cookies()
