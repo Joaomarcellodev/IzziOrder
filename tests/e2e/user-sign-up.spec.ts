@@ -1,11 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv"
 
 test.describe("Sign Up", () => {
-    dotenv.config({ path: ".env.test-e2e" });
-
-    const supabase = createClient(
+    const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
@@ -21,13 +18,13 @@ test.describe("Sign Up", () => {
 
     test.afterEach(async ({ page }) => {
         if (email) {
-            await supabase
-                .from("users")
-                .delete()
-                .eq("email", email);
+            const { data } = await supabaseAdmin.auth.admin.listUsers();
+            const user = data.users.find(u => u.email === email);
+            
+            if (user) {
+                await supabaseAdmin.auth.admin.deleteUser(user.id);
+            }
         }
-
-        await page.waitForTimeout(5000)
     })
 
     test.describe("Valid Cases", () => {
