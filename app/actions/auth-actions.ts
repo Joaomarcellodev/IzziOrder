@@ -27,11 +27,19 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-    const supabase = await createClient()
 
     const user = SignUpUser.fromFormData(formData)
 
-    const { error } = await supabase.auth.signUp({
+    await signupService(user)
+
+    revalidatePath('/', 'layout')
+    redirect('/auth/menu')
+}
+
+export async function signupService(user: SignUpUser) {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
         options: {
@@ -42,12 +50,10 @@ export async function signup(formData: FormData) {
     })
 
     if (error) {
-        console.log(error.code)
-        throw Error(error.message)
+        throw new Error(error.message)
     }
 
-    revalidatePath('/', 'layout')
-    redirect('/')
+    return data
 }
 
 export async function logout() {

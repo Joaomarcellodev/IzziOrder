@@ -9,7 +9,7 @@ test.describe('Editar Item do Cardápio - Testes Negativos', () => {
     await page.goto('http://localhost:3000/login');
     await page.waitForTimeout(2000);
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
-    await page.getByRole('textbox', { name: /senha/i }).fill('senhateste');
+    await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
     await page.locator('button.bg-blue-600').click();
     await page.waitForURL('**/auth/**', { timeout: 15000 });
     await page.waitForTimeout(3000);
@@ -35,7 +35,7 @@ test.describe('Editar Item do Cardápio - Testes Negativos', () => {
 
   test.afterEach(async ({ page }) => {
     console.log('Limpando item de teste: ' + itemDeTeste);
-    
+
     if (!page.url().includes('/auth/menu')) {
       await page.goto('http://localhost:3000/auth/menu');
       await page.waitForTimeout(2000);
