@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { logout } from "@/app/actions/login-actions";
+import { logout } from "@/app/actions/auth-actions";
 
 interface AppShellProps {
   children: React.ReactNode;
