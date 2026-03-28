@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Order, OrderLine, OrderRequestDTO } from "@/app/actions/orders";
-import { MenuItem } from "@/app/actions/menuItem";
-import { Category } from "@/app/actions/category";
-// Componentes UI do seu sistema
+import { Order, OrderLine, OrderRequestDTO } from "@/app/actions/order-actions";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Category } from "@/app/actions/category-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../molecules/card";
 import { Input } from "../atoms/input";
@@ -31,6 +30,7 @@ export function EditOrderModal({
   menuItems,
   categories
 }: EditOrderModalProps) {
+
 
   // --- Estados do Formulário de Edição ---
   const [editedOrderType, setEditedOrderType] = useState<"LOCAL" | "DELIVERY" | "PICKUP">("LOCAL");
@@ -101,6 +101,7 @@ export function EditOrderModal({
     }
   };
 
+
   // --- Cálculo do Total ---
   const totalPrice = editedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -117,6 +118,7 @@ export function EditOrderModal({
       setIsSubmitting(false);
       return;
     }
+
 
     // Validações
     if (editedOrderType === "PICKUP" && !editedDetail) {
@@ -152,20 +154,28 @@ export function EditOrderModal({
         total: totalPrice,
       };
 
+
       onUpdateOrder(updatedOrder);
       // O toast de sucesso é emitido pelo componente pai (OrdersDashboard)
     } catch (error) {
       toast.error("Erro ao salvar edição", {
         description: "Tente novamente mais tarde.",
       });
+      toast.error("Erro ao salvar edição", {
+        description: "Tente novamente mais tarde.",
+      });
     } finally {
+      setIsSubmitting(false);
       setIsSubmitting(false);
     }
   };
 
+
   if (!order) {
     return null;
+    return null;
   }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -175,6 +185,7 @@ export function EditOrderModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
 
           {/* Customer Info */}
           <Card>

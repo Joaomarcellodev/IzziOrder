@@ -1,4 +1,4 @@
-import { OrderRequestDTO } from "@/app/actions/orders";
+import { OrderRequestDTO } from "@/app/actions/order-actions";
 
 export function validateOrder(order: OrderRequestDTO) {
     const errors: string[] = [];

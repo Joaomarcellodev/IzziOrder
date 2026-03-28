@@ -1,6 +1,5 @@
 "use client"
 
-import { AppShell } from "@/components/organisms/app-shell"
 import { useState } from "react"
 import { Button } from "@/components/atoms/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
@@ -16,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/molecules/dialog"
 import { Checkbox } from "@/components/atoms/checkbox"
 import { Search, Plus, MoreVertical, Trash2, Edit } from "lucide-react"
@@ -62,7 +60,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
   viewer: ["read", "view_analytics"],
 }
 
-export default function SettingsPage() {
+export function SettingsManagement() {
   const [users, setUsers] = useState<User[]>([
     {
       id: "1",
@@ -153,7 +151,7 @@ export default function SettingsPage() {
       role: user.role,
       permissions: user.permissions,
     })
-    setIsDialogOpen(true) // ✅ abre o modal automaticamente
+    setIsDialogOpen(true)
   }
 
   const togglePermission = (permissionId: string) => {
@@ -199,7 +197,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <AppShell currentPage="Configurações de Usuários" breadcrumb="Painel > Configurações">
+    <>
       <Toaster position="top-right" richColors />
 
       <div className="min-h-screen bg-background">
@@ -227,7 +225,6 @@ export default function SettingsPage() {
             </Button>
           </div>
 
-          {/* 🧱 Modal único para criar e editar */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
@@ -274,7 +271,6 @@ export default function SettingsPage() {
                     {PERMISSIONS.map((p) => (
                       <div key={p.id} className="flex items-center space-x-2">
                         <Checkbox
-                          
                           checked={formData.permissions.includes(p.id)}
                           onCheckedChange={() => togglePermission(p.id)}
                         />
@@ -292,7 +288,6 @@ export default function SettingsPage() {
             </DialogContent>
           </Dialog>
 
-          {/* 🧱 Cards de usuários */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredUsers.map((user) => (
               <Card key={user.id}>
@@ -333,6 +328,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   )
 }

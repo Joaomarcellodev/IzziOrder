@@ -7,17 +7,17 @@ import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
 import { Label } from "@/components/atoms/label"
-import { Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
 import Link from "next/link"
-import { login } from "../actions/auth-actions"
+import { signup } from "../actions/auth-actions"
 import { useToast } from "@/hooks/use-toast"
 
-export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
+export default function SignUpPage() {
+  const { toast } = useToast();
+  const [userName, setUserName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-
-  const { toast } = useToast();
+  const [passwordConfirmation, setPasswordConfirmation] = useState("")
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -31,24 +31,44 @@ export default function LoginPage() {
             <span style={{ color: "#007BFF" }}>izzi</span>
             <span style={{ color: "#FD7E14" }}>Order</span>
           </div>
-          <p className="text-muted-foreground mt-2">Faça login no painel de controle do seu restaurante.</p>
+          <p className="text-muted-foreground mt-2">Registre-se na plataforma de controle do seu restaurante.</p>
         </div>
 
         {/* Login Form */}
         <Card className="border-border shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Bem vindo de volta</CardTitle>
-            <CardDescription className="text-center">Insira suas credenciais para acessar sua conta.</CardDescription>
+            <CardTitle className="text-2xl text-center">Bem vindo!</CardTitle>
+            <CardDescription className="text-center">Insira seus dados para criar sua conta.</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={async (formData: FormData) => {
-              const { success, error } = await login(formData)
-              if (!success) {
-                toast({ title: "Erro ao fazer login", description: error! })
-              } else {
-                window.location.href = "/auth/orders"
+              try {
+                await signup(formData)
+              } catch (error: any) {
+                if (error?.digest?.includes("NEXT_REDIRECT")) {
+                  throw error
+                }
+
+                toast({ title: error.message })
               }
             }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Nome de Usuário</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="user_name"
+                    name="user_name"
+                    type="user_name"
+                    placeholder="Insira seu nome de usuário"
+                    className="pl-10 "
+                    required
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
@@ -60,6 +80,8 @@ export default function LoginPage() {
                     placeholder="Insira seu e-mail"
                     className="pl-10 "
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -71,34 +93,41 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     name="password"
-                    type={showPassword ? "text" : "password"}
+                    type="password"
                     placeholder="Insira sua senha"
                     className="pl-10 pr-10"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Repita sua senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    placeholder="Insira sua senha"
+                    className="pl-10 pr-10"
+                    required
+                    value={passwordConfirmation}
+                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  />
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <Link href="/reset-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                  Esqueceu a senha?
-                </Link>
-              </div>
-              <div className="flex items-center justify-between">
-                <Link href="/sign-up" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                  Não tem conta?
+                <Link href="/login" className="text-sm text-primary hover:text-primary/80 transition-colors">
+                  Já possui uma conta?
                 </Link>
               </div>
 
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Entrar
+                Criar Conta
               </Button>
             </form>
           </CardContent>

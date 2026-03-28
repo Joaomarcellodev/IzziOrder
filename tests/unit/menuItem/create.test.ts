@@ -1,4 +1,4 @@
-import { calculateNextPosition, createMenuItem, MenuItemRequestDTO } from "@/app/actions/menuItem";
+import { calculateNextPosition, createMenuItem, MenuItemRequestDTO } from "@/app/actions/menu-item-actions";
 import { createClient } from "@/utils/supabase/server";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";

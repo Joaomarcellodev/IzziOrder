@@ -8,9 +8,9 @@ import { Label } from "@/components/atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/organisms/select";
 import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
-import { Category } from "@/app/actions/category";
-import { MenuItem } from "@/app/actions/menuItem";
-import { OrderLine, OrderRequestDTO } from "@/app/actions/orders";
+import { Category } from "@/app/actions/category-actions";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/order-actions";
 
 interface NewOrderFormProps {
   menuItems: MenuItem[];
