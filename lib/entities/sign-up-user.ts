@@ -1,29 +1,28 @@
-export class User {
-    name: string
-    email: string
+import { User } from "./user"
+
+export class SignUpUser extends User {
     password: string
     password_confirmation: string
 
     constructor(name: string, email: string, password: string, password_confirmation: string) {
-        this.name = name
-        this.email = email
+        super(name, email)
         this.password = password
         this.password_confirmation = password_confirmation
 
-        User.validateCredentials(this.email, this.password, this.password_confirmation)
+        SignUpUser.validateCredentials(this.email, this.password, this.password_confirmation)
     }
 
-    static fromFormData(formData: FormData): User {
-        return new User(formData.get("user_name") as string,
+    static fromFormData(formData: FormData): SignUpUser {
+        return new SignUpUser(formData.get("user_name") as string,
             formData.get("email") as string,
             formData.get('password') as string,
             formData.get('password_confirmation') as string)
     }
 
     static validateCredentials(email: string, password: string, password_confirmation: string) {
-        User.validateEmail(email)
-        User.validatePassword(password)
-        User.verifyPasswordConfirmation(password, password_confirmation)
+        SignUpUser.validateEmail(email)
+        SignUpUser.validatePassword(password)
+        SignUpUser.verifyPasswordConfirmation(password, password_confirmation)
     }
 
     static verifyPasswordConfirmation(password: string, password_confirmation: string) {

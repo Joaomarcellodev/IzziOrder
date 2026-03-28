@@ -1,5 +1,5 @@
 import { signupService } from "@/app/actions/auth-actions"
-import { User } from "@/lib/user"
+import { SignUpUser } from "@/lib/entities/sign-up-user"
 import { createClient } from "@/utils/supabase/server"
 
 describe("User sign up", () => {
@@ -18,7 +18,7 @@ describe("User sign up", () => {
             const email = `test_${Date.now()}@email.com`
             const password = "12345678A"
 
-            const user = new User("test name", email, password, password)
+            const user = new SignUpUser("test name", email, password, password)
 
             const result = await signupService(user)
             createdUserIds.push(result.user!.id)
@@ -34,7 +34,7 @@ describe("User sign up", () => {
             const email = `test_${Date.now()}@email.com`
             const password = "12345678A"
 
-            const user = new User("test dup name", email, password, password)
+            const user = new SignUpUser("test dup name", email, password, password)
 
             const result = await signupService(user)
             createdUserIds.push(result.user!.id)

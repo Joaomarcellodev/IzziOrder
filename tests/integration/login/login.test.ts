@@ -1,17 +1,17 @@
-import { User } from "@/lib/user";
+import { SignUpUser } from "@/lib/entities/sign-up-user";
 import { signupService } from "@/app/actions/auth-actions";
 import { createClient } from "@/utils/supabase/server";
 
 describe("Login Integration", () => {
   let createdUserId: string
-  let createdUser: User
+  let createdUser: SignUpUser
   const supabase = createClient()
 
   beforeEach(async () => {
     const email = `test_${Date.now()}@email.com`
     const password = "12345678A"
 
-    const user = new User("test name", email, password, password)
+    const user = new SignUpUser("test name", email, password, password)
 
     const result = await signupService(user)
     createdUserId = result.user!.id

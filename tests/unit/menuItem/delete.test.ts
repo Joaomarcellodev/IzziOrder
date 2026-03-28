@@ -1,4 +1,4 @@
-import { deleteMenuItem } from "@/app/actions/menuItem";
+import { deleteMenuItem } from "@/app/actions/menu-item-actions";
 import { createClient } from "@/utils/supabase/server";
 import { del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";

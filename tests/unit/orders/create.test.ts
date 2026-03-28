@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { createOrder, OrderRequestDTO } from "@/app/actions/orders";
+import { createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { experimental_taintObjectReference } from "react";
 

@@ -4,9 +4,9 @@ import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Truck, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { MenuItem } from "@/app/actions/menuItem";
-import { Category } from "@/app/actions/category";
-import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/orders";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Category } from "@/app/actions/category-actions";
+import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/order-actions";
 
 // ⚠️ CORREÇÃO DA INTERFACE: tableNumber deve ser number | undefined.
 

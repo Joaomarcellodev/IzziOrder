@@ -12,7 +12,7 @@ import Link from "next/link"
 import { signup } from "../actions/auth-actions"
 import { useToast } from "@/hooks/use-toast"
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const { toast } = useToast();
   const [userName, setUserName] = useState("")
   const [email, setEmail] = useState("")

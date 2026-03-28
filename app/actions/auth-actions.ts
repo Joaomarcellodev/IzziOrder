@@ -4,14 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
-import { User } from '@/lib/user'
-import { Session, SupabaseClient } from '@supabase/supabase-js'
+import { SignUpUser } from '@/lib/entities/sign-up-user'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
-
-    // type-casting here for convenience
-    // in practice, you should validate your inputs
 
     const data = {
         email: formData.get('email') as string,
@@ -32,7 +28,7 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
 
-    const user = User.fromFormData(formData)
+    const user = SignUpUser.fromFormData(formData)
 
     await signupService(user)
 
@@ -40,7 +36,7 @@ export async function signup(formData: FormData) {
     redirect('/auth/menu')
 }
 
-export async function signupService(user: User) {
+export async function signupService(user: SignUpUser) {
     const supabase = await createClient()
 
     const { data, error } = await supabase.auth.signUp({
@@ -58,4 +54,12 @@ export async function signupService(user: User) {
     }
 
     return data
+}
+
+export async function logout() {
+    const supabase = await createClient()
+
+    await supabase.auth.signOut()
+
+    redirect("/login")
 }
