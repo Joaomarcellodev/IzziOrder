@@ -100,6 +100,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     console.log(`Teste 2 - Editando PREÇO do item: ${itemDeTeste}`);
 
     const novoPreco = '45.90';
+    const novoPrecoEscapado = novoPreco.replace('.', '\\.');
 
     const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
@@ -112,7 +113,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
 
     const itemAtualizado = page.locator('div, li, article, section')
       .filter({ hasText: itemDeTeste })
-      .filter({ hasText: new RegExp(`R\\$\\s*${novoPreco}`) });
+      .filter({ hasText: new RegExp(`R\\$\\s*${novoPrecoEscapado}`) });
 
     await expect(itemAtualizado.first()).toBeVisible();
     console.log(`PREÇO EDITADO: R$ ${novoPreco} no item: ${itemDeTeste}`);
