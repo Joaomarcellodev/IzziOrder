@@ -14,7 +14,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     await page.locator('button.bg-blue-600').click();
 
 
-    await page.waitForURL('**/auth/**', { timeout: 15000 });
+    await page.waitForURL('**/auth/**', { timeout: 60000 });
     await page.waitForTimeout(3000);
 
     console.log('Login realizado com sucesso - URL atual:', page.url());
@@ -68,6 +68,10 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       itemDeTeste = '';
     }
   });
+  
+  // VALID CASES 
+  test.describe ("Valid Cases ",() => {
+
 
   // 1. EDITAR NOME DO ITEM
   test('deve editar nome do item existente', async ({ page }) => {
@@ -96,6 +100,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
     console.log(`Teste 2 - Editando PREÇO do item: ${itemDeTeste}`);
 
     const novoPreco = '45.90';
+    const novoPrecoEscapado = novoPreco.replace('.', '\\.');
 
     const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
     await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
@@ -108,7 +113,7 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
 
     const itemAtualizado = page.locator('div, li, article, section')
       .filter({ hasText: itemDeTeste })
-      .filter({ hasText: new RegExp(`R\\$\\s*${novoPreco}`) });
+      .filter({ hasText: new RegExp(`R\\$\\s*${novoPrecoEscapado}`) });
 
     await expect(itemAtualizado.first()).toBeVisible();
     console.log(`PREÇO EDITADO: R$ ${novoPreco} no item: ${itemDeTeste}`);
@@ -170,6 +175,97 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       await page.getByRole('button', { name: /cancelar/i }).click();
     }
   });
+
+});
+
+    // INVALID CASES 
+  test.describe ("Invalid Cases ",() => {
+
+  // 1. EDITAR COM NOME VAZIO
+  test('deve bloquear edição com nome vazio', async ({ page }) => {
+    test.setTimeout(60000);
+    console.log('Teste 1 - Tentando editar com NOME VAZIO');
+
+    const itemContainer = page.locator('div, li, article, section')
+      .filter({ hasText: itemDeTeste })
+      .filter({ hasText: /R\$/ })
+      .filter({ has: page.locator('button:has(svg.lucide-square-pen)') })
+      .last();
+
+    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+    await page.waitForTimeout(2000);
+
+    await page.getByRole('textbox', { name: 'Nome do Item' }).clear();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(3000);
+
+    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+    expect(aindaNoModal).toBeTruthy();
+
+    console.log('Edição com nome vazio foi bloqueada corretamente');
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
+  });
+
+  // 2. EDITAR COM PREÇO ZERO
+  test('deve bloquear edição com preço zero', async ({ page }) => {
+    test.setTimeout(60000);
+    console.log('Teste 2 - Tentando editar com PREÇO ZERO');
+
+    const itemContainer = page.locator('div, li, article, section')
+      .filter({ hasText: itemDeTeste })
+      .filter({ hasText: /R\$/ })
+      .filter({ has: page.locator('button:has(svg.lucide-square-pen)') })
+      .last();
+
+    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+    await page.waitForTimeout(2000);
+
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0');
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(3000);
+
+    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+    expect(aindaNoModal).toBeTruthy();
+
+    console.log('Edição com preço zero foi bloqueada corretamente');
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
+  });
+
+  // 3. EDITAR COM PREÇO NEGATIVO
+  test('deve bloquear edição com preço negativo', async ({ page }) => {
+    test.setTimeout(60000);
+    console.log('Teste 3 - Tentando editar com PREÇO NEGATIVO');
+
+    const itemContainer = page.locator('div, li, article, section')
+      .filter({ hasText: itemDeTeste })
+      .filter({ hasText: /R\$/ })
+      .filter({ has: page.locator('button:has(svg.lucide-square-pen)') })
+      .last();
+
+    await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+    await page.waitForTimeout(2000);
+
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).clear();
+    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('-10');
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForTimeout(3000);
+
+    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+    expect(aindaNoModal).toBeTruthy();
+
+    console.log('Edição com preço negativo foi bloqueada corretamente');
+    await page.getByRole('button', { name: /cancelar/i }).first().click();
+    await page.waitForTimeout(2000);
+  });
+
+  })
+
 });
 
 async function encontrarItemRecemCriado(page: Page, nomeItem: string) {

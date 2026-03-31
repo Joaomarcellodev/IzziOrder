@@ -1,9 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 
-test.describe('Editar Categoria - Testes Positivos', () => {
+test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
 
-  // PREPARAÇÃO (executa antes de CADA teste)
+  
   test.beforeEach(async ({ page }) => {
     console.log('Preparando ambiente de teste para categorias...');
 
@@ -12,7 +12,7 @@ test.describe('Editar Categoria - Testes Positivos', () => {
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
     await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
     await page.locator('button.bg-blue-600').click();
-    await page.waitForURL('**/auth/**', { timeout: 15000 });
+    await page.waitForURL('**/auth/**', { timeout: 20000 });
     await page.waitForTimeout(3000);
 
 
@@ -62,7 +62,7 @@ test.describe('Editar Categoria - Testes Positivos', () => {
   // 1. EDITAR NOME DA CATEGORIA
   test('deve editar nome da categoria existente', async ({ page }) => {
     test.setTimeout(60000);
-    const novoNome = 'Categoria Editada Com Sucesso';
+    const novoNome = 'Categoria Editada';
 
     await page.locator('button:has(svg.lucide-square-pen)').last().click();
     await page.waitForTimeout(2000);
