@@ -490,10 +490,13 @@ export function MenuManagement({
         editingItem
       );
       if (success && data) {
+        const itemAtualizado = {
+          ...data,
+          categoryId: data.category_id ?? data.categoryId,
+        };
         setLocalMenuItems((prevItems) =>
-          prevItems.map((item) => (item.id === data.id ? data : item))
+        prevItems.map((item) => (item.id === itemAtualizado.id ? itemAtualizado: item))
         );
-        toast({ title: "Item atualizado com sucesso" });
       } else {
         toast({ title: `Erro: ${error}` });
       }
