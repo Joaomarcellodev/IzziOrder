@@ -10,7 +10,7 @@ import { Input } from "../atoms/input";
 import { Label } from "../atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../organisms/select";
 import { Button } from "../atoms/button";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from 'lucide-react';
 
 interface EditOrderModalProps {
@@ -37,8 +37,10 @@ export function EditOrderModal({
   const [editedDetail, setEditedDetail] = useState<string>();
   const [editedEstimatedTime, setEditedEstimatedTime] = useState("");
   const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN");
-  const [editedItems, setEditedItems] = useState<OrderLine[]>([]);
+  const [editedItems, setEditedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { toast } = useToast();
 
   // --- 💡 SINCRONIZAÇÃO: Carrega dados do 'order' para o estado interno ---
   useEffect(() => {
@@ -82,7 +84,9 @@ export function EditOrderModal({
       ]);
     }
 
-    toast.success(`${menuItem.name} adicionado/atualizado no pedido.`);
+    toast({
+      title: `${menuItem.name} adicionado/atualizado no pedido.`,
+    });
   };
 
   const handleRemoveItem = (menuItemId: string) => {
@@ -114,30 +118,38 @@ export function EditOrderModal({
     setIsSubmitting(true);
 
     if (!order) {
-      toast.error("Erro", { description: "Pedido não encontrado para edição." });
+      toast({
+        title: "Erro",
+        description: "Pedido não encontrado para edição.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
       return;
     }
 
 
     // Validações
-    if (editedOrderType === "PICKUP" && !editedDetail) {
-      toast.error("Por favor, insira o nome do cliente");
+    if (editedOrderType === "PICKUP" && (!editedDetail || !editedDetail.trim())) {
+      toast({
+        title: "Por favor, insira o nome do cliente",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
       return;
     }
-    if (editedOrderType === "PICKUP" && !editedDetail!.trim()) {
-      toast.error("Por favor, insira o nome do cliente");
-      setIsSubmitting(false);
-      return;
-    }
-    if (editedOrderType === "LOCAL" && !editedDetail) {
-      toast.error("Por favor, insira o número da mesa");
+    if (editedOrderType === "LOCAL" && (!editedDetail || !editedDetail.trim())) {
+      toast({
+        title: "Por favor, insira o número da mesa",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
       return;
     }
     if (editedItems.length === 0) {
-      toast.error("Por favor, adicione pelo menos um item ao pedido");
+      toast({
+        title: "O pedido deve conter pelo menos um item.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
       return;
     }
@@ -146,33 +158,29 @@ export function EditOrderModal({
     try {
       const updatedOrder: OrderRequestDTO = {
         ...order,
-        detail: editedDetail,
+        detail: editedDetail!,
         status: editedStatus,
         type: editedOrderType,
-        estimatedTime: parseInt(editedEstimatedTime),
+        estimatedTime: parseInt(editedEstimatedTime) || 0,
         orderLines: editedItems,
         total: totalPrice,
       };
 
-
       onUpdateOrder(updatedOrder);
       // O toast de sucesso é emitido pelo componente pai (OrdersDashboard)
     } catch (error) {
-      toast.error("Erro ao salvar edição", {
+      toast({
+        title: "Erro ao salvar edição",
         description: "Tente novamente mais tarde.",
-      });
-      toast.error("Erro ao salvar edição", {
-        description: "Tente novamente mais tarde.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
       setIsSubmitting(false);
     }
   };
 
 
   if (!order) {
-    return null;
     return null;
   }
 
@@ -215,7 +223,6 @@ export function EditOrderModal({
                       placeholder="Ex: 5"
                       value={editedDetail}
                       onChange={(e) => setEditedDetail(e.target.value)}
-                      required
                     />
                   </div>
                 )}
@@ -228,7 +235,6 @@ export function EditOrderModal({
                       placeholder="Ex: João"
                       value={editedDetail}
                       onChange={(e) => setEditedDetail(e.target.value)}
-                      required
                     />
                   </div>
                 )}
@@ -241,7 +247,6 @@ export function EditOrderModal({
                     id="estimatedTime"
                     type="number"
                     placeholder="(opcional)"
-                    min="1"
                     value={editedEstimatedTime}
                     onChange={(e) => setEditedEstimatedTime(e.target.value)}
                   />

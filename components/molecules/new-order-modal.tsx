@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/molecules/dialog";
-import { MenuItem } from "@/app/actions/menuItem";
-import { Order, OrderRequestDTO } from "@/app/actions/orders";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Order, OrderRequestDTO } from "@/app/actions/order-actions";
 import { NewOrderForm } from "./new-order-form";
-import { Category } from "@/app/actions/category";
+import { Category } from "@/app/actions/category-actions";
 
 interface NewOrderModalProps {
   isOpen: boolean;
