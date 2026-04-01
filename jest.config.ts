@@ -19,7 +19,8 @@ const config: Config = {
     "!**/node_modules/**",
     "!**/.next/**",
     "!**/coverage/**",
-    "lib/user.ts"
+    "lib/entities/**",
+    "lib/validators/**"
   ],
   coverageReporters: [
     "text"
