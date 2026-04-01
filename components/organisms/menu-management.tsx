@@ -489,18 +489,24 @@ export function MenuManagement({
         editingItem.id,
         editingItem
       );
-      if (success && data) {
+      if (success && data) {  
+        const itemAtualizado = {
+          ...data,
+          categoryId: data.category_id ?? data.categoryId,
+        };
         setLocalMenuItems((prevItems) =>
-          prevItems.map((item) => (item.id === data.id ? data : item))
-        );
-        toast({ title: "Item atualizado com sucesso" });
+        prevItems.map((item) => (item.id === itemAtualizado.id ? itemAtualizado : item)));
       } else {
         toast({ title: `Erro: ${error}` });
       }
     } else {
       const { success, error, data } = await createMenuItem(editingItem);
       if (success && data) {
-        setLocalMenuItems((prevItems) => [...prevItems, data]);
+        const itemCriado = {
+          ...data,
+          categoryId: data.category_id ?? data.categoryId,
+        };
+        setLocalMenuItems((prevItems) => [...prevItems, itemCriado]);
         toast({ title: "Item adicionado com sucesso" });
       } else {
         toast({ title: `Erro: ${error}` });
