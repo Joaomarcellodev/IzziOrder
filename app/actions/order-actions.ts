@@ -49,10 +49,7 @@ export interface OrderLine {
 export async function createOrder(
   order: OrderRequestDTO
 ) {
-  const errors = validateOrder(order);
-  if (errors.length > 0) {
-    return { success: false, error: errors.join("\n") };
-  }
+  validateOrder(order);
 
   const supabase = createClient();
 
@@ -70,10 +67,7 @@ export async function createOrder(
     .select("id")
     .single();
 
-  if (error) {
-    console.error("Erro ao criar pedido:", error);
-    return { success: false, error: "Erro ao criar pedido." };
-  }
+  if (error) throw new Error("Erro ao criar pedido")
 
   if (order.orderLines.length > 0) {
     const orderLinesToInsert = order.orderLines.map((line) => ({
@@ -91,14 +85,14 @@ export async function createOrder(
 
     if (orderLinesError) {
       console.error("Erro ao criar itens do pedido:", orderLinesError);
-      return { success: false, error: "Erro ao criar as linhas do pedido." };
+      throw new Error("Erro ao criar as linhas do pedido.");
     }
   }
 
   const { data: createdOrder } = await getOrderById(data.id);
 
   revalidatePath("/orders");
-  return { success: true, data: createdOrder };
+  return createdOrder;
 }
 
 export async function getOrders(establishment_id: string) {
@@ -321,4 +315,22 @@ export async function updateToClosedOrder(id: string): Promise<ActionResponse> {
 
   revalidatePath("/orders");
   return { success: true };
+}
+
+export async function updateToOpenOrder(id: string) {
+  const supabase = createClient();
+
+  if (!id) throw new Error("ID do pedido inválido.");
+
+  const { error } = await (await supabase)
+    .from("orders")
+    .update({ status: "OPEN" })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erro ao reabrir pedido:", error);
+    throw new Error("Erro ao reabrir pedido.");
+  }
+
+  revalidatePath("/orders");
 }

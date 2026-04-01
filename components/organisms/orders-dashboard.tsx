@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "../atoms/button";
-import { createOrder, deleteOrder, Order, OrderRequestDTO, updateOrder } from "@/app/actions/order-actions";
+import { createOrder, deleteOrder, Order, OrderRequestDTO, updateOrder, updateToClosedOrder, updateToOpenOrder } from "@/app/actions/order-actions";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { MenuItem } from "@/app/actions/menu-item-actions";
 import { Category } from "@/app/actions/category-actions";
@@ -51,25 +51,25 @@ export default function OrdersDashboard({
     setSelectedOrder(null);
   };
 
-  const handleAddNewOrder = async (
+  const handleCreateOrder = async (
     newOrder: OrderRequestDTO
   ) => {
-    const { success, error, data } = await createOrder(newOrder);
+    try {
+      const data = await createOrder(newOrder);
+      setOrders((prev) => [...prev, data!]);
 
-    if (success && data) {
-      setOrders((prev) => [...prev, data]);
       toast({
         title: `Novo Pedido Adicionado`,
         description: `O pedido foi criado com sucesso.`,
       });
-    } else {
+      closeNewOrderModal();
+
+    } catch (error: any) {
       toast({
         title: "Erro ao criar o novo pedido:",
-        description: error,
+        description: error.message,
       });
     }
-
-    closeNewOrderModal();
   };
 
   const handleUpdateOrder = async (updatedOrderData: OrderRequestDTO) => {
@@ -93,25 +93,44 @@ export default function OrdersDashboard({
     handleCloseEditModal();
   };
 
-  // 2. Nova função para finalizar o pedido
-  const handleFinishOrder = (orderId: string) => {
-    const finishedOrder = orders.find((o) => o.id === orderId);
+  const handleReopenOrder = async (orderId: string) => {
+    try {
+      await updateToOpenOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } : o))
+      );
+      toast({
+        title: "Pedido Reaberto",
+        description: "O pedido foi movido para a lista de abertos.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao reabrir pedido",
+        description: error,
+      });
+    }
+  };
 
+  // 2. Nova função para finalizar o pedido
+  const handleFinishOrder = async (orderId: string) => {
+    const finishedOrder = orders.find((o) => o.id === orderId);
     if (!finishedOrder) return;
 
-    const updatedOrder: Order = {
-      ...finishedOrder,
-      status: "CLOSED", // Altera o status para FECHADO
-    };
-
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? updatedOrder : o))
-    );
-
-    toast({
-      title: `Pedido ${finishedOrder.code} Finalizado`,
-      description: `O pedido foi movido para a lista de finalizados.`,
-    });
+    try {
+      await updateToClosedOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "CLOSED" } : o))
+      );
+      toast({
+        title: `Pedido ${finishedOrder.code} Finalizado`,
+        description: "O pedido foi movido para a lista de finalizados.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao finalizar pedido",
+        description: error,
+      });
+    }
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -136,14 +155,30 @@ export default function OrdersDashboard({
 
   const getSafeItems = (items: any[]) => (Array.isArray(items) ? items : []);
 
-  // Função para formatar o tipo de pedido
-  const formatOrderType = (type: "LOCAL" | "DELIVERY" | "PICKUP", tableNumber?: number) => {
-    if (type === "LOCAL") {
-      return tableNumber ? `Mesa: ${tableNumber}` : 'Local';
+  const renderTypeAndDetails = (o: Order): React.ReactNode => {
+    if (o.type == "LOCAL") {
+      return (
+        <>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Tipo: <span className="font-medium">LOCAL</span>
+          </p>
+          <p className="text-sm text-gray-700 font-medium">
+            Mesa: {o.tableNumber}
+          </p>
+        </>);
+    } else if (o.type == "PICKUP") {
+      return (
+        <>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Tipo: <span className="font-medium">RETIRADA</span>
+          </p>
+          <p className="text-sm text-gray-700 font-medium">
+            Cliente: {o.customerName}
+          </p>
+        </>);
     }
-    return 'Retirada';
+    return null;
   }
-
 
   return (
     <div className="p-6 space-y-6">
@@ -170,30 +205,6 @@ export default function OrdersDashboard({
                 (sum, item) => sum + item.price * item.quantity,
                 0
               );
-
-              function renderTypeAndDetails(o: Order): React.ReactNode {
-                if (o.type == "LOCAL") {
-                  return (
-                    <>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Tipo: <span className="font-medium">LOCAL</span>
-                      </p>
-                      <p className="text-sm text-gray-700 font-medium">
-                        Mesa: {o.tableNumber}
-                      </p>
-                    </>);
-                } else if (o.type == "PICKUP") {
-                  return (
-                    <>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Tipo: <span className="font-medium">RETIRADA</span>
-                      </p>
-                      <p className="text-sm text-gray-700 font-medium">
-                        Cliente: {o.customerName}
-                      </p>
-                    </>);
-                }
-              }
 
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
@@ -260,6 +271,7 @@ export default function OrdersDashboard({
                       </Button>
 
                       <Button
+                        data-testid="delete-order-button"
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteOrder(o.id)}
@@ -287,28 +299,13 @@ export default function OrdersDashboard({
                 0
               );
 
-              const orderTypeDisplay = formatOrderType(o.type, o.tableNumber);
-
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
                   <div className="flex justify-between items-start">
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-full">
                       <span className="font-semibold">{o.code}</span>
-                      <p className="text-sm text-gray-700 font-medium">
-                        Cliente: {o.customerName}
-                      </p>
-
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Tipo: <span className="font-medium">{orderTypeDisplay}</span>
-                      </p>
-
-                      {/* Exibir Observações
-                      {o.notes && (
-                        <p className="text-xs text-orange-600 italic mt-1 p-1 bg-orange-50 rounded border border-orange-200">
-                          Obs: {o.notes}
-                        </p>
-                      )} */}
+                      {renderTypeAndDetails(o)}
 
                       {/* Itens do Pedido FINALIZADO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
@@ -331,11 +328,28 @@ export default function OrdersDashboard({
                         })}
                       </div>
 
-                      <p className="font-semibold text-gray-700 mt-2">
-                        Total: R$ {total.toFixed(2)}
-                      </p>
+                      <div
+                        className="flex justify-between"
+                      >
+                        <p className="font-semibold text-gray-700 mt-2">
+                          Total:
+                        </p>
+                        <p className="font-semibold text-gray-700 mt-2">
+                          R$ {total.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
 
+                  </div>
+                  <div className="flex gap-2 mt-3 justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReopenOrder(o.id)}
+                      className="h-8"
+                    >
+                      Reabrir
+                    </Button>
                   </div>
                 </div>
               );
@@ -349,7 +363,7 @@ export default function OrdersDashboard({
       <NewOrderModal
         isOpen={isNewOrderModalOpen}
         onClose={closeNewOrderModal}
-        onAddOrder={handleAddNewOrder}
+        onAddOrder={handleCreateOrder}
         menuItems={menuItems}
         categories={categories}
       />
