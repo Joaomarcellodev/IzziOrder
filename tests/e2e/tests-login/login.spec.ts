@@ -42,7 +42,7 @@ test.describe('Login', () => {
     })
 
 
-        // 2. SENHA VAZIA
+    // 2. SENHA VAZIA
     test('deve bloquear login com senha vazia', async ({ page }) => {
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
     await page.waitForTimeout(500);
@@ -51,6 +51,20 @@ test.describe('Login', () => {
     await page.getByRole('button', { name: /entrar/i }).click();
     await page.waitForTimeout(3000);
  
+    await expect(page).toHaveURL(/\/login/);
+    });
+
+
+    // 3. CREDENCIAIS INCORRETAS
+    test('deve exibir erro com credenciais incorretas', async ({ page }) => {
+    await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
+    await page.waitForTimeout(500);
+    await page.getByRole('textbox', { name: /senha/i }).fill('senhaerrada123');
+    await page.waitForTimeout(500);
+    await page.getByRole('button', { name: /entrar/i }).click();
+    await page.waitForTimeout(3000);
+ 
+    await expect(page.getByText(/credenciais inválidas/i)).toBeVisible({ timeout: 10000 });
     await expect(page).toHaveURL(/\/login/);
     });
 
