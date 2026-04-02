@@ -1,307 +1,180 @@
-import { supabase } from "@/utils/supabase/supabaseClient";
+import { updateOrder, createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
+import { ESTABLISHMENT_ID } from "@/utils/config";
+import { createClient } from "@/utils/supabase/server";
 
 describe("Orders UPDATE Integration", () => {
-  const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
+  const testEstablishmentId = ESTABLISHMENT_ID;
+  let mockMenuItemId = "6cfd93ee-1e3d-430d-b525-f5a30bc96338";
   let testLocalOrderId: string;
-  let testDeliveryOrderId: string;
+  let testPickupOrderId: string;
+  let initialOrderLines: any[];
+  let supabase: any;
+
+  beforeAll(async () => {
+    supabase = await createClient();
+  });
 
   beforeEach(async () => {
-    // Cria um pedido LOCAL para cada teste
-    const { data: localOrder, error: localError } = await supabase
-      .from("orders")
-      .insert({
-        total: "100.00",
+    // Cleanup
+    await supabase.from("orders").delete().eq("establishment_id", testEstablishmentId);
+
+
+    initialOrderLines = [{ menuItemId: mockMenuItemId, name: "Pizza", quantity: 1, price: 50.00 }];
+
+    // Create a LOCAL order
+    const localOrder = await createOrder({
+      total: 50.00,
+      type: "LOCAL",
+      status: "OPEN",
+      detail: "5",
+      orderLines: initialOrderLines
+    });
+    testLocalOrderId = localOrder.id!;
+
+    // Create a PICKUP order
+    const pickupOrder = await createOrder({
+      total: 60.00,
+      type: "PICKUP",
+      status: "OPEN",
+      detail: "João Silva",
+      orderLines: [{ menuItemId: mockMenuItemId, name: "Burger", quantity: 1, price: 60.00 }]
+    });
+    testPickupOrderId = pickupOrder.id!;
+  });
+
+  // Casos válidos
+  describe("Valid Cases", () => {
+    it("should update order status and detail for LOCAL", async () => {
+      const updateDTO: OrderRequestDTO = {
+        id: testLocalOrderId,
+        total: 50.00,
         type: "LOCAL",
         status: "OPEN",
-        establishment_id: testEstablishmentId,
-        table_number: 5
-      })
-      .select()
-      .single();
+        detail: "10",
+        orderLines: initialOrderLines
+      };
 
-    // Cria um pedido DELIVERY para cada teste
-    const { data: deliveryOrder, error: deliveryError } = await supabase
-      .from("orders")
-      .insert({
-        total: "150.00",
-        type: "DELIVERY",
-        status: "OPEN",
-        establishment_id: testEstablishmentId,
-        delivery_fee: 10.00,
-        estimated_time: "30 minutos"
-      })
-      .select()
-      .single();
+      const result = await updateOrder(updateDTO);
 
-    if (!localError && localOrder) testLocalOrderId = localOrder.id;
-    if (!deliveryError && deliveryOrder) testDeliveryOrderId = deliveryOrder.id;
-  });
-
-  // Casos válidos - ATUALIZAÇÕES SIMPLES
-  describe("Valid Cases - Simple Updates", () => {
-    it("should update only order total", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          total: "200.00"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.total).toBe(200.00);
-      expect(data.table_number).toBe(5);
-      expect(data.type).toBe("LOCAL");
+      expect(result.status).toBe("OPEN");
+      // @ts-ignore
+      expect(result.tableNumber).toBe("10");
     });
 
-    it("should update only table number", async () => {
-      const { data, error } = await supabase
+    it("should update order lines (add, update, delete)", async () => {
+      // Fetch current order to get line IDs
+      const { data: orderWithLines } = await (await supabase)
         .from("orders")
-        .update({
-          table_number: 15
-        })
+        .select("*, order_lines(*)")
         .eq("id", testLocalOrderId)
-        .select()
         .single();
 
-      expect(error).toBeNull();
-      expect(data.table_number).toBe(15);
-      expect(data.total).toBe(100.00);
+      if (!orderWithLines) throw new Error("Order not found in test");
+      const existingLine = orderWithLines.order_lines[0];
+
+      const updateDTO: OrderRequestDTO = {
+        id: testLocalOrderId,
+        total: 150.00,
+        type: "LOCAL",
+        detail: "5",
+        orderLines: [
+          {
+            id: existingLine.id,
+            menuItemId: existingLine.menu_item_id,
+            name: "Pizza Atualizada",
+            quantity: 2,
+            price: 50.00
+          }, // Update existing
+          { menuItemId: mockMenuItemId, name: "Soda", quantity: 2, price: 25.00 } // Add new
+        ]
+      };
+
+      const result = await updateOrder(updateDTO);
+
+      expect(result.orderLines).toHaveLength(2);
+      expect(result.total).toBe(150.00);
+      const sodaLine = result.orderLines.find(l => l.name === "Soda");
+      expect(sodaLine).toBeDefined();
+      expect(sodaLine?.quantity).toBe(2);
     });
 
-    it("should update status from OPEN to CLOSED", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          status: "CLOSED"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .single();
+    it("should update customer name for PICKUP order", async () => {
+      const updateDTO: OrderRequestDTO = {
+        id: testPickupOrderId,
+        total: 60.00,
+        type: "PICKUP",
+        detail: "Maria Oliveira",
+        orderLines: [{ menuItemId: mockMenuItemId, name: "Burger", quantity: 1, price: 60.00 }]
+      };
 
-      expect(error).toBeNull();
-      expect(data.status).toBe("CLOSED");
+      const result = await updateOrder(updateDTO);
+
+      // @ts-ignore
+      expect(result.customerName).toBe("Maria Oliveira");
     });
   });
 
-  // Casos válidos - MÚLTIPLOS CAMPOS
-  describe("Valid Cases - Multiple Fields", () => {
-    it("should update total, status and table number together", async () => {
-      const { data, error } = await supabase
+  // Casos inválidos
+  describe("Invalid Cases", () => {
+    it("should throw error when updating non-existent order", async () => {
+      const updateDTO: OrderRequestDTO = {
+        id: "00000000-0000-0000-0000-000000000000",
+        total: 50.00,
+        type: "LOCAL",
+        detail: "5",
+        orderLines: initialOrderLines
+      };
+
+      await expect(updateOrder(updateDTO)).rejects.toThrow();
+    });
+
+    it("should reject update that violates business rules (e.g. no items)", async () => {
+      const updateDTO: OrderRequestDTO = {
+        id: testLocalOrderId,
+        total: 0,
+        type: "LOCAL",
+        detail: "5",
+        orderLines: []
+      };
+
+      await expect(updateOrder(updateDTO)).rejects.toThrow("O pedido deve conter pelo menos um item.");
+    });
+
+    it("should reject PICKUP update with short customer name", async () => {
+      const updateDTO: OrderRequestDTO = {
+        id: testPickupOrderId,
+        total: 60.00,
+        type: "PICKUP",
+        detail: "Jo",
+        orderLines: [{ menuItemId: mockMenuItemId, name: "Burger", quantity: 1, price: 60.00 }]
+      };
+
+      await expect(updateOrder(updateDTO)).rejects.toThrow(/pelo menos 3 caracteres/);
+    });
+
+    it("should throw error when trying to update CLOSED order", async () => {
+      // First, close the order
+      const { error } = await (await supabase)
         .from("orders")
-        .update({
-          total: "250.00",
-          status: "CLOSED",
-          table_number: 20
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .single();
+        .update({ status: "CLOSED" })
+        .eq("id", testLocalOrderId);
 
       expect(error).toBeNull();
-      expect(data.total).toBe(250.00);
-      expect(data.status).toBe("CLOSED");
-      expect(data.table_number).toBe(20);
-    });
 
-    it("should update delivery order with new fee and time", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          delivery_fee: 15.00,
-          estimated_time: "45 minutos",
-          total: "175.00"
-        })
-        .eq("id", testDeliveryOrderId)
-        .select()
-        .single();
+      const updateDTO: OrderRequestDTO = {
+        id: testLocalOrderId,
+        total: 100.00,
+        type: "LOCAL",
+        status: "CLOSED", // Pass status as CLOSED too, though it should fail even if we try to keep it CLOSED
+        detail: "10",
+        orderLines: initialOrderLines
+      };
 
-      expect(error).toBeNull();
-      expect(data.delivery_fee).toBe(15.00);
-      expect(data.estimated_time).toBe("45 minutos");
-      expect(data.total).toBe(175.00);
-    });
-  });
-
-  // Casos válidos - MUDANÇA DE TIPO
-  describe("Valid Cases - Type Changes", () => {
-    it("should change LOCAL order to DELIVERY", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          type: "DELIVERY",
-          delivery_fee: 8.50,
-          estimated_time: "40 minutos",
-          table_number: null
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.type).toBe("DELIVERY");
-      expect(data.delivery_fee).toBe(8.50);
-      expect(data.table_number).toBeNull();
-    });
-
-    it("should change DELIVERY order to LOCAL", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          type: "LOCAL",
-          table_number: 8,
-          delivery_fee: null, // LOCAL não tem delivery_fee
-          estimated_time: null // LOCAL não tem estimated_time
-        })
-        .eq("id", testDeliveryOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.type).toBe("LOCAL");
-      expect(data.table_number).toBe(8);
-      expect(data.delivery_fee).toBeNull();
-      expect(data.estimated_time).toBeNull();
-    });
-  });
-
-  // Casos válidos - ATUALIZAÇÕES COM NULL
-  describe("Valid Cases - Null Updates", () => {
-    it("should set delivery_fee to null", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          delivery_fee: null
-        })
-        .eq("id", testDeliveryOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.delivery_fee).toBeNull();
-    });
-
-    it("should set estimated_time to null", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          estimated_time: null
-        })
-        .eq("id", testDeliveryOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.estimated_time).toBeNull();
-    });
-
-    it("should set table_number to null for LOCAL order", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          table_number: null
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .single();
-
-      expect(error).toBeNull();
-      expect(data.table_number).toBeNull();
-    });
-  });
-
-  // Casos inválidos - VALIDAÇÕES
-  describe("Invalid Cases - Validations", () => {
-    it("should reject update with invalid status", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          status: "INVALID_STATUS"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .maybeSingle();
-
-      expect(Boolean(error) || !data).toBe(true);
-    });
-
-    it("should reject update with invalid type", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          type: "INVALID_TYPE"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .maybeSingle();
-
-      expect(Boolean(error) || !data).toBe(true);
-    });
-
-    it("should reject update with total <= 0", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          total: "0.00"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .maybeSingle();
-
-      expect(Boolean(error) || !data).toBe(true);
-    });
-
-    it("should reject update with negative total", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          total: "-10.00"
-        })
-        .eq("id", testLocalOrderId)
-        .select()
-        .maybeSingle();
-
-      expect(Boolean(error) || !data).toBe(true);
-    });
-
-    it("should reject DELIVERY order with table_number", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          table_number: 5
-        })
-        .eq("id", testDeliveryOrderId)
-        .select()
-        .maybeSingle();
-
-      if (error || !data) {
-        expect(Boolean(error) || !data).toBe(true);
-      }
-    });
-  });
-
-  // Casos inválidos - IDs INEXISTENTES
-  describe("Invalid Cases - Non-existent IDs", () => {
-    it("should return empty for update on non-existent order", async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          total: "999.00"
-        })
-        .eq("id", "00000000-0000-0000-0000-000000000000")
-        .select()
-        .maybeSingle();
-
-      expect(error).toBeNull();
-      expect(data).toBeNull();
+      await expect(updateOrder(updateDTO)).rejects.toThrow("Não é possível atualizar um pedido fechado.");
     });
   });
 
   afterAll(async () => {
-    await supabase
-      .from("orders")
-      .delete()
-      .eq("establishment_id", testEstablishmentId);
+    await (await supabase).from("orders").delete().eq("establishment_id", testEstablishmentId);
   });
 });

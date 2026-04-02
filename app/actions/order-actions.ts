@@ -105,10 +105,15 @@ export async function getOrderById(id: string): Promise<Order> {
 }
 
 export async function updateOrder(orderDTO: OrderRequestDTO): Promise<Order> {
+  if (!orderDTO.id) throw new Error("ID do pedido inválido.");
+
+  const currentOrder = await getOrderById(orderDTO.id);
+  if (currentOrder.status === "CLOSED") {
+    throw new Error("Não é possível atualizar um pedido fechado.");
+  }
+
   const orderEntity = Order.fromDTO(orderDTO);
   const supabase = await createClient();
-
-  if (!orderDTO.id) throw new Error("ID do pedido inválido.");
 
   const { error } = await supabase
     .from("orders")
@@ -171,11 +176,20 @@ export async function deleteOrder(id: string): Promise<void> {
 
   if (!id) throw new Error("ID do pedido inválido.");
 
-  const { error } = await supabase.from("orders").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     console.error("Erro Supabase (deleteOrder):", error);
     throw new Error("Erro ao excluir pedido.");
+  }
+
+  if (!data) {
+    throw new Error("Pedido não encontrado.");
   }
 
   if (process.env.TEST_CONTEXT !== "integration") {
@@ -184,13 +198,15 @@ export async function deleteOrder(id: string): Promise<void> {
 }
 
 export async function updateToClosedOrder(id: string): Promise<void> {
-  const supabase = await createClient();
-
   if (!id) throw new Error("ID do pedido inválido.");
 
+  const order = await getOrderById(id);
+  order.close();
+
+  const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
-    .update({ status: "CLOSED" })
+    .update({ status: order.status })
     .eq("id", id);
 
   if (error) {
@@ -204,13 +220,15 @@ export async function updateToClosedOrder(id: string): Promise<void> {
 }
 
 export async function updateToOpenOrder(id: string): Promise<void> {
-  const supabase = await createClient();
-
   if (!id) throw new Error("ID do pedido inválido.");
 
+  const order = await getOrderById(id);
+  order.reopen();
+
+  const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
-    .update({ status: "OPEN" })
+    .update({ status: order.status })
     .eq("id", id);
 
   if (error) {

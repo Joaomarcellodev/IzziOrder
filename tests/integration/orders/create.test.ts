@@ -1,9 +1,11 @@
 import { createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
-import { supabase } from "@/utils/supabase/supabaseClient";
+import { ESTABLISHMENT_ID } from "@/utils/config";
+import { createClient } from "@/utils/supabase/server";
 
 describe("Orders CREATE Integration", () => {
-  const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
+  const testEstablishmentId = ESTABLISHMENT_ID;
   const mockMenuItemId = "6cfd93ee-1e3d-430d-b525-f5a30bc96338"; // Item existente no banco de teste
+  const supabase = createClient()
 
   // Casos válidos
   describe("Valid Cases", () => {
@@ -13,12 +15,12 @@ describe("Orders CREATE Integration", () => {
         type: "LOCAL",
         detail: "5",
         orderLines: [
-            {
-                menuItemId: mockMenuItemId,
-                name: "Item Teste",
-                quantity: 2,
-                price: 50
-            }
+          {
+            menuItemId: mockMenuItemId,
+            name: "Item Teste",
+            quantity: 2,
+            price: 50
+          }
         ]
       };
 
@@ -39,12 +41,12 @@ describe("Orders CREATE Integration", () => {
         deliveryFee: 5.00,
         estimatedTime: 30,
         orderLines: [
-            {
-                menuItemId: mockMenuItemId,
-                name: "Item Teste",
-                quantity: 1,
-                price: 74.50
-            }
+          {
+            menuItemId: mockMenuItemId,
+            name: "Item Teste",
+            quantity: 1,
+            price: 74.50
+          }
         ]
       };
 
@@ -62,12 +64,12 @@ describe("Orders CREATE Integration", () => {
         type: "PICKUP",
         detail: "João Silva",
         orderLines: [
-            {
-                menuItemId: mockMenuItemId,
-                name: "Hambúrguer",
-                quantity: 1,
-                price: 25
-            }
+          {
+            menuItemId: mockMenuItemId,
+            name: "Hambúrguer",
+            quantity: 1,
+            price: 25
+          }
         ]
       };
 
@@ -85,12 +87,12 @@ describe("Orders CREATE Integration", () => {
         total: 50,
         type: "LOCAL",
         orderLines: [
-            {
-                menuItemId: mockMenuItemId,
-                name: "Pizza",
-                quantity: 1,
-                price: 50
-            }
+          {
+            menuItemId: mockMenuItemId,
+            name: "Pizza",
+            quantity: 1,
+            price: 50
+          }
         ]
       };
 
@@ -109,27 +111,27 @@ describe("Orders CREATE Integration", () => {
     });
 
     it("should reject PICKUP order with short customer name", async () => {
-        const orderDTO: OrderRequestDTO = {
-          total: 25,
-          type: "PICKUP",
-          detail: "Jo",
-          orderLines: [
-              {
-                  menuItemId: mockMenuItemId,
-                  name: "Hambúrguer",
-                  quantity: 1,
-                  price: 25
-              }
-          ]
-        };
-  
-        await expect(createOrder(orderDTO)).rejects.toThrow(/pelo menos 3 caracteres no nome do cliente/);
-      });
+      const orderDTO: OrderRequestDTO = {
+        total: 25,
+        type: "PICKUP",
+        detail: "Jo",
+        orderLines: [
+          {
+            menuItemId: mockMenuItemId,
+            name: "Hambúrguer",
+            quantity: 1,
+            price: 25
+          }
+        ]
+      };
+
+      await expect(createOrder(orderDTO)).rejects.toThrow(/pelo menos 3 caracteres no nome do cliente/);
+    });
   });
 
   // Limpeza
   afterAll(async () => {
-    await supabase
+    await (await supabase)
       .from("orders")
       .delete()
       .eq("establishment_id", testEstablishmentId);
