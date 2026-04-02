@@ -3,334 +3,245 @@
 import { createClient } from "@/utils/supabase/server";
 import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
-import { validateOrder } from "@/lib/validators/order";
-
-// Tipo padrão de resposta
-interface ActionResponse<T = any> {
-  success: boolean;
-  error?: string;
-  data?: T;
-}
-
-export interface Order {
-  id: string;
-  code?: string;
-  date: string; // timestamp
-  total: number;
-  status: "OPEN" | "CLOSED";
-  tableNumber?: number;
-  customerName?: string;
-  type: "DELIVERY" | "LOCAL" | "PICKUP";
-  deliveryFee?: number;
-  estimatedTime?: number;
-  orderLines: Array<OrderLine>;
-}
+import { Order, OrderLine, OrderType, OrderStatus } from "@/lib/entities/order";
 
 export interface OrderRequestDTO {
   id?: string;
   total: number;
-  status?: "OPEN" | "CLOSED";
-  type: "DELIVERY" | "LOCAL" | "PICKUP";
+  status?: OrderStatus;
+  type: OrderType;
   detail?: string;
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<OrderLine>;
 }
 
-export interface OrderLine {
-  id?: string,
-  menuItemId: string,
-  name: string,
-  quantity: number,
-  price: number,
-  observation?: string;
-}
+export async function createOrder(orderDTO: OrderRequestDTO): Promise<Order> {
+  const orderEntity = Order.fromDTO(orderDTO);
 
-export async function createOrder(
-  order: OrderRequestDTO
-) {
-  validateOrder(order);
+  const supabase = await createClient();
 
-  const supabase = createClient();
-
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("orders")
     .insert({
-      total: order.total.toFixed(2),
-      type: order.type,
-      status: "OPEN",
+      total: orderEntity.total.toFixed(2),
+      type: orderEntity.type,
+      status: orderEntity.status,
       establishment_id: ESTABLISHMENT_ID,
-      detail: order.detail,
-      delivery_fee: order.deliveryFee ?? 0,
-      estimated_time: order.estimatedTime ?? 0,
+      detail: orderDTO.detail,
+      delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
+      estimated_time: orderEntity.estimatedTime ?? 0,
     })
     .select("id")
     .single();
 
-  if (error) throw new Error("Erro ao criar pedido")
+  if (error) {
+    console.error("Erro Supabase (createOrder):", error);
+    throw new Error("Erro ao criar pedido no banco de dados.");
+  }
 
-  if (order.orderLines.length > 0) {
-    const orderLinesToInsert = order.orderLines.map((line) => ({
+  if (orderEntity.orderLines.length > 0) {
+    const orderLinesToInsert = orderEntity.orderLines.map((line) => ({
       name: line.name,
       price: line.price,
       quantity: line.quantity,
       order_id: data.id,
       menu_item_id: line.menuItemId,
-      observation: line.observation
+      observation: line.observation,
     }));
 
-    const { error: orderLinesError } = await (await supabase)
+    const { error: orderLinesError } = await supabase
       .from("order_lines")
       .insert(orderLinesToInsert);
 
     if (orderLinesError) {
-      console.error("Erro ao criar itens do pedido:", orderLinesError);
+      console.error("Erro Supabase (orderLines):", orderLinesError);
       throw new Error("Erro ao criar as linhas do pedido.");
     }
   }
 
-  const { data: createdOrder } = await getOrderById(data.id);
+  const createdOrder = await getOrderById(data.id);
 
-  revalidatePath("/orders");
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+
   return createdOrder;
 }
 
-export async function getOrders(establishment_id: string) {
-  const supabase = createClient();
+export async function getOrders(establishment_id: string): Promise<Order[]> {
+  const supabase = await createClient();
 
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("orders")
     .select("*, order_lines(*)")
     .eq("establishment_id", establishment_id);
 
   if (error) {
-    console.error("Erro ao buscar pedidos:", error);
-    return { success: false, error: "Erro ao buscar pedidos." };
+    console.error("Erro Supabase (getOrders):", error);
+    throw new Error("Erro ao buscar pedidos.");
   }
 
-  const orders: Order[] = [];
-  for (const orderData of data) {
-    const order = mapDataToOrder(orderData);
-
-    orders.push(order);
-  }
-
-  return { success: true, data: orders };
-
+  return data.map(mapDataToOrder);
 }
 
-function mapDataToOrder(orderData: any): Order {
-  const order = orderData as Order;
-  if (order.type == "LOCAL") {
-    order.code = "#LOC" + "-" + order.id.slice(0, 6).toUpperCase();
-    order.tableNumber = orderData.detail;
-  } else if (order.type == "DELIVERY") {
-    order.code = "#DLV" + "-" + order.id.slice(0, 6).toUpperCase();
-  } else if (order.type == "PICKUP") {
-    order.code = "#PIC" + "-" + order.id.slice(0, 6).toUpperCase();
-    order.customerName = orderData.detail;
-  }
+export async function getOrderById(id: string): Promise<Order> {
+  const supabase = await createClient();
 
-  order.deliveryFee = orderData.delivery_fee;
-  order.estimatedTime = orderData.estimated_time;
+  if (!id) throw new Error("ID do pedido inválido.");
 
-  const orderLines = [];
-  for (const orderLineData of orderData.order_lines) {
-    const orderLine: OrderLine = {
-      id: orderLineData.id,
-      menuItemId: orderLineData.menu_item_id,
-      name: orderLineData.name,
-      quantity: orderLineData.quantity,
-      price: orderLineData.price,
-      observation: orderLineData.observation
-    }
-    orderLines.push(orderLine)
-  }
-  order.orderLines = orderLines;
-  return order;
-}
-
-/**
- * Busca um pedido pelo ID.
- * @param id ID do pedido.
- */
-export async function getOrderById(
-  id: string
-): Promise<ActionResponse<Order>> {
-  const supabase = createClient();
-
-  if (!id) {
-    return { success: false, error: "ID do pedido inválido." };
-  }
-
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("orders")
     .select("*, order_lines(*)")
     .eq("id", id)
     .single();
 
   if (error) {
-    console.error("Erro ao buscar pedido:", error);
-    return { success: false, error: "Pedido não encontrado." };
+    console.error("Erro Supabase (getOrderById):", error);
+    throw new Error("Pedido não encontrado.");
   }
 
-  return { success: true, data: mapDataToOrder(data) };
+  return mapDataToOrder(data);
 }
 
-/**
- * Atualiza um pedido existente.
- * @param id ID do pedido.
- * @param order Campos a serem atualizados.
- */
-export async function updateOrder(
-  order: OrderRequestDTO
-) {
-  const supabase = createClient();
+export async function updateOrder(orderDTO: OrderRequestDTO): Promise<Order> {
+  const orderEntity = Order.fromDTO(orderDTO);
+  const supabase = await createClient();
 
-  if (!order.id) {
-    return { success: false, error: "ID do pedido inválido." };
-  }
+  if (!orderDTO.id) throw new Error("ID do pedido inválido.");
 
-  const { data, error } = await (await supabase)
+  const { error } = await supabase
     .from("orders")
     .update({
-      total: order.total!.toFixed(2),
-      type: order.type,
-      status: "OPEN",
-      detail: order.detail,
-      delivery_fee: order.deliveryFee,
-      estimated_time: order.estimatedTime,
+      total: orderEntity.total.toFixed(2),
+      type: orderEntity.type,
+      status: orderEntity.status,
+      detail: orderDTO.detail,
+      delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
+      estimated_time: orderEntity.estimatedTime,
     })
-    .eq("id", order.id)
-    .select("*, order_lines(*)")
-    .single();
+    .eq("id", orderDTO.id);
 
   if (error) {
-    console.error("Erro ao atualizar pedido:", error);
-    return { success: false, error: "Erro ao atualizar pedido." };
+    console.error("Erro Supabase (updateOrder):", error);
+    throw new Error("Erro ao atualizar pedido.");
   }
 
-  if (order.orderLines.length > 0) {
-    const { data: existingLines, error: fetchError } = await (await supabase)
+  if (orderDTO.orderLines) {
+    const { data: existingLines } = await supabase
       .from("order_lines")
       .select("id")
-      .eq("order_id", order.id);
+      .eq("order_id", orderDTO.id);
 
-    if (fetchError) {
-      console.error("Erro ao buscar linhas do pedido:", fetchError);
-      return { success: false, error: "Erro ao buscar linhas do pedido." };
+    const existingIds = (existingLines || []).map((l) => l.id);
+    const incomingIds = orderDTO.orderLines.filter((l) => l.id).map((l) => l.id);
+    const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
+
+    if (toDelete.length > 0) {
+      await supabase.from("order_lines").delete().in("id", toDelete);
     }
 
-    // Pega os ids das linhas existentes
-    const existingIds = (existingLines ?? []).map(line => line.id);
-
-    // Pega apenas as linhas que ainda existem ou foram editadas
-    const updatedIds = order.orderLines
-      .filter(line => line.id)
-      .map(line => line.id);
-
-    // Pega os ids que existem no banco mas não no update
-    const removedLineIds = existingIds.filter(existingId => !updatedIds.includes(existingId));
-
-    if (removedLineIds.length > 0) {
-      const { error: deleteError } = await (await supabase)
-        .from("order_lines")
-        .delete()
-        .in("id", removedLineIds);
-
-      if (deleteError) {
-        console.error("Erro ao excluir linhas do pedido:", deleteError);
-        return { success: false, error: "Erro ao excluir linhas do pedido." };
-      }
-    }
-
-    for (const line of order.orderLines) {
+    for (const line of orderDTO.orderLines) {
       const lineData = {
-        name: line.name,
-        price: line.price,
-        quantity: line.quantity,
-        order_id: order.id,
+        order_id: orderDTO.id,
         menu_item_id: line.menuItemId,
-        observation: line.observation
+        name: line.name,
+        quantity: line.quantity,
+        price: line.price,
+        observation: line.observation,
       };
 
       if (line.id) {
-        // Atualiza linha existente
-        await (await supabase).from("order_lines").update(lineData).eq("id", line.id);
+        await supabase.from("order_lines").update(lineData).eq("id", line.id);
       } else {
-        // Insere nova
-        await (await supabase).from("order_lines").insert({ ...lineData, order_id: order.id });
+        await supabase.from("order_lines").insert(lineData);
       }
     }
   }
 
-  const updatedOrder = mapDataToOrder(data);
-  updatedOrder.orderLines = order.orderLines;
-
-  revalidatePath("/orders");
-  return { success: true, data: updatedOrder };
+  const result = await getOrderById(orderDTO.id);
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+  return result;
 }
 
-/**
- * Deleta um pedido.
- * @param id ID do pedido.
- */
-export async function deleteOrder(id: string) {
-  const supabase = createClient();
+export async function deleteOrder(id: string): Promise<void> {
+  const supabase = await createClient();
 
-  if (!id) {
-    return { success: false, error: "ID do pedido inválido." };
-  }
+  if (!id) throw new Error("ID do pedido inválido.");
 
-  const { error } = await (await supabase)
-    .from("orders")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("orders").delete().eq("id", id);
 
   if (error) {
-    console.error("Erro ao excluir pedido:", error);
-    return { success: false, error: "Erro ao excluir pedido." };
+    console.error("Erro Supabase (deleteOrder):", error);
+    throw new Error("Erro ao excluir pedido.");
   }
 
-  revalidatePath("/orders");
-  return { success: true };
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
 }
 
-export async function updateToClosedOrder(id: string): Promise<ActionResponse> {
-  const supabase = createClient();
+export async function updateToClosedOrder(id: string): Promise<void> {
+  const supabase = await createClient();
 
-  if (!id) {
-    return { success: false, error: "ID do pedido inválido." };
-  }
+  if (!id) throw new Error("ID do pedido inválido.");
 
-  const { error } = await (await supabase)
+  const { error } = await supabase
     .from("orders")
     .update({ status: "CLOSED" })
     .eq("id", id);
 
   if (error) {
-    console.error("Erro ao fechar pedido:", error);
-    return { success: false, error: "Erro ao fechar pedido." };
+    console.error("Erro Supabase (updateToClosedOrder):", error);
+    throw new Error("Erro ao fechar pedido.");
   }
 
-  revalidatePath("/orders");
-  return { success: true };
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
 }
 
-export async function updateToOpenOrder(id: string) {
-  const supabase = createClient();
+export async function updateToOpenOrder(id: string): Promise<void> {
+  const supabase = await createClient();
 
   if (!id) throw new Error("ID do pedido inválido.");
 
-  const { error } = await (await supabase)
+  const { error } = await supabase
     .from("orders")
     .update({ status: "OPEN" })
     .eq("id", id);
 
   if (error) {
-    console.error("Erro ao reabrir pedido:", error);
+    console.error("Erro Supabase (updateToOpenOrder):", error);
     throw new Error("Erro ao reabrir pedido.");
   }
 
-  revalidatePath("/orders");
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+}
+
+function mapDataToOrder(orderData: any): Order {
+  return Order.fromDTO({
+    id: orderData.id,
+    status: orderData.status,
+    type: orderData.type,
+    detail:
+      orderData.detail ||
+      orderData.table_number ||
+      orderData.customer_name ||
+      orderData.address,
+    deliveryFee: orderData.delivery_fee,
+    estimatedTime: orderData.estimated_time,
+    orderLines: orderData.order_lines.map((line: any) => ({
+      id: line.id,
+      menuItemId: line.menu_item_id,
+      name: line.name,
+      quantity: line.quantity,
+      price: line.price,
+      observation: line.observation,
+    })),
+  });
 }
