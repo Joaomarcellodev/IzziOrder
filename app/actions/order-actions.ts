@@ -16,7 +16,7 @@ export interface OrderRequestDTO {
   orderLines: Array<OrderLine>;
 }
 
-export async function createOrder(orderDTO: OrderRequestDTO): Promise<Order> {
+export async function createOrder(orderDTO: OrderRequestDTO): Promise<any> {
   const orderEntity = Order.fromDTO(orderDTO);
 
   const supabase = await createClient();
@@ -69,7 +69,7 @@ export async function createOrder(orderDTO: OrderRequestDTO): Promise<Order> {
   return createdOrder;
 }
 
-export async function getOrders(establishment_id: string): Promise<Order[]> {
+export async function getOrders(establishment_id: string): Promise<any> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -82,10 +82,10 @@ export async function getOrders(establishment_id: string): Promise<Order[]> {
     throw new Error("Erro ao buscar pedidos.");
   }
 
-  return data.map(mapDataToOrder);
+  return data.map(o => adjustOrderLines(o));
 }
 
-export async function getOrderById(id: string): Promise<Order> {
+export async function getOrderById(id: string) {
   const supabase = await createClient();
 
   if (!id) throw new Error("ID do pedido inválido.");
@@ -101,10 +101,10 @@ export async function getOrderById(id: string): Promise<Order> {
     throw new Error("Pedido não encontrado.");
   }
 
-  return mapDataToOrder(data);
+  return adjustOrderLines(data);
 }
 
-export async function updateOrder(orderDTO: OrderRequestDTO): Promise<Order> {
+export async function updateOrder(orderDTO: OrderRequestDTO) {
   if (!orderDTO.id) throw new Error("ID do pedido inválido.");
 
   const currentOrder = await getOrderById(orderDTO.id);
@@ -200,9 +200,34 @@ export async function deleteOrder(id: string): Promise<void> {
 export async function updateToClosedOrder(id: string): Promise<void> {
   if (!id) throw new Error("ID do pedido inválido.");
 
-  const order = await getOrderById(id);
+  const order = Order.fromDTO(await getOrderById(id));
   order.close();
 
+  await updateOrderStatus(order, id);
+
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+
+  return adjustOrderLines(order.toJSON());
+}
+
+export async function updateToOpenOrder(id: string): Promise<any> {
+  if (!id) throw new Error("ID do pedido inválido.");
+
+  const order = Order.fromDTO(await getOrderById(id));
+  order.reopen();
+
+  await updateOrderStatus(order, id);
+
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+
+  return adjustOrderLines(order.toJSON());
+}
+
+async function updateOrderStatus(order: Order, id: string) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
@@ -213,53 +238,9 @@ export async function updateToClosedOrder(id: string): Promise<void> {
     console.error("Erro Supabase (updateToClosedOrder):", error);
     throw new Error("Erro ao fechar pedido.");
   }
-
-  if (process.env.TEST_CONTEXT !== "integration") {
-    revalidatePath("/orders");
-  }
 }
 
-export async function updateToOpenOrder(id: string): Promise<void> {
-  if (!id) throw new Error("ID do pedido inválido.");
-
-  const order = await getOrderById(id);
-  order.reopen();
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("orders")
-    .update({ status: order.status })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Erro Supabase (updateToOpenOrder):", error);
-    throw new Error("Erro ao reabrir pedido.");
-  }
-
-  if (process.env.TEST_CONTEXT !== "integration") {
-    revalidatePath("/orders");
-  }
-}
-
-function mapDataToOrder(orderData: any): Order {
-  return Order.fromDTO({
-    id: orderData.id,
-    status: orderData.status,
-    type: orderData.type,
-    detail:
-      orderData.detail ||
-      orderData.table_number ||
-      orderData.customer_name ||
-      orderData.address,
-    deliveryFee: orderData.delivery_fee,
-    estimatedTime: orderData.estimated_time,
-    orderLines: orderData.order_lines.map((line: any) => ({
-      id: line.id,
-      menuItemId: line.menu_item_id,
-      name: line.name,
-      quantity: line.quantity,
-      price: line.price,
-      observation: line.observation,
-    })),
-  });
+function adjustOrderLines(orderData: any) {
+  orderData.orderLines = orderData.order_lines
+  return orderData
 }

@@ -16,6 +16,7 @@ export abstract class Order {
   orderLines: OrderLine[];
   date?: string;
   estimatedTime?: number;
+  detail?: string
 
   constructor(data: {
     id?: string;
@@ -80,6 +81,21 @@ export abstract class Order {
       throw new Error("Pedido já está aberto.");
     }
     this.status = "OPEN";
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      status: this.status,
+      orderLines: this.orderLines,
+      date: this.date,
+      estimatedTime: this.estimatedTime,
+      detail: this.detail,
+      type: this.type,
+      total: this.total,
+      code: this.code,
+      itemsCount: this.itemsCount,
+    };
   }
 
   static fromDTO(dto: {
