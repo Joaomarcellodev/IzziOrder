@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "../atoms/button";
-import { createOrder, deleteOrder, Order, OrderRequestDTO, updateOrder, updateToClosedOrder, updateToOpenOrder } from "@/app/actions/order-actions";
+import { createOrder, deleteOrder, OrderRequestDTO, updateOrder, updateToClosedOrder, updateToOpenOrder } from "@/app/actions/order-actions";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { MenuItem } from "@/app/actions/menu-item-actions";
 import { Category } from "@/app/actions/category-actions";
@@ -10,12 +10,31 @@ import { Pencil, Trash2 } from "lucide-react";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
 import { useToast } from "@/hooks/use-toast";
+import { Order, LocalOrder, PickupOrder } from "@/lib/entities/order";
 
+type OrderDTO = {
+  id?: string;
+  code: string;
+  total: number;
+  status: "OPEN" | "CLOSED";
+  type: "LOCAL" | "PICKUP" | "DELIVERY";
+  detail?: string,
+  tableNumber?: string;
+  customerName?: string;
+  orderLines: {
+    id?: string;
+    menuItemId: string;
+    name: string;
+    price: number;
+    quantity: number;
+    observation?: string;
+  }[];
+};
 
 interface OrdersDashboardProps {
   menuItems: MenuItem[];
   categories: Category[];
-  orders: Order[];
+  orders: OrderDTO[];
 }
 
 export default function OrdersDashboard({
@@ -23,7 +42,7 @@ export default function OrdersDashboard({
   categories,
   orders: initialOrders,
 }: OrdersDashboardProps) {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
 
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const openNewOrderModal = () => setIsNewOrderModalOpen(true);
@@ -41,8 +60,8 @@ export default function OrdersDashboard({
     setSelectedOrder(null);
   };
 
-  const handleEditOrder = (order: Order) => {
-    setSelectedOrder(order);
+  const handleEditOrder = (order: OrderDTO) => {
+    setSelectedOrder(Order.fromDTO(order));
     setIsEditModalOpen(true);
   };
 
@@ -56,7 +75,7 @@ export default function OrdersDashboard({
   ) => {
     try {
       const data = await createOrder(newOrder);
-      setOrders((prev) => [...prev, data!]);
+      setOrders((prev) => [...prev, data]);
 
       toast({
         title: `Novo Pedido Adicionado`,
@@ -73,17 +92,20 @@ export default function OrdersDashboard({
   };
 
   const handleUpdateOrder = async (updatedOrderData: OrderRequestDTO) => {
-    const { success, data, error } = await updateOrder(updatedOrderData);
+    try {
+      const data = await updateOrder(updatedOrderData);
 
-    if (success && data) {
       setOrders((prev) =>
         prev.map((o) => (o.id === data.id ? data : o))
       );
+
+      const orderEntity = Order.fromDTO(data)
+
       toast({
-        title: `Pedido ${data!.code} Atualizado`,
+        title: `Pedido ${orderEntity.code} Atualizado`,
         description: `O pedido foi salvo com sucesso.`,
       });
-    } else {
+    } catch (error: any) {
       toast({
         title: "Erro ao editar o  pedido:",
         description: error,
@@ -97,7 +119,7 @@ export default function OrdersDashboard({
     try {
       await updateToOpenOrder(orderId);
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } as OrderDTO : o))
       );
       toast({
         title: "Pedido Reaberto",
@@ -117,9 +139,9 @@ export default function OrdersDashboard({
     if (!finishedOrder) return;
 
     try {
-      await updateToClosedOrder(orderId);
+      const order = await updateToClosedOrder(orderId);
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "CLOSED" } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: "CLOSED" } as OrderDTO : o))
       );
       toast({
         title: `Pedido ${finishedOrder.code} Finalizado`,
@@ -136,9 +158,9 @@ export default function OrdersDashboard({
   const handleDeleteOrder = async (orderId: string) => {
     const deletedOrder = orders.find((o) => o.id === orderId);
 
-    const { success, error } = await deleteOrder(orderId);
-
-    if (!success) {
+    try {
+      await deleteOrder(orderId);
+    } catch (error: any) {
       toast({
         title: "Erro ao remover pedido",
         description: error,
@@ -153,27 +175,27 @@ export default function OrdersDashboard({
     });
   };
 
-  const getSafeItems = (items: any[]) => (Array.isArray(items) ? items : []);
-
-  const renderTypeAndDetails = (o: Order): React.ReactNode => {
-    if (o.type == "LOCAL") {
+  const renderTypeAndDetails = (o: OrderDTO): React.ReactNode => {
+    if (o.type === "LOCAL") {
+      const local = o as LocalOrder;
       return (
         <>
           <p className="text-xs text-gray-500 mt-0.5">
             Tipo: <span className="font-medium">LOCAL</span>
           </p>
           <p className="text-sm text-gray-700 font-medium">
-            Mesa: {o.tableNumber}
+            Mesa: {local.detail}
           </p>
         </>);
-    } else if (o.type == "PICKUP") {
+    } else if (o.type === "PICKUP") {
+      const pickup = o as PickupOrder;
       return (
         <>
           <p className="text-xs text-gray-500 mt-0.5">
             Tipo: <span className="font-medium">RETIRADA</span>
           </p>
           <p className="text-sm text-gray-700 font-medium">
-            Cliente: {o.customerName}
+            Cliente: {pickup.detail}
           </p>
         </>);
     }
@@ -200,11 +222,8 @@ export default function OrdersDashboard({
           {orders
             .filter((o) => o.status === "OPEN")
             .map((o) => {
-              const items = getSafeItems(o.orderLines);
-              const total = items.reduce(
-                (sum, item) => sum + item.price * item.quantity,
-                0
-              );
+              const items = o.orderLines || [];
+              const total = o.total;
 
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
@@ -220,13 +239,12 @@ export default function OrdersDashboard({
                           const subtotal = i.price * i.quantity;
                           return (
                             <div
-                              key={o.id + i.id}
+                              key={`${o.id}-${i.id || i.menuItemId}`}
                               className="flex justify-between"
                             >
                               <span>
                                 {i.quantity}x {i.name} — R$ {i.price.toFixed(2)}
-                                {i.observation && (<p>
-
+                                {i.observation && (<p className="italic text-gray-500 ml-2">
                                   OBS: {i.observation}
                                 </p>)}
                               </span>
@@ -239,12 +257,12 @@ export default function OrdersDashboard({
                         })}
                       </div>
                       <div
-                        className="flex justify-between"
+                        className="flex justify-between border-t mt-2 pt-2"
                       >
-                        <p className="font-semibold text-gray-700 mt-2">
+                        <p className="font-semibold text-gray-700">
                           Total:
                         </p>
-                        <p className="font-semibold text-gray-700 mt-2">
+                        <p className="font-semibold text-gray-700">
                           R$ {total.toFixed(2)}
                         </p>
                       </div>
@@ -255,7 +273,7 @@ export default function OrdersDashboard({
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => handleFinishOrder(o.id)}
+                        onClick={() => handleFinishOrder(o.id!)}
                         className="bg-green-600 hover:bg-green-700 text-white h-8"
                       >
                         Finalizar
@@ -274,7 +292,7 @@ export default function OrdersDashboard({
                         data-testid="delete-order-button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteOrder(o.id)}
+                        onClick={() => handleDeleteOrder(o.id!)}
                         className="text-red-600 hover:bg-red-100 h-8 w-8 p-0"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -293,11 +311,8 @@ export default function OrdersDashboard({
           {orders
             .filter((o) => o.status === "CLOSED")
             .map((o) => {
-              const items = getSafeItems(o.orderLines);
-              const total = items.reduce(
-                (sum, item) => sum + item.price * item.quantity,
-                0
-              );
+              const items = o.orderLines || [];
+              const total = o.total;
 
               return (
                 <div key={o.id} className="p-3 border rounded-lg mb-2">
@@ -313,7 +328,7 @@ export default function OrdersDashboard({
                           const subtotal = i.price * i.quantity;
                           return (
                             <div
-                              key={i.menuItemId}
+                              key={`${o.id}-${i.id || i.menuItemId}`}
                               className="flex justify-between"
                             >
                               <span>
@@ -329,12 +344,12 @@ export default function OrdersDashboard({
                       </div>
 
                       <div
-                        className="flex justify-between"
+                        className="flex justify-between border-t mt-2 pt-2"
                       >
-                        <p className="font-semibold text-gray-700 mt-2">
+                        <p className="font-semibold text-gray-700">
                           Total:
                         </p>
-                        <p className="font-semibold text-gray-700 mt-2">
+                        <p className="font-semibold text-gray-700">
                           R$ {total.toFixed(2)}
                         </p>
                       </div>
@@ -345,7 +360,7 @@ export default function OrdersDashboard({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleReopenOrder(o.id)}
+                      onClick={() => handleReopenOrder(o.id!)}
                       className="h-8"
                     >
                       Reabrir

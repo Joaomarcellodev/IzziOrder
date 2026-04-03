@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Order, OrderLine, OrderRequestDTO } from "@/app/actions/order-actions";
+import { OrderRequestDTO } from "@/app/actions/order-actions";
 import { MenuItem } from "@/app/actions/menu-item-actions";
 import { Category } from "@/app/actions/category-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Button } from "../atoms/button";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from 'lucide-react';
+import { Order, LocalOrder, PickupOrder, DeliveryOrder } from "@/lib/entities/order";
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -33,8 +34,10 @@ export function EditOrderModal({
 
 
   // --- Estados do Formulário de Edição ---
-  const [editedOrderType, setEditedOrderType] = useState<"LOCAL" | "DELIVERY" | "PICKUP">("LOCAL");
-  const [editedDetail, setEditedDetail] = useState<string>();
+  const [editedOrderType, setEditedOrderType] = useState<Order['type']>("LOCAL");
+  const [editedDetail, setEditedDetail] = useState<string>("");
+  const [editedAddress, setEditedAddress] = useState<string>("");
+  const [editedDeliveryFee, setEditedDeliveryFee] = useState<string>("0");
   const [editedEstimatedTime, setEditedEstimatedTime] = useState("");
   const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN");
   const [editedItems, setEditedItems] = useState<any[]>([]);
@@ -47,13 +50,19 @@ export function EditOrderModal({
     if (order) {
       setEditedStatus(order.status);
       setEditedOrderType(order.type);
-      if (order.type == "LOCAL") {
-        setEditedDetail(order.tableNumber?.toString());
-      } else if (order.type == "PICKUP") {
-        setEditedDetail(order.customerName);
+      if (order.type === "LOCAL") {
+        const local = order as LocalOrder;
+        setEditedDetail(local.tableNumber || "");
+      } else if (order.type === "PICKUP") {
+        const pickup = order as PickupOrder;
+        setEditedDetail(pickup.customerName || "");
+      } else if (order.type === "DELIVERY") {
+        const delivery = order as DeliveryOrder;
+        setEditedAddress(delivery.address || "");
+        setEditedDeliveryFee(delivery.deliveryFee?.toString() || "0");
       }
       setEditedEstimatedTime(String(order.estimatedTime || ""));
-      setEditedItems(order.orderLines);
+      setEditedItems(order.orderLines || []);
     }
   }, [order]);
 
@@ -157,13 +166,14 @@ export function EditOrderModal({
 
     try {
       const updatedOrder: OrderRequestDTO = {
-        ...order,
-        detail: editedDetail!,
+        id: order.id,
+        detail: editedOrderType === "DELIVERY" ? editedAddress : editedDetail,
+        deliveryFee: parseFloat(editedDeliveryFee) || 0,
         status: editedStatus,
         type: editedOrderType,
         estimatedTime: parseInt(editedEstimatedTime) || 0,
         orderLines: editedItems,
-        total: totalPrice,
+        total: totalPrice + (editedOrderType === "DELIVERY" ? parseFloat(editedDeliveryFee) || 0 : 0),
       };
 
       onUpdateOrder(updatedOrder);
@@ -309,7 +319,7 @@ export function EditOrderModal({
                 {editedItems.map((item) => {
                   return (
                     <div
-                      key={item.menuItemId}
+                      key={item.menuItemId + order.id}
                       className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
                     >
                       <div className="flex-1">
@@ -348,8 +358,8 @@ export function EditOrderModal({
 
                 <div className="border-t border-orange-200 pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-lg text-orange-900">Total Atual:</span>
-                    <span className="font-bold text-2xl text-orange-600">
+                    <span className="font-bold text-lg text-orange-900">Total Itens:</span>
+                    <span className="font-bold text-lg text-orange-600">
                       R$ {totalPrice.toFixed(2)}
                     </span>
                   </div>

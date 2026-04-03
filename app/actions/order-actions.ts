@@ -16,7 +16,7 @@ export interface OrderRequestDTO {
   orderLines: Array<OrderLine>;
 }
 
-export async function createOrder(orderDTO: OrderRequestDTO): Promise<any> {
+export async function createOrder(orderDTO: OrderRequestDTO) {
   const orderEntity = Order.fromDTO(orderDTO);
 
   const supabase = await createClient();

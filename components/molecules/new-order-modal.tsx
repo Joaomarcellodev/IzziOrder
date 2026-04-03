@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/molecules/dialog";
 import { MenuItem } from "@/app/actions/menu-item-actions";
-import { Order, OrderRequestDTO } from "@/app/actions/order-actions";
+import { OrderRequestDTO } from "@/app/actions/order-actions";
 import { NewOrderForm } from "./new-order-form";
 import { Category } from "@/app/actions/category-actions";
 
