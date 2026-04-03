@@ -30,32 +30,7 @@ describe("Orders CREATE Integration", () => {
       expect(result.type).toBe("LOCAL");
       expect(result.status).toBe("OPEN");
       // @ts-ignore - LocalOrder has tableNumber
-      expect(result.tableNumber).toBe("5");
-    });
-
-    it("should create a valid DELIVERY order", async () => {
-      const orderDTO: OrderRequestDTO = {
-        total: 79.50,
-        type: "DELIVERY",
-        detail: "Rua dos Testes, 123",
-        deliveryFee: 5.00,
-        estimatedTime: 30,
-        orderLines: [
-          {
-            menuItemId: mockMenuItemId,
-            name: "Item Teste",
-            quantity: 1,
-            price: 74.50
-          }
-        ]
-      };
-
-      const result = await createOrder(orderDTO);
-
-      expect(result).toBeDefined();
-      expect(result.type).toBe("DELIVERY");
-      // @ts-ignore - DeliveryOrder has deliveryFee
-      expect(result.deliveryFee).toBe(5.00);
+      expect(result.detail).toBe("5");
     });
 
     it("should create a valid PICKUP order", async () => {

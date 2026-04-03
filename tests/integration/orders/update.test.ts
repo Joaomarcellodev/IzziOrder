@@ -58,7 +58,7 @@ describe("Orders UPDATE Integration", () => {
 
       expect(result.status).toBe("OPEN");
       // @ts-ignore
-      expect(result.tableNumber).toBe("10");
+      expect(result.detail).toBe("10");
     });
 
     it("should update order lines (add, update, delete)", async () => {
@@ -93,7 +93,7 @@ describe("Orders UPDATE Integration", () => {
 
       expect(result.orderLines).toHaveLength(2);
       expect(result.total).toBe(150.00);
-      const sodaLine = result.orderLines.find(l => l.name === "Soda");
+      const sodaLine = result.orderLines.find((l: { name: string; }) => l.name === "Soda");
       expect(sodaLine).toBeDefined();
       expect(sodaLine?.quantity).toBe(2);
     });
@@ -110,7 +110,7 @@ describe("Orders UPDATE Integration", () => {
       const result = await updateOrder(updateDTO);
 
       // @ts-ignore
-      expect(result.customerName).toBe("Maria Oliveira");
+      expect(result.detail).toBe("Maria Oliveira");
     });
   });
 
