@@ -16,8 +16,6 @@ export async function login(formData: FormData) {
 
     const { data: dataU, error } = await supabase.auth.signInWithPassword(data)
 
-    console.log(dataU)
-
     if (error) {
         return { success: false, error: "Credenciais inválidas." }
     }

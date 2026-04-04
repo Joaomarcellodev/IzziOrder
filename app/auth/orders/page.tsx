@@ -8,13 +8,18 @@ import { getUser } from "@/app/actions/user-actions";
 
 
 export default async function OrdersPage() {
+  let orders
+  let user
 
-  const { data: orders, error: errorTables } = await getOrders(ESTABLISHMENT_ID);
+  try {
+    orders = await getOrders(ESTABLISHMENT_ID);
+    user = await getUser()
+  } catch (error: any) {
+    return <div>Erro: {error}</div>
+  }
   const { data: categories, error: errorCategories } = await getCategories(ESTABLISHMENT_ID);
   const { data: menuItems, error: errorMenuItems } = await getMenuItems(ESTABLISHMENT_ID);
-  const user = await getUser()
 
-  if (errorTables) return <div>Erro: {errorTables}</div>;
   if (errorMenuItems) return <div>Erro: {errorMenuItems}</div>;
   if (errorCategories) return <div>Erro: {errorCategories}</div>;
 
