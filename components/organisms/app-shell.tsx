@@ -31,7 +31,7 @@ const navigationItems = [
   { id: "orders", label: "Pedidos", icon: Calendar, href: "/auth/orders" },
   { id: "menu", label: "Cardápio", icon: ChefHat, href: "/auth/menu" },
   { id: "reports", label: "Relatórios", icon: BarChart3, href: "/auth/reports" },
-  { id: "settings", label: "Configurações", icon: Settings, href: "/auth/settings" },
+  { id: "settings", label: "Configurações", icon: Settings, href: "/auth/services" },
 ];
 
 export function AppShell({

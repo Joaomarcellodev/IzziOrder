@@ -45,7 +45,6 @@ Essa abordagem melhora a **padronização**, **testabilidade** e **escalabilidad
 - **TypeScript** → Tipagem estática para maior confiabilidade.  
 - **Tailwind CSS** → Estilização rápida e responsiva.  
 - **ESLint + Prettier** → Padrões de código e consistência.  
-- **GitHub Actions (CI/CD)** → Integração e entrega contínua *(opcional se você já usa)*.  
 
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" height="40" alt="Next.js logo" />

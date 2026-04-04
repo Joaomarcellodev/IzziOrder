@@ -1,7 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 
 test.describe('Adicionar Item', () => {
-
   test.beforeEach(async ({ page }) => {
 
     await page.goto('http://localhost:3000/login');
@@ -34,251 +33,251 @@ test.describe('Adicionar Item', () => {
       console.log('Item excluído');
     }
   });
-  
+
 
   // VALID CASES
   test.describe("Valid Cases", () => {
 
-  
 
-  // 1. ADICIONAR ITEM COMUM
-  test('deve adicionar item com dados válidos', async ({ page }) => {
-    test.setTimeout(60000);
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(2000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Pizza Teste');
-    await page.waitForTimeout(1000);
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Pizza de teste criada automaticamente');
-    await page.waitForTimeout(1000);
+    // 1. ADICIONAR ITEM COMUM
+    test('deve adicionar item com dados válidos', async ({ page }) => {
+      test.setTimeout(60000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(2000);
 
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('35.90');
-    await page.waitForTimeout(1000);
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Pizza Teste');
+      await page.waitForTimeout(1000);
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Pizza de teste criada automaticamente');
+      await page.waitForTimeout(1000);
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
-    await page.waitForTimeout(500);
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('35.90');
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
-    await expect(page.getByText('Pizza Teste').first()).toBeVisible();
-  });
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
+      await page.waitForTimeout(500);
 
-  // 2. ITEM COM PREÇO INTEIRO (SEM CENTAVOS)
-  test('deve adicionar item com preço inteiro', async ({ page }) => {
-    test.setTimeout(60000);
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
+      await expect(page.getByText('Pizza Teste').first()).toBeVisible();
+    });
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Água Mineral');
-    await page.waitForTimeout(1000);
+    // 2. ITEM COM PREÇO INTEIRO (SEM CENTAVOS)
+    test('deve adicionar item com preço inteiro', async ({ page }) => {
+      test.setTimeout(60000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(2000);
 
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Água sem gás 500ml');
-    await page.waitForTimeout(1000);
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Água Mineral');
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('4');
-    await page.waitForTimeout(1000);
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Água sem gás 500ml');
+      await page.waitForTimeout(1000);
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
-    await page.waitForTimeout(500);
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('4');
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
+      await page.waitForTimeout(500);
 
-    await expect(page.getByText('Água Mineral').first()).toBeVisible();
-  });
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-  // 3. PREÇO MÍNIMO VÁLIDO (R$ 0.01)
-  test('deve adicionar item com preço mínimo válido', async ({ page }) => {
-    test.setTimeout(60000);
+      await expect(page.getByText('Água Mineral').first()).toBeVisible();
+    });
 
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(2000);
+    // 3. PREÇO MÍNIMO VÁLIDO (R$ 0.01)
+    test('deve adicionar item com preço mínimo válido', async ({ page }) => {
+      test.setTimeout(60000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Promocional');
-    await page.waitForTimeout(1000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(2000);
 
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Item com preço simbólico');
-    await page.waitForTimeout(1000);
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Promocional');
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0.01');
-    await page.waitForTimeout(1000);
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Item com preço simbólico');
+      await page.waitForTimeout(1000);
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
-    await page.waitForTimeout(500);
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0.01');
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
+      await page.waitForTimeout(500);
 
-    await expect(page.getByText('Item Promocional').first()).toBeVisible();
-    await expect(page.getByText('R$ 0.01').first()).toBeVisible();
-  });
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
+
+      await expect(page.getByText('Item Promocional').first()).toBeVisible();
+      await expect(page.getByText('R$ 0.01').first()).toBeVisible();
+    });
 
   })
 
-    // INVALID CASES
+  // INVALID CASES
   test.describe("Invalid Cases", () => {
 
 
 
- // 1. NOME COM MENOS DE 3 CARACTERES
-  test('deve bloquear item com nome menor que 3 caracteres', async ({ page }) => {
-    test.setTimeout(60000);
+    // 1. NOME COM MENOS DE 3 CARACTERES
+    test('deve bloquear item com nome menor que 3 caracteres', async ({ page }) => {
+      test.setTimeout(60000);
 
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Ab');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Ab');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 2. ITEM COM NOME VAZIO
-  test('deve bloquear item com nome vazio', async ({ page }) => {
-    test.setTimeout(60000);
+    // 2. ITEM COM NOME VAZIO
+    test('deve bloquear item com nome vazio', async ({ page }) => {
+      test.setTimeout(60000);
 
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 3. DESCRIÇÃO VAZIA
-  test('deve bloquear item com descrição vazia', async ({ page }) => {
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+    // 3. DESCRIÇÃO VAZIA
+    test('deve bloquear item com descrição vazia', async ({ page }) => {
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByPlaceholder('Escreva a descrição do item').isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByPlaceholder('Escreva a descrição do item').isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 4. DESCRIÇÃO COM MENOS DE 3 CARACTERES
-  test('deve bloquear item com descrição menor que 3 caracteres', async ({ page }) => {
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+    // 4. DESCRIÇÃO COM MENOS DE 3 CARACTERES
+    test('deve bloquear item com descrição menor que 3 caracteres', async ({ page }) => {
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('De');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Válido');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('De');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('25.00');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByPlaceholder('Escreva a descrição do item').isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByPlaceholder('Escreva a descrição do item').isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 5. PREÇO ZERO
-  test('deve bloquear item com preço zero', async ({ page }) => {
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+    // 5. PREÇO ZERO
+    test('deve bloquear item com preço zero', async ({ page }) => {
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item com Preço Zero');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item com Preço Zero');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('0');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 6. PREÇO NEGATIVO
-  test('deve bloquear item com preço negativo', async ({ page }) => {
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+    // 6. PREÇO NEGATIVO
+    test('deve bloquear item com preço negativo', async ({ page }) => {
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item com Preço Negativo');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('-10.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item com Preço Negativo');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('-10.00');
 
-    await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option').first().click();
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByRole('spinbutton', { name: 'Preço (R$)' }).isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
 
-  // 7. SEM CATEGORIA SELECIONADA
-  test('deve bloquear item sem categoria selecionada', async ({ page }) => {
-    await page.getByRole('button', { name: /Adicionar Item/i }).click();
-    await page.waitForTimeout(1000);
+    // 7. SEM CATEGORIA SELECIONADA
+    test('deve bloquear item sem categoria selecionada', async ({ page }) => {
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(1000);
 
-    await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Sem Categoria');
-    await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
-    await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('30.00');
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Sem Categoria');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Descrição válida');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('30.00');
 
-    await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.waitForTimeout(2000);
+      await page.getByRole('button', { name: 'Salvar' }).click();
+      await page.waitForTimeout(2000);
 
-    const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
-    expect(aindaNoModal).toBeTruthy();
+      const aindaNoModal = await page.getByRole('textbox', { name: 'Nome do Item' }).isVisible();
+      expect(aindaNoModal).toBeTruthy();
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-  });
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    });
   })
 
 });

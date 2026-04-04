@@ -3,7 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
 
-  
+
   test.beforeEach(async ({ page }) => {
     console.log('Preparando ambiente de teste para categorias...');
 

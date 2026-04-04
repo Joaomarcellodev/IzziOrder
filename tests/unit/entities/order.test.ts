@@ -91,16 +91,16 @@ describe("Order Entity Hierarchy", () => {
     });
 
     it("should calculate itemsCount correctly", () => {
-        const order = new LocalOrder({
-          id: "123",
-          tableNumber: "5",
-          orderLines: [
-            { menuItemId: "1", name: "Pizza", quantity: 2, price: 50 },
-            { menuItemId: "2", name: "Coke", quantity: 3, price: 10 },
-          ],
-        });
-        expect(order.itemsCount).toBe(5);
+      const order = new LocalOrder({
+        id: "123",
+        tableNumber: "5",
+        orderLines: [
+          { menuItemId: "1", name: "Pizza", quantity: 2, price: 50 },
+          { menuItemId: "2", name: "Coke", quantity: 3, price: 10 },
+        ],
       });
+      expect(order.itemsCount).toBe(5);
+    });
 
     it("should throw error if order has no lines", () => {
       expect(() => new LocalOrder({
@@ -121,41 +121,41 @@ describe("Order Entity Hierarchy", () => {
     });
 
     it("should throw error when closing an already closed order", () => {
-        const order = new LocalOrder({
-            tableNumber: "1",
-            orderLines: commonLines,
-            status: "CLOSED"
-        });
-        expect(() => order.close()).toThrow("Pedido já está fechado.");
+      const order = new LocalOrder({
+        tableNumber: "1",
+        orderLines: commonLines,
+        status: "CLOSED"
+      });
+      expect(() => order.close()).toThrow("Pedido já está fechado.");
     });
 
     it("should change status to OPEN when reopen() is called", () => {
-        const order = new LocalOrder({
-            tableNumber: "1",
-            orderLines: commonLines,
-            status: "CLOSED"
-        });
-        expect(order.status).toBe("CLOSED");
-        order.reopen();
-        expect(order.status).toBe("OPEN");
+      const order = new LocalOrder({
+        tableNumber: "1",
+        orderLines: commonLines,
+        status: "CLOSED"
+      });
+      expect(order.status).toBe("CLOSED");
+      order.reopen();
+      expect(order.status).toBe("OPEN");
     });
 
     it("should throw error when reopening an already open order", () => {
-        const order = new LocalOrder({
-            tableNumber: "1",
-            orderLines: commonLines,
-            status: "OPEN"
-        });
-        expect(() => order.reopen()).toThrow("Pedido já está aberto.");
+      const order = new LocalOrder({
+        tableNumber: "1",
+        orderLines: commonLines,
+        status: "OPEN"
+      });
+      expect(() => order.reopen()).toThrow("Pedido já está aberto.");
     });
 
     it("should set current date if not provided", () => {
-        const order = new LocalOrder({
-            tableNumber: "1",
-            orderLines: commonLines,
-        });
-        expect(order.date).toBeDefined();
-        expect(new Date(order.date!).getTime()).toBeLessThanOrEqual(Date.now());
+      const order = new LocalOrder({
+        tableNumber: "1",
+        orderLines: commonLines,
+      });
+      expect(order.date).toBeDefined();
+      expect(new Date(order.date!).getTime()).toBeLessThanOrEqual(Date.now());
     });
 
     it("should preserve estimatedTime", () => {

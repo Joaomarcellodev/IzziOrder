@@ -82,7 +82,7 @@ export async function getOrders(establishment_id: string): Promise<any> {
     throw new Error("Erro ao buscar pedidos.");
   }
 
-  return data.map(o => adjustOrderLines(o));
+  return data.map((o: any) => adjustOrderLines(o));
 }
 
 export async function getOrderById(id: string) {
@@ -138,9 +138,9 @@ export async function updateOrder(orderDTO: OrderRequestDTO) {
       .select("id")
       .eq("order_id", orderDTO.id);
 
-    const existingIds = (existingLines || []).map((l) => l.id);
+    const existingIds = (existingLines || []).map((l: any) => l.id);
     const incomingIds = orderDTO.orderLines.filter((l) => l.id).map((l) => l.id);
-    const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
+    const toDelete = existingIds.filter((id: any) => !incomingIds.includes(id));
 
     if (toDelete.length > 0) {
       await supabase.from("order_lines").delete().in("id", toDelete);
