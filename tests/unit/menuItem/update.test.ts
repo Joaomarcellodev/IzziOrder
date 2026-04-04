@@ -1,4 +1,4 @@
-import { updateMenuItem, updateMenuItemAvailability, updateMenuOrdernation } from "@/app/actions/menuItem";
+import { updateMenuItem, updateMenuItemAvailability, updateMenuOrdernation } from "@/app/actions/menu-item-actions";
 import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";

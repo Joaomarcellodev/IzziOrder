@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Clock, MapPin, Truck, X } from "lucide-react";
-import { Order } from "@/app/actions/orders";
+import { Order } from "@/app/actions/order-actions";
 
 interface OrderDetailsModalProps {
   order: Order | null;

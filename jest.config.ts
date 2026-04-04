@@ -1,11 +1,11 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest', 
+  preset: 'ts-jest',
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
-  
+
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
@@ -18,12 +18,14 @@ const config: Config = {
     "!app/**/*.d.ts",
     "!**/node_modules/**",
     "!**/.next/**",
-    "!**/coverage/**"
+    "!**/coverage/**",
+    "lib/entities/**",
+    "lib/validators/**"
   ],
   coverageReporters: [
     "text"
   ],
-  
+
 };
 
 export default config;

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import {
-  Bell,
   BarChart3,
   Calendar,
   Settings,
@@ -12,17 +11,20 @@ import {
   LogOut,
   Menu,
   X,
+  User,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/atoms/avatar";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { logout } from "@/app/actions/auth-actions";
 
 interface AppShellProps {
   children: React.ReactNode;
   currentPage: string;
   breadcrumb: string;
   hasNewNotifications?: boolean;
+  user: { name: string, email: string }
 }
 
 const navigationItems = [
@@ -36,24 +38,17 @@ export function AppShell({
   children,
   currentPage,
   breadcrumb,
-  hasNewNotifications = false,
+  user
 }: AppShellProps) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  const getActiveItem = () => {
-    const item = navigationItems.find((item) => item.label === currentPage);
-    return item?.id || "orders";
-  };
 
   const handleNavigation = () => {
     if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
   const router = useRouter();
-
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -110,18 +105,19 @@ export function AppShell({
           <div className="flex items-center justify-between gap-3">
             {/* Avatar + Nome */}
             <div
-              className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition flex-1"
-              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-3 p-2 rounded-lg transition flex-1"
+
             >
               <Avatar className="w-10 h-10">
-                <AvatarImage src="/manager-avatar.png" />
-                <AvatarFallback>CM</AvatarFallback>
+                <AvatarFallback>
+                  <User className="w-5 h-5" />
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900 truncate">
-                  Carlos - Manager
+                  {user.name}
                 </div>
-                <div className="text-xs text-gray-500 truncate">Ver perfil</div>
+                <div className="text-xs text-gray-500 truncate">{user.email}</div>
               </div>
             </div>
 
@@ -173,61 +169,12 @@ export function AppShell({
                 {breadcrumb}
               </div>
             </div>
-
-            {/* <div className="flex items-center gap-4 ml-auto">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notificações"
-                className="relative hover:bg-gray-100 transition"
-              >
-                <Bell className="w-6 h-6 text-gray-800" />
-                {hasNewNotifications && (
-                  <span
-                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
-                    style={{ backgroundColor: "#FD7E14" }}
-                  />
-                )}
-              </Button>
-            </div> */}
           </div>
         </header>
 
         {/* Conteúdo */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
-
-      {/* Modal de Perfil */}
-      {isProfileOpen && (
-        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Perfil do Usuário
-            </h2>
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src="/manager-avatar.png" />
-                <AvatarFallback>CM</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-lg font-semibold text-gray-800">
-                  Carlos Mendes
-                </p>
-                <p className="text-sm text-gray-500">Gerente do Restaurante</p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600">
-              Email: carlos.mendes@izziorder.com.br
-            </p>
-            <p className="text-sm text-gray-600 mt-1">
-              Cargo: <span className="font-medium">Manager</span>
-            </p>
-            <div className="mt-6 flex justify-end">
-              <Button className=" bg-blue-600 hover:bg-blue-700" onClick={() => setIsProfileOpen(false)}>Fechar</Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal de Logout */}
       {isLogoutModalOpen && (
@@ -243,15 +190,13 @@ export function AppShell({
               >
                 Cancelar
               </Button>
-              <Button
-                className=" bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  router.push("/login");
-                  setIsLogoutModalOpen(false);
-                }}
-              >
-                Sair
-              </Button>
+              <form action={logout}>
+                <Button
+                  className=" bg-blue-600 hover:bg-blue-700"
+                >
+                  Sair
+                </Button>
+              </form>
             </div>
           </div>
         </div>

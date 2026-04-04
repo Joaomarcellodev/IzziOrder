@@ -7,10 +7,10 @@ import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/organisms/select";
 import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from "sonner";
-import { Category } from "@/app/actions/category";
-import { MenuItem } from "@/app/actions/menuItem";
-import { OrderLineRequestDTO, OrderRequestDTO } from "@/app/actions/orders";
+import { useToast } from "@/hooks/use-toast";
+import { Category } from "@/app/actions/category-actions";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { OrderRequestDTO } from "@/app/actions/order-actions";
 
 interface NewOrderFormProps {
   menuItems: MenuItem[];
@@ -23,9 +23,11 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   const [orderType, setOrderType] = useState<"LOCAL" | "PICKUP">("LOCAL");
   const [orderDetail, setOrderDetail] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("");
-  const [selectedItems, setSelectedItems] = useState<OrderLineRequestDTO[]>([]);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
+
+  const { toast } = useToast();
 
   const handleAddItem = (menuItem: MenuItem) => {
     const id = menuItem.id!;
@@ -54,7 +56,9 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       ]);
     }
 
-    toast.success(`${menuItem.name} adicionado ao pedido`);
+    toast({
+      title: `${menuItem.name} adicionado ao pedido`,
+    });
   };
 
   const handleRemoveItem = (menuItemId: string) => {
@@ -82,12 +86,18 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     e.preventDefault();
 
     if (orderType === "LOCAL" && !orderDetail.trim()) {
-      toast.error("Por favor, insira o número da mesa");
+      toast({
+        title: "Por favor, insira o número da mesa",
+        variant: "destructive",
+      });
       return;
     }
 
     if (selectedItems.length === 0) {
-      toast.error("Por favor, adicione pelo menos um item ao pedido");
+      toast({
+        title: "O pedido deve conter pelo menos um item.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -98,14 +108,15 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
         total: totalPrice,
         type: orderType,
         detail: orderDetail,
-        estimatedTime: parseInt(estimatedTime),
+        estimatedTime: parseInt(estimatedTime) || 0,
         orderLines: selectedItems
       };
 
       onSubmit?.(orderData);
 
-      toast.success("Pedido criado com sucesso!", {
-        description: `Pedido de ${customerName} foi registrado.`,
+      toast({
+        title: "Pedido criado com sucesso!",
+        description: `Pedido de ${customerName || orderDetail} foi registrado.`,
       });
 
       // Reset form
@@ -116,8 +127,10 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       setSelectedItems([]);
 
     } catch (error) {
-      toast.error("Erro ao criar pedido", {
+      toast({
+        title: "Erro ao criar pedido",
         description: "Tente novamente mais tarde.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -165,7 +178,6 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   placeholder="Ex: 5"
                   value={orderDetail}
                   onChange={(e) => setOrderDetail(e.target.value)}
-                  required
                 />
               </div>
             )}
@@ -178,7 +190,6 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   placeholder="Ex: João"
                   value={orderDetail}
                   onChange={(e) => setOrderDetail(e.target.value)}
-                  required
                 />
               </div>
             )}
