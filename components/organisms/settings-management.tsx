@@ -167,7 +167,7 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
                 className="gap-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800 hover:border-orange-300 font-medium transition-all shadow-sm"
               >
                 <KeyRound className="h-4 w-4" />
-                Trocar Senha
+                Alterar Senha
               </Button>
               <Button 
                 type="submit" 
@@ -184,7 +184,7 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Trocar Senha</DialogTitle>
+            <DialogTitle>Alterar Senha</DialogTitle>
             <DialogDescription>
               Para sua segurança, informe sua senha atual antes de cadastrar uma nova.
             </DialogDescription>
