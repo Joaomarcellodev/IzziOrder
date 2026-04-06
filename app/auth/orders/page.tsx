@@ -6,30 +6,59 @@ import { getCategories } from "@/app/actions/category-actions";
 import OrdersDashboard from "@/components/organisms/orders-dashboard";
 import { getUser } from "@/app/actions/user-actions";
 
+function getErrorMessage(error: unknown) {
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as any).message);
+  }
+  return String(error);
+}
 
 export default async function OrdersPage() {
-  let orders
-  let user
+  let orders: any = null;
+  let user: any = null;
 
   try {
     orders = await getOrders(ESTABLISHMENT_ID);
-    user = await getUser()
-  } catch (error: any) {
-    return <div>Erro: {error}</div>
-  }
-  const { data: categories, error: errorCategories } = await getCategories(ESTABLISHMENT_ID);
-  const { data: menuItems, error: errorMenuItems } = await getMenuItems(ESTABLISHMENT_ID);
+    user = await getUser();
+  } catch (error: unknown) {
+    console.error("Erro ao carregar pedidos/usuário:", error);
 
-  if (errorMenuItems) return <div>Erro: {errorMenuItems}</div>;
-  if (errorCategories) return <div>Erro: {errorCategories}</div>;
+    return <div>Erro: {getErrorMessage(error)}</div>;
+  }
+
+  const { data: categories, error: errorCategories } =
+    await getCategories(ESTABLISHMENT_ID);
+
+  const { data: menuItems, error: errorMenuItems } =
+    await getMenuItems(ESTABLISHMENT_ID);
+
+  if (errorMenuItems) {
+    console.error("Erro menuItems:", errorMenuItems);
+
+    return <div>Erro: {getErrorMessage(errorMenuItems)}</div>;
+  }
+
+  if (errorCategories) {
+    console.error("Erro categories:", errorCategories);
+
+    return <div>Erro: {getErrorMessage(errorCategories)}</div>;
+  }
+
+  const safeUser =
+    user && typeof user.toJSON === "function" ? user.toJSON() : user ?? {};
 
   return (
     <AppShell
       currentPage="Painel de Pedidos"
       breadcrumb="Painel > Painel de Pedidos"
-      user={user.toJSON()}
+      user={safeUser}
     >
-      <OrdersDashboard orders={orders!} categories={categories!} menuItems={menuItems!} />
+      <OrdersDashboard
+        orders={orders ?? []}
+        categories={categories ?? []
+}
+        menuItems={menuItems ?? []}
+      />
     </AppShell>
   );
 }
