@@ -57,7 +57,6 @@ describe("User Profile Integration", () => {
         const result = await updatePassword(formData, s);
         expect(result.success).toBe(true);
 
-        // Verify we can login with new password
         const { error } = await s.auth.signInWithPassword({
             email: createdUser.email,
             password: "NewPassword123!"
@@ -72,10 +71,7 @@ describe("User Profile Integration", () => {
         formData.append("newPassword", "weak"); 
         formData.append("confirmPassword", "weak");
 
-        const result = await updatePassword(formData, s);
-        
-        expect(result.success).toBe(false);
-        expect(result.error).toBeDefined();
+        await expect(updatePassword(formData, s)).rejects.toThrow();
     });
 
     it("should fail to update password with wrong current password", async () => {
@@ -85,8 +81,6 @@ describe("User Profile Integration", () => {
         formData.append("newPassword", "NewPassword123!");
         formData.append("confirmPassword", "NewPassword123!");
 
-        const result = await updatePassword(formData, s);
-        expect(result.success).toBe(false);
-        expect(result.error).toBe("Senha atual incorreta");
+        await expect(updatePassword(formData, s)).rejects.toThrow("Senha atual incorreta");
     });
 });
