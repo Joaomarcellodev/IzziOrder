@@ -52,25 +52,28 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
 
     setLoading(true)
     
-    const formData = new FormData()
-    formData.append("name", profileData.name)
-    formData.append("email", profileData.email)
+    try {
+      const formData = new FormData()
+      formData.append("name", profileData.name)
+      formData.append("email", profileData.email)
 
-    const result = await updateProfile(formData)
-    setLoading(false)
+      const result = await updateProfile(formData)
+      setLoading(false)
 
-    if (result.success) {
-      toast({
-        title: "Sucesso!",
-        description: "Perfil atualizado com sucesso!",
-        className: "bg-green-600 text-white border-green-700",
-      })
-    } else {
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: "Perfil atualizado com sucesso!",
+          className: "bg-green-600 text-white border-green-700",
+        })
+      }
+    } catch (error: any) {
+      setLoading(false)
       toast({
         variant: "destructive",
         title: "Erro ao atualizar perfil",
-        description: result.error || "Ocorreu um erro inesperado.",
-        className: "text-white", // Força o texto branco para visibilidade
+        description: error.message || "Ocorreu um erro inesperado.",
+        className: "text-white",
       })
     }
   }
@@ -79,32 +82,35 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
     e.preventDefault()
     setLoading(true)
 
-    const formData = new FormData()
-    formData.append("currentPassword", passwordData.currentPassword)
-    formData.append("newPassword", passwordData.newPassword)
-    formData.append("confirmPassword", passwordData.confirmPassword)
+    try {
+      const formData = new FormData()
+      formData.append("currentPassword", passwordData.currentPassword)
+      formData.append("newPassword", passwordData.newPassword)
+      formData.append("confirmPassword", passwordData.confirmPassword)
 
-    const result = await updatePassword(formData)
-    setLoading(false)
+      const result = await updatePassword(formData)
+      setLoading(false)
 
-    if (result.success) {
-      toast({
-        title: "Sucesso!",
-        description: "Senha atualizada com sucesso!",
-        className: "bg-green-600 text-white border-green-700",
-      })
-      setIsPasswordDialogOpen(false)
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      })
-    } else {
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: "Senha atualizada com sucesso!",
+          className: "bg-green-600 text-white border-green-700",
+        })
+        setIsPasswordDialogOpen(false)
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        })
+      }
+    } catch (error: any) {
+      setLoading(false)
       toast({
         variant: "destructive",
         title: "Erro ao atualizar senha",
-        description: result.error || "Ocorreu um erro inesperado.",
-        className: "text-white", // CORRIGIDO: Agora usando text-white aqui também
+        description: error.message || "Ocorreu um erro inesperado.",
+        className: "text-white", 
       })
     }
   }
