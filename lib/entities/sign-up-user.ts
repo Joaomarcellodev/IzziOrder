@@ -22,12 +22,18 @@ export class SignUpUser extends User {
 
     static validateCredentials(email: string, password: string, password_confirmation: string) {
         SignUpUser.validateEmail(email)
-        
+        SignUpUser.validatePasswordStrength(password)
+        SignUpUser.verifyPasswordConfirmation(password, password_confirmation)
+    }
+
+    static validatePasswordStrength(password: string) {
         const passwordErrors = validatePassword(password)
         if (passwordErrors.length > 0) {
             throw new Error(passwordErrors[0])
         }
+    }
 
+    static verifyPasswordConfirmation(password: string, password_confirmation: string) {
         const confirmationErrors = verifyPasswordConfirmation(password, password_confirmation)
         if (confirmationErrors.length > 0) {
             throw new Error(confirmationErrors[0])
