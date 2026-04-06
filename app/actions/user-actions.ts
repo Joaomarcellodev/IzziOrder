@@ -34,13 +34,10 @@ export async function updatePassword(formData: FormData, supabaseClient?: any) {
     const newPassword = formData.get("newPassword") as string
     const confirmPassword = formData.get("confirmPassword") as string
 
-    const errors = validatePasswordChange(currentPassword, newPassword, confirmPassword)
-    if (errors.length > 0) {
-        return { success: false, error: errors[0] }
-    }
+    validatePasswordChange(currentPassword, newPassword, confirmPassword)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || !user.email) return { success: false, error: "Usuário não autenticado" }
+    if (!user || !user.email) throw new Error("Usuário não autenticado")
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
@@ -48,7 +45,7 @@ export async function updatePassword(formData: FormData, supabaseClient?: any) {
     })
 
     if (signInError) {
-        return { success: false, error: "Senha atual incorreta" }
+        throw new Error("Senha atual incorreta")
     }
 
     const { error: updateError } = await supabase.auth.updateUser({
@@ -60,7 +57,7 @@ export async function updatePassword(formData: FormData, supabaseClient?: any) {
         if (errorMessage.includes("new password should be different from the old one")) {
             errorMessage = "A nova senha deve ser diferente da senha atual"
         }
-        return { success: false, error: errorMessage }
+        throw new Error(errorMessage)
     }
 
     return { success: true }
@@ -71,27 +68,22 @@ export async function updateProfile(formData: FormData, supabaseClient?: any) {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
 
-    const errors = validateProfileUpdate(name, email)
-    if (errors.length > 0) {
-        return { success: false, error: errors[0] }
-    }
+    validateProfileUpdate(name, email)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: "Usuário não autenticado" }
+    if (!user) throw new Error("Usuário não autenticado")
 
-    // Update email if changed
     if (email !== user.email) {
         const { error: emailError } = await supabase.auth.updateUser({ email })
-        if (emailError) return { success: false, error: emailError.message }
+        if (emailError) throw new Error(emailError.message)
     }
 
-    // Update profiles table
     const { error: profileError } = await supabase.from("profiles").update({
         user_name: name,
     }).eq("id", user.id)
 
     if (profileError) {
-        return { success: false, error: profileError.message }
+        throw new Error(profileError.message)
     }
 
     revalidatePath("/auth/settings")
