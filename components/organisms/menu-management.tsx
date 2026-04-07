@@ -769,7 +769,7 @@ export function MenuManagement({
         {/* --- Modais --- */}
 
         {/* Modal de Item (Adicionar/Editar) */}
-        <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
+        {/* <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
           <DialogContent className="max-w-md sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -899,10 +899,10 @@ export function MenuManagement({
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         {/* Modal de Adicionar Categoria */}
-        <Dialog
+        {/* <Dialog
           open={isCategoryModalOpen}
           onOpenChange={setIsCategoryModalOpen}
         >
@@ -938,10 +938,10 @@ export function MenuManagement({
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         {/* Modal de Editar Categoria */}
-        <Dialog
+        {/* <Dialog
           open={isEditCategoryModalOpen}
           onOpenChange={setIsEditCategoryModalOpen}
         >
@@ -977,10 +977,10 @@ export function MenuManagement({
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         {/* Dialog de Confirmação para Exclusão de ITEM */}
-        <Dialog
+        {/* <Dialog
           open={isDeleteItemModalOpen}
           onOpenChange={setIsDeleteItemModalOpen}
         >
@@ -1005,10 +1005,10 @@ export function MenuManagement({
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         {/* Dialog de Confirmação para Exclusão de CATEGORIA */}
-        <Dialog
+        {/* <Dialog
           open={isDeleteCategoryModalOpen}
           onOpenChange={setIsDeleteCategoryModalOpen}
         >
@@ -1038,7 +1038,7 @@ export function MenuManagement({
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     </DndProvider>
   );
