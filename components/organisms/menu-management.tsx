@@ -684,7 +684,6 @@ export function MenuManagement({
             >
               <Plus className="w-4 h-4 mr-2" /> Adicionar Item
             </Button>
-            {/* O botão 'Adicionar Categoria' foi movido para baixo */}
           </div>
         </div>
 
