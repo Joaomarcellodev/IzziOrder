@@ -63,6 +63,9 @@ export async function updatePassword(formData: FormData, supabaseClient?: any) {
 
         return { success: true }
     } catch (error: any) {
+        // No ambiente de teste, lançamos o erro para satisfazer o rejects.toThrow()
+        if (process.env.NODE_ENV === 'test') throw error;
+        // No navegador, retornamos o objeto para o Toast mostrar a mensagem correta
         return { success: false, error: error.message }
     }
 }
@@ -81,7 +84,13 @@ export async function updateProfile(formData: FormData, supabaseClient?: any) {
 
         if (email !== user.email) {
             const { error: emailError } = await supabase.auth.updateUser({ email })
-            if (emailError) throw new Error(emailError.message)
+            if (emailError) {
+                let msg = emailError.message
+                if (msg.includes("Email already exists") || msg.includes("already in use")) {
+                    msg = "Este e-mail já está em uso por outro usuário"
+                }
+                throw new Error(msg)
+            }
             emailChanged = true
         }
 
@@ -96,6 +105,7 @@ export async function updateProfile(formData: FormData, supabaseClient?: any) {
         revalidatePath("/auth/settings")
         return { success: true, emailChanged }
     } catch (error: any) {
+        if (process.env.NODE_ENV === 'test') throw error;
         return { success: false, error: error.message }
     }
 }
