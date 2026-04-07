@@ -124,7 +124,6 @@ export function ReportsAnalytics() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with Time Range Selector */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
@@ -196,9 +195,7 @@ export function ReportsAnalytics() {
         })}
       </div>
 
-      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Receita Semanal</CardTitle>
@@ -236,19 +233,15 @@ export function ReportsAnalytics() {
                   outerRadius={100}
                   dataKey="value"
                   label={({ name, value }) => {
-                    // Verifica se o 'value' é um número antes de fazer qualquer cálculo
                     const numericValue = typeof value === "number" ? value : 0;
 
-                    // Calcula o total de todos os valores no array
                     const total = orderDistributionData.reduce(
                       (sum, entry) => sum + entry.value,
                       0
                     );
 
-                    // Calcula a porcentagem da fatia atual
                     const percent = total > 0 ? numericValue / total : 0;
 
-                    // Retorna a string formatada
                     return `${name} ${(percent * 100).toFixed(0)}%`;
                   }}
                 >
@@ -261,7 +254,6 @@ export function ReportsAnalytics() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        {/* Top Selling Items */}
         <Card>
           <CardHeader>
             <CardTitle>Itens mais vendidos</CardTitle>
@@ -298,7 +290,6 @@ export function ReportsAnalytics() {
         </Card>
       </div>
 
-      {/* Detailed Analytics Table */}
       <Card>
         <CardHeader>
           <CardTitle>Desempenho dos principais itens</CardTitle>
