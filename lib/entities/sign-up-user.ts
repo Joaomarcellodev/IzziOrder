@@ -1,3 +1,4 @@
+import { validatePassword, verifyPasswordConfirmation } from "../validators/password"
 import { User } from "./user"
 
 export class SignUpUser extends User {
@@ -21,13 +22,21 @@ export class SignUpUser extends User {
 
     static validateCredentials(email: string, password: string, password_confirmation: string) {
         SignUpUser.validateEmail(email)
-        SignUpUser.validatePassword(password)
+        SignUpUser.validatePasswordStrength(password)
         SignUpUser.verifyPasswordConfirmation(password, password_confirmation)
     }
 
+    static validatePasswordStrength(password: string) {
+        const passwordErrors = validatePassword(password)
+        if (passwordErrors.length > 0) {
+            throw new Error(passwordErrors[0])
+        }
+    }
+
     static verifyPasswordConfirmation(password: string, password_confirmation: string) {
-        if (password !== password_confirmation) {
-            throw new Error("As senhas não batem")
+        const confirmationErrors = verifyPasswordConfirmation(password, password_confirmation)
+        if (confirmationErrors.length > 0) {
+            throw new Error(confirmationErrors[0])
         }
     }
 
@@ -42,24 +51,4 @@ export class SignUpUser extends User {
         }
     }
 
-    static validatePassword(password: string) {
-        if (!password || password.trim() === '') {
-            throw new Error('Senha é obrigatória');
-        }
-
-        // Mínimo 8 caracteres
-        if (password.length < 8) {
-            throw new Error('Senha deve ter no mínimo 8 caracteres');
-        }
-
-        // Pelo menos uma letra maiúscula
-        if (!/[A-Z]/.test(password)) {
-            throw new Error('Senha deve ter pelo menos uma letra maiúscula');
-        }
-
-        // Pelo menos um número
-        if (!/\d/.test(password)) {
-            throw new Error('Senha deve ter pelo menos um número');
-        }
-    }
 }
