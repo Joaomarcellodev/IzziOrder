@@ -1,535 +1,133 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"; // Adicionado useEffect
-import { GripVertical, Edit, Trash, Upload, Plus, CameraOff, MoreVertical } from "lucide-react";
-import { useDrag, useDrop, DndProvider } from "react-dnd";
+import React, { useState, useMemo, useRef } from "react";
+import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/atoms/button";
-import { Card, CardContent } from "@/components/molecules/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/molecules/dialog";
-import { Input } from "@/components/atoms/input";
-import { Label } from "@/components/atoms/label";
-import { Textarea } from "@/components/atoms/textarea";
+
+import { CategoryManager } from "./category-manager";
+import { MenuContent } from "./menu-content";
+import { ItemDialog } from "./item-dialog";
+import { CategoryDialog } from "./category-dialog";
+import { ConfirmDeleteModal } from "./confirm-delete-modal";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/organisms/select";
-import { Switch } from "@/components/atoms/switch";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import {
-  createMenuItem,
-  updateMenuItem,
-  updateMenuItemAvailability,
-  deleteMenuItem as serverDeleteMenuItem,
-  updateMenuOrdernation,
-  MenuItem,
-  MenuItemRequestDTO,
-} from "@/app/actions/menu-item-actions";
-import {
-  createCategory,
-  deleteCategory,
-  updateCategory,
-} from "@/app/actions/category-actions";
-import { validateMenuItem } from "@/lib/validators/menuItem";
+} from "./select";
 
-// Interfaces (Mantidas as originais)
+// 1. Interfaces Internas Estritas (Garantem que ID é string)
 interface Category {
-  id: string | null;
-  name: string;
-}
-
-interface MenuItemCardProps {
-  item: MenuItemRequestDTO;
-  index: number;
-  moveItem: (dragIndex: number, hoverIndex: number) => void;
-  toggleAvailability: (itemId: string) => Promise<void>;
-  openEditModal: (item: MenuItemRequestDTO) => void;
-  openDeleteModal: (itemId: string) => void;
-  onDrop: (dragIndex: number) => void;
-}
-
-interface DragItem {
   id: string;
-  index: number;
+  name: string;
+  establishment_id?: string;
 }
 
-interface DropCollectedProps {
-  handlerId: string | symbol | null;
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl?: string;
+  available: boolean;
+  categoryId: string;
+  index?: number;
 }
 
 interface MenuManagementProps {
-  menuItems: MenuItem[];
-  categories: Category[];
+  menuItems: any[]; // Aceita o que vier do server (com possiveis nulls)
+  categories: any[]; 
 }
 
-const ItemTypes = {
-  CARD: "card",
-};
-
-// ---
-// ## Componente MenuItemCard (Layout Compacto e Responsivo Horizontal)
-// ---
-
-const MenuItemCard = ({
-  item,
-  index,
-  moveItem,
-  toggleAvailability,
-  openEditModal,
-  openDeleteModal,
-  onDrop,
-}: MenuItemCardProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<HTMLDivElement>(null); // Referência para a área de ações
-
-  // Estado para simular o "abrir" das ações no mobile sem um swipe real
-  const [isActionsOpen, setIsActionsOpen] = useState(false);
-
-  // LÓGICA DE CLICK FORA DO MENU (CLICK OUTSIDE)
-  useEffect(() => {
-    // A função é executada apenas no lado do cliente
-    if (typeof window === 'undefined') return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // 1. Verifica se o menu de ações está aberto E se estamos em uma tela mobile
-      if (isActionsOpen && window.innerWidth < 640) {
-        // 2. Verifica se o clique NÃO foi dentro do card (ref.current)
-        // Isso permite o fechamento ao clicar em outro lugar na tela.
-        if (ref.current && !ref.current.contains(event.target as Node)) {
-          setIsActionsOpen(false);
-        }
-      }
-    };
-
-    // Adiciona o listener quando o menu abre
-    if (isActionsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      // Remove o listener quando o menu fecha
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    // Função de limpeza (cleanup) para remover o listener ao desmontar o componente ou quando isActionsOpen muda para false
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isActionsOpen]);
-
-
-  const [{ handlerId }, drop] = useDrop<DragItem, void, DropCollectedProps>({
-    accept: ItemTypes.CARD,
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
-    hover(draggedItem, monitor) {
-      if (!ref.current) {
-        return;
-      }
-      const dragIndex = draggedItem.index;
-      const hoverIndex = index;
-
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      const hoverBoundingRect = ref.current.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-
-      if (!clientOffset) return;
-
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
-
-      moveItem(dragIndex, hoverIndex);
-      draggedItem.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemTypes.CARD,
-    item: () => {
-      return { id: item.id!, index: index };
-    },
-    end: (draggedItem, monitor) => {
-      if (monitor.didDrop()) {
-        onDrop(draggedItem.index);
-      }
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  // Aplica o drop no card
-  drop(ref);
-
-  // O drag é aplicado no GripVertical
-  const dragRef = drag(useRef<HTMLDivElement>(null));
-
-  const hasImage = item.imageUrl && item.imageUrl !== "/placeholder-img.svg";
-
-  // Função para abrir/fechar ações no clique (alternativa ao swipe)
-  const toggleMobileActions = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Para evitar que o clique no botão abra as ações no desktop
-    if (window.innerWidth < 640) { // 640px é o 'sm' do Tailwind
-      e.stopPropagation(); // Evita que o evento se propague, se necessário
-      setIsActionsOpen(prev => !prev);
-    }
-  };
-
-
-  return (
-    <Card
-      ref={ref}
-      className={cn("hover:shadow-md transition-shadow relative overflow-hidden", {
-        "opacity-50": isDragging,
-      })}
-      data-handler-id={handlerId}
-      // Se for mobile e ações estiverem abertas, ajuste a altura
-      style={{ minHeight: isActionsOpen && window.innerWidth < 640 ? '100px' : 'auto' }}
-    >
-      <CardContent className="p-3 sm:p-4 relative">
-        {/* Container Principal: Horizontal e Alinhado ao Centro */}
-        <div className="flex items-center gap-3 sm:gap-4">
-
-          {/* Coluna 1: Drag Handle (Sempre visível à esquerda) */}
-          <div
-            ref={dragRef as any}
-            className="cursor-grab text-gray-400 hover:text-gray-600 flex-shrink-0"
-            data-handler-id={handlerId}
-          >
-            <GripVertical className="w-5 h-5" />
-          </div>
-
-          {/* Coluna 2: Imagem/Placeholder */}
-          {hasImage ? (
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0"
-            />
-          ) : (
-            // Placeholder compacto 
-            <div
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200"
-            >
-              <CameraOff className="w-6 h-6 text-gray-400" />
-            </div>
-          )}
-
-          {/* Coluna 3: Detalhes do Item (Foco - Expansível) */}
-          <div className="flex-1 min-w-0">
-            {/* REMOVIDO: truncate. Permite que o nome quebre a linha no mobile */}
-            <h3 className="font-semibold text-gray-900 break-words line-clamp-2">
-              {item.name}
-            </h3>
-            {/* Descrição: Oculta no mobile para manter a compacidade */}
-            <p className="text-xs text-gray-500 truncate mt-0.5 hidden md:block">
-              {item.description}
-            </p>
-            <div className="text-base sm:text-lg font-semibold text-gray-900 mt-1">
-              R$ {item.price.toFixed(2)}
-            </div>
-          </div>
-
-          {/* Coluna 4: Ações no Desktop / Ícone de Ações no Mobile */}
-          <div className="hidden sm:flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            {/* Desktop: Switch e Botões Visíveis */}
-            <div className="flex items-center flex-shrink-0">
-              <Switch
-                checked={item.available}
-                onCheckedChange={() => toggleAvailability(item.id!)}
-                className="data-[state=checked]:bg-blue-600 w-9 h-5"
-              />
-            </div>
-
-            <div className="flex gap-1.5 sm:gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => openEditModal(item)}
-                className="h-7 w-7 sm:h-8 sm:w-8"
-              >
-                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => openDeleteModal(item.id!)}
-                className="h-7 w-7 sm:h-8 sm:w-8"
-              >
-                <Trash className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile: Botão para abrir ações */}
-          <div className="sm:hidden flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMobileActions}
-              className="h-8 w-8 text-gray-500"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-
-      {/* ÁREA DE AÇÕES SLIDEOUT (Mobile) */}
-      <div
-        ref={actionsRef}
-        className={cn(
-          "absolute right-0 top-0 h-full w-40 bg-gray-100/95 backdrop-blur-sm transition-transform duration-300 sm:hidden",
-          "flex items-center justify-end gap-2 p-3",
-          isActionsOpen ? "translate-x-0" : "translate-x-full"
-        )}
-        // Adicionando onMouseDown/onTouchStart para evitar que o clique dentro da área feche o menu imediatamente
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        {/* Switch de Disponibilidade */}
-        <Switch
-          checked={item.available}
-          onCheckedChange={() => toggleAvailability(item.id!)}
-          className="data-[state=checked]:bg-blue-600 w-9 h-5"
-        />
-
-        {/* Botão Editar */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => { openEditModal(item); setIsActionsOpen(false); }}
-          className="h-8 w-8"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-
-        {/* Botão Excluir */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => { openDeleteModal(item.id!); setIsActionsOpen(false); }}
-          className="h-8 w-8"
-        >
-          <Trash className="w-4 h-4 text-red-600" />
-        </Button>
-      </div>
-
-    </Card>
-  );
-};
-
-// O restante do componente MenuManagement (o código grande abaixo)
-// permanece inalterado, como na resposta anterior.
-
-// ---
-// ## Componente MenuManagement (O restante do código, inalterado)
-// ---
-
-export function MenuManagement({
-  menuItems: initialMenuItems,
-  categories: initialCategories,
+export default function MenuManagement({
+  menuItems,
+  categories,
 }: MenuManagementProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [editingItem, setEditingItem] = useState<MenuItemRequestDTO | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const [localCategories, setLocalCategories] = useState<Category[]>(() => 
+    categories.map(cat => ({ ...cat, id: cat.id ?? "" }))
+  );
+  
+  const [items, setItems] = useState<MenuItem[]>(() => 
+    menuItems.map(item => ({ ...item, id: item.id ?? "" }))
+  );
+
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [categoryToEditId, setCategoryToEditId] = useState("");
-
-  const [localMenuItems, setLocalMenuItems] =
-    useState<MenuItem[]>(initialMenuItems);
-  const [localCategories, setLocalCategories] = useState<Category[]>(
-    initialCategories || []
-  );
-  const { toast } = useToast();
-
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Estados de Exclusão
   const [isDeleteItemModalOpen, setIsDeleteItemModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
-  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
-    useState(false);
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
 
-  const filteredItems =
-    selectedCategory === "All"
-      ? localMenuItems
-      : localMenuItems.filter((item) => item.categoryId === selectedCategory);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const toggleAvailability = async (itemId: string) => {
-    const itemToUpdate = localMenuItems.find((item) => item.id === itemId);
-    if (!itemToUpdate) return;
+  const filteredItems = useMemo(() => {
+    if (selectedCategory === "All") return items;
+    return items.filter((item) => item.categoryId === selectedCategory);
+  }, [items, selectedCategory]);
 
-    const newAvailability = !itemToUpdate.available;
-
-    const { success, error } = await updateMenuItemAvailability(
-      itemId,
-      newAvailability
-    );
-    if (success) {
-      setLocalMenuItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === itemId ? { ...item, available: newAvailability } : item
-        )
-      );
-      toast({
-        title: `${itemToUpdate.name} ${newAvailability ? "agora disponível" : "agora indisponível"
-          }`,
-      });
-    } else {
-      toast({
-        title: `Erro ao atualizar disponibilidade`,
-        description: error,
-      });
-    }
-  };
-
-  const openDeleteModal = (itemId: string) => {
-    const item = localMenuItems.find((i) => i.id === itemId);
-    if (item) {
-      setItemToDelete(item);
-      setIsDeleteItemModalOpen(true);
-    }
-  };
-
-  const handleConfirmDeleteItem = async () => {
-    if (!itemToDelete || !itemToDelete.id) return;
-
-    setIsDeleteItemModalOpen(false);
-
-    const { success, error } = await serverDeleteMenuItem(itemToDelete.id);
-
-    if (success) {
-      setLocalMenuItems((prevItems) =>
-        prevItems.filter((item) => item.id !== itemToDelete.id)
-      );
-      toast({
-        title: "Item excluído com sucesso!",
-        description: `O item '${itemToDelete.name}' foi removido do menu.`,
-      });
-    } else {
-      toast({
-        title: "Erro ao excluir item",
-        description: error,
-        variant: "destructive",
-      });
-    }
-
-    setItemToDelete(null);
-  };
-
-  const openEditModal = (item: MenuItemRequestDTO) => {
-    setEditingItem({ ...item });
+  const addNewItem = () => {
+    setEditingItem({
+      name: "",
+      description: "",
+      price: 0,
+      categoryId: selectedCategory !== "All" ? selectedCategory : "",
+      imageUrl: "",
+      available: true,
+    });
     setIsItemModalOpen(true);
-    setImageFile(null);
+  };
+
+  const openEditModal = (item: any) => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
   };
 
   const closeItemModal = () => {
     setEditingItem(null);
     setIsItemModalOpen(false);
-    setImageFile(null);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setEditingItem((prev) =>
-        prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null
-      );
-    }
-  };
-
-  const saveItem = async () => {
-    if (!editingItem) return;
-
-    const errors = validateMenuItem(editingItem);
-    if (errors.length > 0) {
-      toast({ title: `Erro: ${errors.join("\n")}` });
-      return;
-    }
-
-    if (imageFile) {
-      editingItem.imageFile = imageFile;
-    } else {
-      editingItem.imageUrl;
-    }
-
-    if (editingItem.id) {
-      const { success, error, data } = await updateMenuItem(
-        editingItem.id,
-        editingItem
-      );
-      if (success && data) {  
-        const itemAtualizado = {
-          ...data,
-          categoryId: data.category_id ?? data.categoryId,
-        };
-        setLocalMenuItems((prevItems) =>
-        prevItems.map((item) => (item.id === itemAtualizado.id ? itemAtualizado : item)));
-      } else {
-        toast({ title: `Erro: ${error}` });
-      }
-    } else {
-      const { success, error, data } = await createMenuItem(editingItem);
-      if (success && data) {
-        const itemCriado = {
-          ...data,
-          categoryId: data.category_id ?? data.categoryId,
-        };
-        setLocalMenuItems((prevItems) => [...prevItems, itemCriado]);
-        toast({ title: "Item adicionado com sucesso" });
-      } else {
-        toast({ title: `Erro: ${error}` });
-      }
-    }
-
+  const saveItem = () => {
+    console.log("Salvando item:", editingItem);
     closeItemModal();
   };
 
-  const addNewItem = () => {
-    const newItem = {
-      id: null,
-      name: "",
-      description: "",
-      price: 0,
-      categoryId: "",
-      image: "/placeholder-img.svg",
-      imageFile: null,
-      available: true,
-    };
-    setEditingItem(newItem);
-    setIsItemModalOpen(true);
-    setImageFile(null);
+  const toggleAvailability = (id: string) => {
+    setItems(prev =>
+      prev.map((item) =>
+        item.id === id ? { ...item, available: !item.available } : item,
+      ),
+    );
+  };
+
+  const openDeleteModal = (item: any) => {
+    setItemToDelete(item);
+    setIsDeleteItemModalOpen(true);
+  };
+
+  const handleConfirmDeleteItem = () => {
+    setItems(prev => prev.filter((i) => i.id !== itemToDelete.id));
+    setIsDeleteItemModalOpen(false);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingItem) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingItem({ ...editingItem, imageUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const addNewCategory = () => {
@@ -537,507 +135,129 @@ export function MenuManagement({
     setIsCategoryModalOpen(true);
   };
 
-  const saveCategory = async () => {
-    const trimmedName = newCategoryName.trim();
-    if (!trimmedName) {
-      toast({ title: `Categoria precisa de nome!` });
-      return;
-    }
-
-    const { success, error, data } = await createCategory(trimmedName);
-
-    if (success && data) {
-      setLocalCategories((prev) => [...prev, data]);
-      toast({ title: `Categoria "${data.name}" adicionada!` });
-    } else {
-      toast({ title: `Erro ao adicionar a categoria "${trimmedName}"!` });
-    }
-
+  const saveCategory = () => {
+    const newCat = { id: Math.random().toString(), name: newCategoryName };
+    setLocalCategories([...localCategories, newCat]);
     setIsCategoryModalOpen(false);
   };
 
-  const openEditCategoryModal = (category: Category) => {
-    setCategoryToEditId(category.id!);
+  const openEditCategoryModal = (category: any) => {
     setNewCategoryName(category.name);
     setIsEditCategoryModalOpen(true);
   };
 
-  const saveEditedCategory = async () => {
-    const trimmedName = newCategoryName.trim();
-    if (!trimmedName) return;
-
-    const category = localCategories.find((cat) => cat.id === categoryToEditId);
-    if (!category) return;
-
-    if (trimmedName === category.name) {
-      setIsEditCategoryModalOpen(false);
-      return;
-    }
-
-    const { success, data, error } = await updateCategory(
-      category.id!,
-      trimmedName
-    );
-
-    if (success && data) {
-      setLocalCategories((prev) =>
-        prev.map((cat) => (cat.id === data.id ? data : cat))
-      );
-
-      toast({ title: `Categoria atualizada para "${data.name}"!` });
-    } else {
-      toast({ title: `Erro ao atualizar categoria: ${error}` });
-    }
-
+  const saveEditedCategory = () => {
     setIsEditCategoryModalOpen(false);
-    setCategoryToEditId("");
   };
 
-  const openDeleteCategoryModal = (category: Category) => {
-    setCategoryToDeleteId(category.id!);
+  const openDeleteCategoryModal = (category: any) => {
     setCategoryToDeleteName(category.name);
     setIsDeleteCategoryModalOpen(true);
   };
 
-  const handleConfirmDeleteCategory = async () => {
-    const { success, error } = await deleteCategory(categoryToDeleteId);
-
-    if (success) {
-      setLocalCategories((prev) =>
-        prev.filter((cat) => cat.id !== categoryToDeleteId)
-      );
-      // Opcionalmente, selecionar "All" se a categoria excluída era a ativa
-      if (selectedCategory === categoryToDeleteId) {
-        setSelectedCategory("All");
-      }
-
-      toast({
-        title: `Categoria "${categoryToDeleteName}" foi excluída!`,
-      });
-    } else {
-      toast({
-        title: `Erro: "${error}"`,
-      });
-    }
+  const handleConfirmDeleteCategory = () => {
     setIsDeleteCategoryModalOpen(false);
-    setCategoryToDeleteId("");
-    setCategoryToDeleteName("");
   };
 
-  const moveItem = useCallback((dragIndex: number, hoverIndex: number) => {
-    setLocalMenuItems((prevItems) => {
-      const newItems = [...prevItems];
-      const [movedItem] = newItems.splice(dragIndex, 1);
-      newItems.splice(hoverIndex, 0, movedItem as MenuItem);
-      return newItems;
-    });
-  }, []);
+  const moveItem = (dragIndex: number, hoverIndex: number) => {
+    console.log(`Movendo de ${dragIndex} para ${hoverIndex}`);
+  };
 
-  const handleDrop = useCallback(async () => {
-    const newPosition = localMenuItems.map((item) => item.id!);
-    const { success, error } = await updateMenuOrdernation(newPosition);
-
-    if (success) {
-      toast({
-        title: "Ordem atualizada",
-        description: "Os itens do menu foram reordenados com sucesso.",
-      });
-    } else {
-      toast({
-        title: "Erro ao atualizar a ordem.",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [localMenuItems, toast]);
+  const handleDrop = (index: number) => {
+    console.log("Item solto na posição:", index);
+  };
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-4 sm:p-6">
-        {/* Top Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div className="flex-1 min-w-0">
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-full sm:w-48">
+      <div className="p-4 sm:p-6 space-y-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Cardápio</h1>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full sm:w-48 bg-white">
                 <SelectValue placeholder="Todas as Categorias" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">Todas as Categorias</SelectItem>
-                {localCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id!}>
-                    {category.name}
+                {localCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
-          {/* Botões de Ação: APENAS ADICIONAR ITEM */}
-          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={addNewItem}
-              className="w-full sm:w-auto text-white font-semibold"
-              style={{ backgroundColor: "#FD7E14" }}
+              className="text-white font-semibold bg-[#FD7E14] hover:bg-[#e67212] shadow-sm"
             >
               <Plus className="w-4 h-4 mr-2" /> Adicionar Item
             </Button>
           </div>
         </div>
 
-        {/* Lista de Itens do Menu */}
-        <div className="space-y-4">
-          {filteredItems.length === 0 ? (
-            <Card className="p-12 text-center">
-              <div className="space-y-4">
-                <div className="text-6xl">👨‍🍳</div>
-                <div className="text-lg text-gray-600">Categoria Vazia.</div>
-                <Button
-                  onClick={addNewItem}
-                  className="text-white font-semibold"
-                  style={{ backgroundColor: "#FD7E14" }}
-                >
-                  + Adicionar o primeiro item
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            filteredItems.map((item, index) => (
-              <MenuItemCard
-                key={item.id!}
-                item={item}
-                index={index}
-                moveItem={moveItem}
-                toggleAvailability={toggleAvailability}
-                openEditModal={openEditModal}
-                openDeleteModal={openDeleteModal}
-                onDrop={handleDrop}
-              />
-            ))
-          )}
+        <hr className="border-gray-200" />
+
+        <CategoryManager
+          categories={localCategories}
+          onAddCategory={addNewCategory}
+          onEditCategory={openEditCategoryModal}
+          onDeleteCategory={openDeleteCategoryModal}
+        />
+
+        <div className="pt-4">
+          <h2 className="text-xl font-bold mb-4">Itens do Menu</h2>
+          <MenuContent
+            items={filteredItems}
+            onAddItem={addNewItem}
+            onMoveItem={moveItem}
+            onToggleAvailability={toggleAvailability}
+            onEditItem={openEditModal}
+            onDeleteItem={openDeleteModal}
+            onDrop={handleDrop}
+          />
         </div>
 
-        {/* Gerenciar Categorias */}
-        <div className="mt-8">
-          {/* Nova div para alinhamento do título e botão */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Gerenciar Categorias</h2>
+        <ItemDialog
+          isOpen={isItemModalOpen}
+          onOpenChange={setIsItemModalOpen}
+          editingItem={editingItem}
+          setEditingItem={setEditingItem}
+          categories={localCategories}
+          onSave={saveItem}
+          onClose={closeItemModal}
+          handleImageChange={handleImageChange}
+          fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
+        />
 
-            {/* Botão Adicionar Categoria movido e ajustado para ser compacto */}
-            <Button
-              onClick={addNewCategory}
-              className="text-white font-semibold px-3 h-8 text-sm"
-              style={{ backgroundColor: "#FD7E14" }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Adicionar Categoria
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {localCategories.map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center p-2 bg-gray-100 rounded-md"
-              >
-                <span className="text-sm font-medium mr-2">
-                  {category.name}
-                </span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => openEditCategoryModal(category)}
-                  className="h-8 w-8"
-                >
-                  <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => openDeleteCategoryModal(category)}
-                  className="h-8 w-8"
-                >
-                  <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <CategoryDialog
+          isOpen={isCategoryModalOpen || isEditCategoryModalOpen}
+          onOpenChange={isEditCategoryModalOpen ? setIsEditCategoryModalOpen : setIsCategoryModalOpen}
+          title={isEditCategoryModalOpen ? "Editar Categoria" : "Nova Categoria"}
+          description="Organize seus produtos por grupos para facilitar a navegação."
+          value={newCategoryName}
+          onChange={setNewCategoryName}
+          onSave={isEditCategoryModalOpen ? saveEditedCategory : saveCategory}
+        />
 
-        {/* --- Modais --- */}
-
-        {/* Modal de Item (Adicionar/Editar) */}
-        {/* <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-          <DialogContent className="max-w-md sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem?.name ? `Edite: ${editingItem.name}` : "Novo Item"}
-              </DialogTitle>
-            </DialogHeader>
-            {editingItem && (
-              <div className="space-y-6 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Item</Label>
-                  <Input
-                    id="name"
-                    value={editingItem.name}
-                    onChange={(e) =>
-                      setEditingItem((prev) =>
-                        prev ? { ...prev, name: e.target.value } : null
-                      )
-                    }
-                    placeholder="Escreva o nome do Item"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={editingItem.description}
-                    onChange={(e) =>
-                      setEditingItem((prev) =>
-                        prev ? { ...prev, description: e.target.value } : null
-                      )
-                    }
-                    placeholder="Escreva a descrição do item "
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Preço (R$)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="1"
-                      value={editingItem.price === 0 ? "" : editingItem.price}
-                      onChange={(e) =>
-                        setEditingItem((prev) =>
-                          prev
-                            ? {
-                              ...prev,
-                              price: Number.parseFloat(e.target.value) || 0,
-                            }
-                            : null
-                        )
-                      }
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select
-                      value={editingItem.categoryId}
-                      onValueChange={(value) =>
-                        setEditingItem((prev) =>
-                          prev ? { ...prev, categoryId: value } : null
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {localCategories.map((category) => (
-                          <SelectItem key={category.id!} value={category.id!}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Imagem</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    {editingItem.imageUrl &&
-                      editingItem.imageUrl !== "/placeholder-img.svg" ? (
-                      <img
-                        src={editingItem.imageUrl}
-                        alt="Pré-visualização da imagem"
-                        className="w-32 h-32 object-cover rounded-lg mx-auto mb-2"
-                      />
-                    ) : (
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    )}
-                    <div className="text-sm text-gray-600">
-                      Arraste e solte uma imagem aqui ou clique para selecionar
-                    </div>
-
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 bg-transparent"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Escolha arquivo
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={closeItemModal}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={saveItem}
-                className="text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
-
-        {/* Modal de Adicionar Categoria */}
-        {/* <Dialog
-          open={isCategoryModalOpen}
-          onOpenChange={setIsCategoryModalOpen}
-        >
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Adicionar Nova Categoria</DialogTitle>
-              <DialogDescription>
-                Adicione uma nova categoria para organizar seu menu.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <Label htmlFor="newCategory">Nome da Categoria</Label>
-              <Input
-                id="newCategory"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Ex: Pizzas, Bebidas, etc."
-              />
-            </div>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsCategoryModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={saveCategory}
-                className="text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
-
-        {/* Modal de Editar Categoria */}
-        {/* <Dialog
-          open={isEditCategoryModalOpen}
-          onOpenChange={setIsEditCategoryModalOpen}
-        >
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Editar Categoria</DialogTitle>
-              <DialogDescription>
-                Altere o nome da categoria selecionada.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <Label htmlFor="editCategoryName">Novo Nome da Categoria</Label>
-              <Input
-                id="editCategoryName"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Escreva o novo nome"
-              />
-            </div>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsEditCategoryModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={saveEditedCategory}
-                className="text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
-
-        {/* Dialog de Confirmação para Exclusão de ITEM */}
-        {/* <Dialog
-          open={isDeleteItemModalOpen}
+        <ConfirmDeleteModal
+          isOpen={isDeleteItemModalOpen}
           onOpenChange={setIsDeleteItemModalOpen}
-        >
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                Tem certeza que deseja excluir o item "{itemToDelete?.name}"?
-              </DialogTitle>
-              <DialogDescription>
-                Esta ação é permanente e removerá o item do seu menu.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteItemModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button variant="destructive" onClick={handleConfirmDeleteItem}>
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
+          onConfirm={handleConfirmDeleteItem}
+          title={`Excluir "${itemToDelete?.name}"?`}
+          description="Esta ação não pode ser desfeita."
+        />
 
-        {/* Dialog de Confirmação para Exclusão de CATEGORIA */}
-        {/* <Dialog
-          open={isDeleteCategoryModalOpen}
+        <ConfirmDeleteModal
+          isOpen={isDeleteCategoryModalOpen}
           onOpenChange={setIsDeleteCategoryModalOpen}
-        >
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                Tem certeza que deseja excluir a categoria "
-                {categoryToDeleteName}"?
-              </DialogTitle>
-              <DialogDescription>
-                Esta ação é permanente e removerá a categoria e todos os itens
-                de menu associados a ela.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteCategoryModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleConfirmDeleteCategory}
-              >
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
+          onConfirm={handleConfirmDeleteCategory}
+          title={`Excluir Categoria "${categoryToDeleteName}"?`}
+          description="Isso afetará os itens vinculados."
+        />
       </div>
     </DndProvider>
   );

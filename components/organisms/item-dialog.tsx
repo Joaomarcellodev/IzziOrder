@@ -22,7 +22,7 @@ interface ItemDialogProps {
   onSave: () => void;
   onClose: () => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function ItemDialog({
