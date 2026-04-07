@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
 import { Label } from "@/components/atoms/label"
-import { Mail, Lock, Eye, EyeOff, User, Loader2 } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User, Loader2, Check, Circle } from "lucide-react"
 import Link from "next/link"
 import { signup } from "../actions/auth-actions"
 import { useToast } from "@/hooks/use-toast"
@@ -16,10 +16,30 @@ export default function SignUpPage() {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [showPassword, setShowPassword] = useState(false)
+  const [passwordValue, setPasswordValue] = useState("")
 
-  async function handleSubmit(formData: FormData) {
+  const passwordRequirements = useMemo(() => ({
+    hasMinLength: passwordValue.length >= 8,
+    hasUppercase: /[A-Z]/.test(passwordValue),
+  }), [passwordValue])
+
+  const isPasswordValid = passwordRequirements.hasMinLength && passwordRequirements.hasUppercase
+
+  async function onFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    
+    const formData = new FormData(event.currentTarget)
     const password = formData.get("password") as string
     const confirmation = formData.get("password_confirmation") as string
+
+    if (!isPasswordValid) {
+      toast({
+        variant: "destructive",
+        title: "Senha fraca",
+        description: "A senha deve conter 8 caracteres e uma letra maiúscula.",
+      })
+      return
+    }
 
     if (password !== confirmation) {
       toast({
@@ -32,11 +52,16 @@ export default function SignUpPage() {
 
     startTransition(async () => {
       try {
-        await signup(formData)
-      } catch (error: any) {
-        if (error?.digest?.includes("NEXT_REDIRECT")) {
-          throw error
+        const result = await signup(formData)
+        if (result?.error) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao criar conta",
+            description: result.error,
+          })
         }
+      } catch (error: any) {
+        if (error.message === 'NEXT_REDIRECT') return
         toast({
           variant: "destructive",
           title: "Erro ao criar conta",
@@ -59,7 +84,7 @@ export default function SignUpPage() {
         </CardHeader>
         
         <CardContent className="px-8 pb-8">
-          <form action={handleSubmit} className="space-y-4">
+          <form onSubmit={onFormSubmit} className="space-y-4">
             
             <div className="space-y-2">
               <Label htmlFor="user_name" className="text-sm font-semibold text-gray-700">Nome de Usuário</Label>
@@ -75,7 +100,6 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* E-mail */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700">E-mail</Label>
               <div className="relative group">
@@ -99,7 +123,9 @@ export default function SignUpPage() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Crie uma senha forte"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
                   className="pl-10 pr-10 h-11 border-gray-200 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   required
                 />
@@ -110,6 +136,18 @@ export default function SignUpPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+
+              {/* Indicador de Requisitos */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <RequirementItem 
+                  label="8+ caracteres" 
+                  met={passwordRequirements.hasMinLength} 
+                />
+                <RequirementItem 
+                  label="Uma letra maiúscula" 
+                  met={passwordRequirements.hasUppercase} 
+                />
               </div>
             </div>
 
@@ -129,9 +167,9 @@ export default function SignUpPage() {
             </div>
 
             <Button 
-              disabled={isPending}
+              disabled={isPending || !isPasswordValid}
               type="submit" 
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] mt-2"
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-500/30 disabled:opacity-50 transition-all active:scale-[0.98] mt-2"
             >
               {isPending ? (
                 <span className="flex items-center gap-2">
@@ -150,5 +188,14 @@ export default function SignUpPage() {
         </CardContent>
       </Card>
     </AuthLayout>
+  )
+}
+
+function RequirementItem({ label, met }: { label: string; met: boolean }) {
+  return (
+    <div className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${met ? 'text-green-600' : 'text-gray-400'}`}>
+      {met ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3 fill-gray-100" />}
+      {label}
+    </div>
   )
 }

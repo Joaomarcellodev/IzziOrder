@@ -35,25 +35,21 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // Rotas que não precisam de autenticação
   const isPublicRoute = 
     pathname.startsWith('/login') || 
     pathname.startsWith('/sign-up') || 
     pathname.startsWith('/reset-password') || 
     pathname.startsWith('/error')
 
-  // Se for uma rota pública, não chamamos getUser() para evitar o erro de "Session Missing" no log
   if (isPublicRoute) {
     return supabaseResponse
   }
 
-  // Se NÃO for rota pública, aí sim validamos o usuário
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser()
 
-  // Redireciona se não houver usuário logado em rotas protegidas
   if (!user || error) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
