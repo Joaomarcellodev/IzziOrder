@@ -40,7 +40,6 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
     confirmPassword: "",
   })
 
-  // Verifica se houve alteração nos dados do perfil
   const hasChanges = 
     profileData.name !== user.name || 
     profileData.email !== user.email;
@@ -61,18 +60,40 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
       setLoading(false)
 
       if (result.success) {
+        if (result.emailChanged) {
+          setProfileData(prev => ({ ...prev, email: user.email }));
+
+          toast({
+            title: "Confirmação enviada!",
+            description: "Um e-mail de confirmação foi enviado para validar o novo endereço.",
+            className: "bg-blue-600 text-white border-blue-700",
+          })
+        } else {
+          toast({
+            title: "Sucesso!",
+            description: "Perfil atualizado com sucesso!",
+            className: "bg-green-600 text-white border-green-700",
+          })
+        }
+      } else {
         toast({
-          title: "Sucesso!",
-          description: "Perfil atualizado com sucesso!",
-          className: "bg-green-600 text-white border-green-700",
+          variant: "destructive",
+          title: "Erro ao atualizar perfil",
+          description: result.error || "Ocorreu um erro inesperado.",
+          className: "text-white",
         })
       }
     } catch (error: any) {
       setLoading(false)
+      const message = error.message || "";
+      const cleanMessage = message.includes("insecure") 
+        ? "Erro de autenticação. Tente fazer login novamente." 
+        : message;
+
       toast({
         variant: "destructive",
         title: "Erro ao atualizar perfil",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: cleanMessage || "Ocorreu um erro inesperado.",
         className: "text-white",
       })
     }
@@ -103,13 +124,25 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
           newPassword: "",
           confirmPassword: "",
         })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar senha",
+          description: result.error || "Ocorreu um erro inesperado.",
+          className: "text-white",
+        })
       }
     } catch (error: any) {
       setLoading(false)
+      const message = error.message || "";
+      const cleanMessage = message.includes("insecure") 
+        ? "Erro de autenticação. Tente novamente." 
+        : message;
+
       toast({
         variant: "destructive",
         title: "Erro ao atualizar senha",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: cleanMessage || "Ocorreu um erro inesperado.",
         className: "text-white", 
       })
     }

@@ -29,64 +29,73 @@ export async function getUserProfile(supabase: any, user: any) {
 }
 
 export async function updatePassword(formData: FormData, supabaseClient?: any) {
-    const supabase = supabaseClient ?? await createClient()
-    const currentPassword = formData.get("currentPassword") as string
-    const newPassword = formData.get("newPassword") as string
-    const confirmPassword = formData.get("confirmPassword") as string
+    try {
+        const supabase = supabaseClient ?? await createClient()
+        const currentPassword = formData.get("currentPassword") as string
+        const newPassword = formData.get("newPassword") as string
+        const confirmPassword = formData.get("confirmPassword") as string
 
-    validatePasswordChange(currentPassword, newPassword, confirmPassword)
+        validatePasswordChange(currentPassword, newPassword, confirmPassword)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user || !user.email) throw new Error("Usuário não autenticado")
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user || !user.email) throw new Error("Usuário não autenticado")
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword
-    })
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password: currentPassword
+        })
 
-    if (signInError) {
-        throw new Error("Senha atual incorreta")
-    }
-
-    const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-    })
-
-    if (updateError) {
-        let errorMessage = updateError.message
-        if (errorMessage.includes("new password should be different from the old one")) {
-            errorMessage = "A nova senha deve ser diferente da senha atual"
+        if (signInError) {
+            throw new Error("Senha atual incorreta")
         }
-        throw new Error(errorMessage)
-    }
 
-    return { success: true }
+        const { error: updateError } = await supabase.auth.updateUser({
+            password: newPassword
+        })
+
+        if (updateError) {
+            let errorMessage = updateError.message
+            if (errorMessage.includes("new password should be different from the old one")) {
+                errorMessage = "A nova senha deve ser diferente da senha atual"
+            }
+            throw new Error(errorMessage)
+        }
+
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
 }
 
 export async function updateProfile(formData: FormData, supabaseClient?: any) {
-    const supabase = supabaseClient ?? await createClient()
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
+    try {
+        const supabase = supabaseClient ?? await createClient()
+        const name = formData.get("name") as string
+        const email = formData.get("email") as string
+        let emailChanged = false
 
-    validateProfileUpdate(name, email)
+        validateProfileUpdate(name, email)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Usuário não autenticado")
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Usuário não autenticado")
 
-    if (email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser({ email })
-        if (emailError) throw new Error(emailError.message)
+        if (email !== user.email) {
+            const { error: emailError } = await supabase.auth.updateUser({ email })
+            if (emailError) throw new Error(emailError.message)
+            emailChanged = true
+        }
+
+        const { error: profileError } = await supabase.from("profiles").update({
+            user_name: name,
+        }).eq("id", user.id)
+
+        if (profileError) {
+            throw new Error(profileError.message)
+        }
+
+        revalidatePath("/auth/settings")
+        return { success: true, emailChanged }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
-
-    const { error: profileError } = await supabase.from("profiles").update({
-        user_name: name,
-    }).eq("id", user.id)
-
-    if (profileError) {
-        throw new Error(profileError.message)
-    }
-
-    revalidatePath("/auth/settings")
-    return { success: true }
-
 }
