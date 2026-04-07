@@ -33,7 +33,6 @@ export default function UpdatePasswordPage() {
 
     if (!isPasswordValid) {
       toast({
-        variant: "destructive",
         title: "Senha fraca",
         description: "Siga os requisitos de segurança antes de prosseguir.",
       })

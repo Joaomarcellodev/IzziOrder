@@ -35,14 +35,12 @@ export default function ForgotPasswordPage() {
           })
         } else {
           toast({
-            variant: "destructive",
             title: "Erro ao solicitar recuperação",
             description: result?.error || "Verifique se o e-mail está correto.",
           })
         }
       } catch (error: any) {
         toast({
-          variant: "destructive",
           title: "Erro no servidor",
           description: "Não foi possível conectar ao serviço de autenticação.",
         })

@@ -23,7 +23,6 @@ export default function LoginPage() {
 
       if (!success) {
         toast({
-          variant: "destructive",
           title: "Erro na autenticação",
           description: error || "Verifique suas credenciais.",
         });
