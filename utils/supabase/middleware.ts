@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
 
@@ -33,21 +33,28 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
+  const pathname = request.nextUrl.pathname
 
+  // Rotas que não precisam de autenticação
+  const isPublicRoute = 
+    pathname.startsWith('/login') || 
+    pathname.startsWith('/sign-up') || 
+    pathname.startsWith('/reset-password') || 
+    pathname.startsWith('/error')
+
+  // Se for uma rota pública, não chamamos getUser() para evitar o erro de "Session Missing" no log
+  if (isPublicRoute) {
+    return supabaseResponse
+  }
+
+  // Se NÃO for rota pública, aí sim validamos o usuário
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser()
 
-  if (error) {
-    console.error('Erro ao obter usuário no middleware:', error)
-  }
-
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/error')
-  ) {
+  // Redireciona se não houver usuário logado em rotas protegidas
+  if (!user || error) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
