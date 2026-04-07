@@ -77,7 +77,6 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
         }
       } else {
         toast({
-          variant: "destructive",
           title: "Erro ao atualizar perfil",
           description: result.error || "Ocorreu um erro inesperado.",
           className: "text-white",
@@ -126,7 +125,6 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
         })
       } else {
         toast({
-          variant: "destructive",
           title: "Erro ao atualizar senha",
           description: result.error || "Ocorreu um erro inesperado.",
           className: "text-white",
@@ -140,7 +138,6 @@ export function SettingsManagement({ user }: SettingsManagementProps) {
         : message;
 
       toast({
-        variant: "destructive",
         title: "Erro ao atualizar senha",
         description: cleanMessage || "Ocorreu um erro inesperado.",
         className: "text-white", 

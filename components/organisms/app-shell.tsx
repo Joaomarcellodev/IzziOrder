@@ -43,7 +43,6 @@ export function AppShell({ children, currentPage, breadcrumb, user }: AppShellPr
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100">
-          {/* Logo Section */}
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
                 <img src="/android-chrome-512x512.png" className="w-full h-full object-cover" alt="Logo" />
