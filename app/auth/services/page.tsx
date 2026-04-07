@@ -7,11 +7,11 @@ export default async function SettingsPage() {
 
   return (
     <AppShell
-      currentPage="Configurações de Usuários"
+      currentPage="Configurações de Perfil"
       breadcrumb="Painel > Configurações"
       user={user.toJSON()}
     >
-      <SettingsManagement />
+      <SettingsManagement user={user.toJSON()} />
     </AppShell>
   );
 }
