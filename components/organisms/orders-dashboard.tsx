@@ -133,7 +133,6 @@ export default function OrdersDashboard({
     }
   };
 
-  // 2. Nova função para finalizar o pedido
   const handleFinishOrder = async (orderId: string) => {
     const finishedOrder = orders.find((o) => o.id === orderId);
     if (!finishedOrder) return;
@@ -215,7 +214,6 @@ export default function OrdersDashboard({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ABERTOS */}
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="text-lg font-medium mb-3">Abertos</h2>
 
@@ -233,7 +231,6 @@ export default function OrdersDashboard({
                       <span className="font-semibold">{o.code}</span>
                       {renderTypeAndDetails(o)}
 
-                      {/* Itens do Pedido ABERTO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -269,7 +266,6 @@ export default function OrdersDashboard({
                     </div>
 
                     <div className="flex gap-2 mt-3 self-end">
-                      {/* 3. Botão Finalizar Pedido */}
                       <Button
                         variant="default"
                         size="sm"
@@ -304,7 +300,6 @@ export default function OrdersDashboard({
             })}
         </div>
 
-        {/* FINALIZADOS */}
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="text-lg font-medium mb-3">Finalizados</h2>
 
@@ -322,7 +317,6 @@ export default function OrdersDashboard({
                       <span className="font-semibold">{o.code}</span>
                       {renderTypeAndDetails(o)}
 
-                      {/* Itens do Pedido FINALIZADO - Detalhado */}
                       <div className="text-xs text-gray-600 mt-2 space-y-1">
                         {items.map((i) => {
                           const subtotal = i.price * i.quantity;
@@ -372,8 +366,7 @@ export default function OrdersDashboard({
         </div>
       </div>
 
-      {/* --- Modais --- */}
-      {/* Certifique-se de que os Modais estão prontos para receber e salvar 'notes' */}
+      
 
       <NewOrderModal
         isOpen={isNewOrderModalOpen}
