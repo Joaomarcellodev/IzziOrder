@@ -7,8 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { KPIStats } from "./kpi-stats";
 import { RevenueChart } from "./revenue-chart";
 import { TopItemsTable } from "./top-items-table";
-import { kpiData, revenueData, topItemsData } from "@/app/auth/reports/constants";
+import { DistributionChart } from "./distribution-chart"; 
 
+import { 
+  kpiData, 
+  revenueData, 
+  topItemsData, 
+  orderDistributionData 
+} from "@/app/auth/reports/constants";
 
 export function ReportsAnalytics() {
   const [timeRange, setTimeRange] = useState("today");
@@ -17,7 +23,7 @@ export function ReportsAnalytics() {
     <div className="p-4 sm:p-8 space-y-8 bg-gray-50/30 min-h-screen">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Analytics</h2>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Análise de Vendas</h2>
           <p className="text-gray-500 font-medium">Relatórios detalhados do seu restaurante</p>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -39,7 +45,8 @@ export function ReportsAnalytics() {
           <RevenueChart data={revenueData} />
         </div>
 
-        <div className="space-y-8">
+        <div className="lg:col-span-1">
+          <DistributionChart data={orderDistributionData} />
         </div>
       </div>
 

@@ -26,3 +26,8 @@ export const kpiData = [
   { title: "Tempo médio", value: "18 min", trend: -3.2, icon: Clock, borderColor: "#DC3545" },
 ];
 
+export const orderDistributionData = [
+  { name: "Local", value: 45, color: "#007BFF" }, 
+//   { name: "Delivery", value: 35, color: "#FD7E14" }, 
+  { name: "Retirada", value: 20, color: "#28A745" }, 
+];
