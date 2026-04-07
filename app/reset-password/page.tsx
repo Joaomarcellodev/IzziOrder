@@ -1,25 +1,53 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/molecules/card"
 import { Label } from "@/components/atoms/label"
-import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { Mail, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { AuthLayout } from "@/components/templates/auth-layout"
 import { AuthHeader } from "@/components/molecules/auth-header"
+import { resetPassword } from "../actions/auth-actions" 
+import { useToast } from "@/hooks/use-toast"
 
 export default function ForgotPasswordPage() {
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
   const [email, setEmail] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    // TODO: Implementar lógica de reset de senha via API
-    console.log("Password reset requested for:", email)
-    setIsSubmitted(true)
+    
+    const formData = new FormData(e.currentTarget)
+
+    startTransition(async () => {
+      try {
+        const result = await resetPassword(formData)
+
+        if (result?.success) {
+          setIsSubmitted(true)
+          toast({
+            title: "E-mail enviado!",
+            description: "Verifique sua caixa de entrada para redefinir a senha.",
+          })
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Erro ao solicitar recuperação",
+            description: result?.error || "Verifique se o e-mail está correto.",
+          })
+        }
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Erro no servidor",
+          description: "Não foi possível conectar ao serviço de autenticação.",
+        })
+      }
+    })
   }
 
   return (
@@ -49,21 +77,30 @@ export default function ForgotPasswordPage() {
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                   <Input
                     id="email"
+                    name="email" 
                     type="email"
                     placeholder="exemplo@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-11 border-gray-200 focus:ring-2 focus:ring-blue-500/20 transition-all bg-background/50"
                     required
+                    disabled={isPending}
                   />
                 </div>
               </div>
 
               <Button 
                 type="submit" 
+                disabled={isPending}
                 className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98]"
               >
-                Enviar link de recuperação
+                {isPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+                  </span>
+                ) : (
+                  "Enviar link de recuperação"
+                )}
               </Button>
             </form>
           ) : (
@@ -72,7 +109,7 @@ export default function ForgotPasswordPage() {
                 <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400 mx-auto mb-3" />
                 <p className="text-sm text-green-800 dark:text-green-200">
                   Um e-mail foi enviado para <span className="font-bold">{email}</span>. 
-                  Verifique sua caixa de entrada.
+                  Verifique sua caixa de entrada e siga as instruções.
                 </p>
               </div>
 

@@ -20,11 +20,9 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-
           supabaseResponse = NextResponse.next({
             request,
           })
-
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -33,26 +31,30 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const pathname = request.nextUrl.pathname
 
   const isPublicRoute = 
+    pathname === '/' ||
     pathname.startsWith('/login') || 
     pathname.startsWith('/sign-up') || 
     pathname.startsWith('/reset-password') || 
+    pathname.startsWith('/auth/update-password') || 
+    pathname.startsWith('/auth/callback') ||       
     pathname.startsWith('/error')
 
-  if (isPublicRoute) {
-    return supabaseResponse
-  }
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (!user || error) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (user && (pathname === '/login' || pathname === '/sign-up')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/orders' // Ou sua rota protegida inicial
     return NextResponse.redirect(url)
   }
 
