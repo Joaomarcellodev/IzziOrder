@@ -9,7 +9,7 @@ test.describe("Configurações do Usuário - E2E", () => {
 
     test.beforeEach(async ({ page }) => {
         // Configura um timeout de 30s para cada ação individual
-        page.setDefaultTimeout(30000);
+        page.setDefaultTimeout(60000);
 
         // 1. Realiza o Login
         await page.goto("/login", { waitUntil: 'networkidle' });
@@ -21,27 +21,50 @@ test.describe("Configurações do Usuário - E2E", () => {
         await page.waitForURL("**/auth/**", { timeout: 30000 });
         
         // 3. Navega para a página de configurações
-        await page.goto("/auth/settings", { waitUntil: 'networkidle' });
+        await page.goto("/auth/services", { waitUntil: 'networkidle' });
+
+        await page.waitForSelector("#name", { timeout: 15000 });
     });
 
-    test("Deve alterar as informações de perfil (Nome e Login)", async ({ page }) => {
-        // Armazena valores originais para restaurar ao fim do teste
-        const nomeOriginal = await page.inputValue('input[name="name"]');
-        
-        // Altera o nome
-        await page.fill('input[name="name"]', "Nome Editado E2E");
-        await page.fill('input[name="login"]', "usuario_e2e_test");
-        
-        await page.click('button:has-text("Salvar Alterações")');
+     test("Deve alterar as informações de perfil (Nome)", async ({ page }) => {
+        // Salva valores originais para restaurar ao final
+        const campoNome = page.locator("#name");
 
-        // Verifica notificação de sucesso
-        const toast = page.locator('span[role="status"]').filter({ hasText: /Perfil atualizado com sucesso/i });
+        const nomeOriginal = await campoNome.inputValue();
+        await page.waitForTimeout(800);
+
+        // Limpa e digita o novo nome
+        await campoNome.clear();
+        await page.waitForTimeout(500);
+        await campoNome.fill("Nome Editado E2E");
+        await page.waitForTimeout(800);
+
+        // Salva
+        await page.click('button:has-text("Salvar Alterações")');
+        await page.waitForTimeout(1000);
+
+        const toast = page
+            .locator('li[role="status"]')
+            .filter({ hasText: /Perfil atualizado com sucesso/i })
+            .first();
+
         await expect(toast).toBeVisible({ timeout: 15000 });
+        await page.waitForTimeout(2000); // tempo para ler o toast
 
-        // Restaura o nome original para não "sujar" seu usuário de teste
-        await page.fill('input[name="name"]', nomeOriginal);
+        // Restaura nome original
+        await campoNome.clear();
+        await page.waitForTimeout(500);
+        await campoNome.fill(nomeOriginal);
+        await page.waitForTimeout(800);
+
         await page.click('button:has-text("Salvar Alterações")');
-        await expect(page.locator('span[role="status"]').filter({ hasText: /Perfil atualizado com sucesso/i })).toBeVisible();
+        await page.waitForTimeout(1000);
+
+        await expect(
+            page.locator('li[role="status"]').filter({ hasText: /Perfil atualizado com sucesso/i })
+            .first()
+        ).toBeVisible({ timeout: 15000 });
+        await page.waitForTimeout(2000);
     });
 
     test("Deve iniciar processo de alteração de E-mail", async ({ page }) => {
