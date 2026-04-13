@@ -2,34 +2,26 @@
 
 import React, { useState } from "react";
 import { Button } from "../atoms/button";
-import { createOrder, deleteOrder, OrderRequestDTO, updateOrder, updateToClosedOrder, updateToOpenOrder } from "@/app/actions/order-actions";
+import { Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Order } from "@/lib/entities/order";
+
+import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
-import { MenuItem } from "@/app/actions/menu-item-actions";
-import { Category } from "@/app/actions/category-actions";
-import { Pencil, Trash2 } from "lucide-react";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { ViewOrderModal } from "../molecules/ViewOrderModal";
-import { useToast } from "@/hooks/use-toast";
-import { Order, LocalOrder, PickupOrder } from "@/lib/entities/order";
 
-type OrderDTO = {
-  id?: string;
-  code: string;
-  total: number;
-  status: "OPEN" | "CLOSED";
-  type: "LOCAL" | "PICKUP" | "DELIVERY";
-  detail?: string,
-  tableNumber?: string;
-  customerName?: string;
-  orderLines: {
-    id?: string;
-    menuItemId: string;
-    name: string;
-    price: number;
-    quantity: number;
-    observation?: string;
-  }[];
-};
+import {
+  createOrder,
+  deleteOrder,
+  updateOrder,
+  updateToClosedOrder,
+  updateToOpenOrder,
+  OrderRequestDTO,
+} from "@/app/actions/order-actions";
+import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Category } from "@/app/actions/category-actions";
+import { OrderDTO } from "@/app/auth/orders/types";
 
 interface OrdersDashboardProps {
   menuItems: MenuItem[];
@@ -43,46 +35,20 @@ export default function OrdersDashboard({
   orders: initialOrders,
 }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
-
-  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
-  const openNewOrderModal = () => setIsNewOrderModalOpen(true);
-  const closeNewOrderModal = () => setIsNewOrderModalOpen(false);
-
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
   const { toast } = useToast();
 
-  const handleCloseViewModal = () => {
-    setIsViewModalOpen(false);
-    setSelectedOrder(null);
-  };
-
-  const handleEditOrder = (order: OrderDTO) => {
-    setSelectedOrder(Order.fromDTO(order));
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedOrder(null);
-  };
-
-  const handleCreateOrder = async (
-    newOrder: OrderRequestDTO
-  ) => {
+  const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
     try {
       const data = await createOrder(newOrder);
       setOrders((prev) => [...prev, data]);
-
       toast({
         title: `Novo Pedido Adicionado`,
         description: `O pedido foi criado com sucesso.`,
       });
-      closeNewOrderModal();
-
+      setIsNewOrderModalOpen(false);
     } catch (error: any) {
       toast({
         title: "Erro ao criar o novo pedido:",
@@ -94,317 +60,128 @@ export default function OrdersDashboard({
   const handleUpdateOrder = async (updatedOrderData: OrderRequestDTO) => {
     try {
       const data = await updateOrder(updatedOrderData);
-
-      setOrders((prev) =>
-        prev.map((o) => (o.id === data.id ? data : o))
-      );
-
-      const orderEntity = Order.fromDTO(data)
-
+      setOrders((prev) => prev.map((o) => (o.id === data.id ? data : o)));
+      const orderEntity = Order.fromDTO(data);
       toast({
         title: `Pedido ${orderEntity.code} Atualizado`,
         description: `O pedido foi salvo com sucesso.`,
       });
+      setIsEditModalOpen(false);
+      setSelectedOrder(null);
     } catch (error: any) {
-      toast({
-        title: "Erro ao editar o  pedido:",
-        description: error,
-      });
+      toast({ title: "Erro ao editar o pedido:", description: error.message });
     }
+  };
 
-    handleCloseEditModal();
+  const handleFinishOrder = async (orderId: string) => {
+    try {
+      await updateToClosedOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "CLOSED" } : o)),
+      );
+      toast({
+        title: "Pedido Finalizado",
+        description: "Movido para a lista de finalizados.",
+      });
+    } catch (error: any) {
+      toast({ title: "Erro ao finalizar pedido", description: error.message });
+    }
   };
 
   const handleReopenOrder = async (orderId: string) => {
     try {
       await updateToOpenOrder(orderId);
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } as OrderDTO : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } : o)),
       );
       toast({
         title: "Pedido Reaberto",
-        description: "O pedido foi movido para a lista de abertos.",
+        description: "Movido para a lista de abertos.",
       });
     } catch (error: any) {
-      toast({
-        title: "Erro ao reabrir pedido",
-        description: error,
-      });
-    }
-  };
-
-  // 2. Nova função para finalizar o pedido
-  const handleFinishOrder = async (orderId: string) => {
-    const finishedOrder = orders.find((o) => o.id === orderId);
-    if (!finishedOrder) return;
-
-    try {
-      const order = await updateToClosedOrder(orderId);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "CLOSED" } as OrderDTO : o))
-      );
-      toast({
-        title: `Pedido ${finishedOrder.code} Finalizado`,
-        description: "O pedido foi movido para a lista de finalizados.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao finalizar pedido",
-        description: error,
-      });
+      toast({ title: "Erro ao reabrir pedido", description: error.message });
     }
   };
 
   const handleDeleteOrder = async (orderId: string) => {
     const deletedOrder = orders.find((o) => o.id === orderId);
-
     try {
       await deleteOrder(orderId);
-    } catch (error: any) {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
       toast({
-        title: "Erro ao remover pedido",
-        description: error,
+        title: "Pedido removido",
+        description: `O pedido ${deletedOrder?.code} foi excluído.`,
       });
-      return;
+    } catch (error: any) {
+      toast({ title: "Erro ao remover pedido", description: error.message });
     }
-
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    toast({
-      title: "Pedido removido",
-      description: `O pedido ${deletedOrder?.code} foi excluído com sucesso.`,
-    });
   };
 
-  const renderTypeAndDetails = (o: OrderDTO): React.ReactNode => {
-    if (o.type === "LOCAL") {
-      const local = o as LocalOrder;
-      return (
-        <>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Tipo: <span className="font-medium">LOCAL</span>
-          </p>
-          <p className="text-sm text-gray-700 font-medium">
-            Mesa: {local.detail}
-          </p>
-        </>);
-    } else if (o.type === "PICKUP") {
-      const pickup = o as PickupOrder;
-      return (
-        <>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Tipo: <span className="font-medium">RETIRADA</span>
-          </p>
-          <p className="text-sm text-gray-700 font-medium">
-            Cliente: {pickup.detail}
-          </p>
-        </>);
-    }
-    return null;
-  }
+  const handleEditClick = (order: OrderDTO) => {
+    setSelectedOrder(Order.fromDTO(order));
+    setIsEditModalOpen(true);
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Pedidos</h1>
+    <div className="p-6 space-y-8 bg-white min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b pb-8 border-gray-100">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            Gestão de Pedidos
+          </h1>
+
+          <p className="text-gray-500 font-medium flex items-center gap-2">
+            Monitoramento em tempo real do seu estabelecimento
+          </p>
+        </div>
+
         <Button
-          className="bg-blue-600 hover:bg-blue-700"
-          onClick={openNewOrderModal}
+          onClick={() => setIsNewOrderModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100 gap-2 h-12 px-8 text-base font-semibold transition-all hover:scale-[1.02] active:scale-95"
         >
+          <Plus className="w-5 h-5 stroke-[3px]" />
           Novo Pedido
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ABERTOS */}
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-lg font-medium mb-3">Abertos</h2>
-
-          {orders
-            .filter((o) => o.status === "OPEN")
-            .map((o) => {
-              const items = o.orderLines || [];
-              const total = o.total;
-
-              return (
-                <div key={o.id} className="p-3 border rounded-lg mb-2">
-                  <div className="flex flex-col">
-
-                    <div className="flex flex-col w-full">
-                      <span className="font-semibold">{o.code}</span>
-                      {renderTypeAndDetails(o)}
-
-                      {/* Itens do Pedido ABERTO - Detalhado */}
-                      <div className="text-xs text-gray-600 mt-2 space-y-1">
-                        {items.map((i) => {
-                          const subtotal = i.price * i.quantity;
-                          return (
-                            <div
-                              key={`${o.id}-${i.id || i.menuItemId}`}
-                              className="flex justify-between"
-                            >
-                              <span>
-                                {i.quantity}x {i.name} — R$ {i.price.toFixed(2)}
-                                {i.observation && (<p className="italic text-gray-500 ml-2">
-                                  OBS: {i.observation}
-                                </p>)}
-                              </span>
-
-                              <span className="font-medium">
-                                R$ {subtotal.toFixed(2)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div
-                        className="flex justify-between border-t mt-2 pt-2"
-                      >
-                        <p className="font-semibold text-gray-700">
-                          Total:
-                        </p>
-                        <p className="font-semibold text-gray-700">
-                          R$ {total.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-3 self-end">
-                      {/* 3. Botão Finalizar Pedido */}
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleFinishOrder(o.id!)}
-                        className="bg-green-600 hover:bg-green-700 text-white h-8"
-                      >
-                        Finalizar
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditOrder(o)}
-                        className="text-yellow-600 hover:bg-yellow-100 h-8 w-8 p-0"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-
-                      <Button
-                        data-testid="delete-order-button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteOrder(o.id!)}
-                        className="text-red-600 hover:bg-red-100 h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-
-        {/* FINALIZADOS */}
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-lg font-medium mb-3">Finalizados</h2>
-
-          {orders
-            .filter((o) => o.status === "CLOSED")
-            .map((o) => {
-              const items = o.orderLines || [];
-              const total = o.total;
-
-              return (
-                <div key={o.id} className="p-3 border rounded-lg mb-2">
-                  <div className="flex justify-between items-start">
-
-                    <div className="flex flex-col w-full">
-                      <span className="font-semibold">{o.code}</span>
-                      {renderTypeAndDetails(o)}
-
-                      {/* Itens do Pedido FINALIZADO - Detalhado */}
-                      <div className="text-xs text-gray-600 mt-2 space-y-1">
-                        {items.map((i) => {
-                          const subtotal = i.price * i.quantity;
-                          return (
-                            <div
-                              key={`${o.id}-${i.id || i.menuItemId}`}
-                              className="flex justify-between"
-                            >
-                              <span>
-                                {i.quantity}x {i.name} — R$ {i.price.toFixed(2)}
-                              </span>
-
-                              <span className="font-medium">
-                                R$ {subtotal.toFixed(2)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div
-                        className="flex justify-between border-t mt-2 pt-2"
-                      >
-                        <p className="font-semibold text-gray-700">
-                          Total:
-                        </p>
-                        <p className="font-semibold text-gray-700">
-                          R$ {total.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-
-                  </div>
-                  <div className="flex gap-2 mt-3 justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleReopenOrder(o.id!)}
-                      className="h-8"
-                    >
-                      Reabrir
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)]">
+        <OrderColumn
+          title="PEDIDOS ABERTOS"
+          orders={orders}
+          status="OPEN"
+          onEdit={handleEditClick}
+          onDelete={handleDeleteOrder}
+          onFinish={handleFinishOrder}
+        />
+        <OrderColumn
+          title="FINALIZADOS"
+          orders={orders}
+          status="CLOSED"
+          onReopen={handleReopenOrder}
+        />
       </div>
-
-      {/* --- Modais --- */}
-      {/* Certifique-se de que os Modais estão prontos para receber e salvar 'notes' */}
 
       <NewOrderModal
         isOpen={isNewOrderModalOpen}
-        onClose={closeNewOrderModal}
+        onClose={() => setIsNewOrderModalOpen(false)}
         onAddOrder={handleCreateOrder}
         menuItems={menuItems}
         categories={categories}
       />
 
-      {
-        selectedOrder && (
-          <ViewOrderModal
-            isOpen={isViewModalOpen}
-            onClose={handleCloseViewModal}
-            order={selectedOrder}
-          />
-        )
-      }
-
-      {
-        selectedOrder && (
-          <EditOrderModal
-            isOpen={isEditModalOpen}
-            onClose={handleCloseEditModal}
-            order={selectedOrder}
-            onUpdateOrder={handleUpdateOrder}
-            menuItems={menuItems}
-            categories={categories}
-          />
-        )
-      }
-    </div >
+      {selectedOrder && (
+        <EditOrderModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          order={selectedOrder}
+          onUpdateOrder={handleUpdateOrder}
+          menuItems={menuItems}
+          categories={categories}
+        />
+      )}
+    </div>
   );
 }
