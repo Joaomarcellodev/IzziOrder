@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
+import { getEstablishmentId } from "./establisment_actions";
 
 // Tipo para a resposta das Server Actions
 interface ActionResponse<T = any> {
@@ -52,7 +52,7 @@ export async function createCategory(
   // Tenta inserir a categoria
   const { data, error } = await (await supabase)
     .from("categories")
-    .insert({ name: trimmedName, establishment_id: ESTABLISHMENT_ID })
+    .insert({ name: trimmedName, establishment_id: await getEstablishmentId() })
     .select()
     .single();
 
@@ -101,7 +101,7 @@ export async function updateCategory(
     .from("categories")
     .update({ name: trimmedName })
     .eq("id", id)
-    .eq("establishment_id", ESTABLISHMENT_ID)
+    .eq("establishment_id", await getEstablishmentId())
     .select()
     .single();
 
@@ -138,7 +138,7 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
     .from("categories")
     .delete()
     .eq("id", id)
-    .eq("establishment_id", ESTABLISHMENT_ID);
+    .eq("establishment_id", await getEstablishmentId());
 
   if (error) {
     if (error.code === "23503") {
