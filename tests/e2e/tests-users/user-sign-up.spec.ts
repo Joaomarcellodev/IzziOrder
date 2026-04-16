@@ -12,7 +12,7 @@ test.describe("Sign Up", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/login");
 
-        await page.getByText("Não tem conta?").click()
+        await page.getByText("Cadastre seu usuário").click()
         await page.waitForURL("**/sign-up")
     })
 
@@ -54,7 +54,7 @@ test.describe("Sign Up", () => {
 
             await page.click('button[type="submit"]');
 
-            const notification = page.locator('span[role="status"]', { hasText: /As senhas não batem/i });
+            const notification = page.getByText("As senhas não coincidem.", { exact: true });
             await expect(notification).toBeVisible({ timeout: 5000 });
         });
 
@@ -68,7 +68,7 @@ test.describe("Sign Up", () => {
 
             await page.click('button[type="submit"]');
 
-            const notification = page.locator('span[role="status"]', { hasText: /Senha deve ter no mínimo 8 caracteres/i });
+            const notification = page.getByText("A senha deve conter 8 caracteres e uma letra maiúscula.", { exact: true });
             await expect(notification).toBeVisible({ timeout: 5000 });
         });
 
@@ -84,9 +84,13 @@ test.describe("Sign Up", () => {
                 await page.fill('input[name="password_confirmation"]', "12345678A");
 
                 await page.click('button[type="submit"]');
+                
+                if (index === 0) {
+                    await page.waitForURL("**/auth/menu")
+                }
             }
 
-            const notification = page.locator('span[role="status"]', { hasText: /User already registered/i });
+            const notification = page.getByText("User already registered", { exact: true });
             await expect(notification).toBeVisible({ timeout: 10000 });
         })
     })
