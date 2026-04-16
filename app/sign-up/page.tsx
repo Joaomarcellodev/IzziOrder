@@ -27,14 +27,13 @@ export default function SignUpPage() {
 
   async function onFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    
+
     const formData = new FormData(event.currentTarget)
     const password = formData.get("password") as string
     const confirmation = formData.get("password_confirmation") as string
 
     if (!isPasswordValid) {
       toast({
-        variant: "destructive",
         title: "Senha fraca",
         description: "A senha deve conter 8 caracteres e uma letra maiúscula.",
       })
@@ -43,7 +42,6 @@ export default function SignUpPage() {
 
     if (password !== confirmation) {
       toast({
-        variant: "destructive",
         title: "Erro na validação",
         description: "As senhas não coincidem.",
       })
@@ -55,7 +53,6 @@ export default function SignUpPage() {
         const result = await signup(formData)
         if (result?.error) {
           toast({
-            variant: "destructive",
             title: "Erro ao criar conta",
             description: result.error,
           })
@@ -63,7 +60,6 @@ export default function SignUpPage() {
       } catch (error: any) {
         if (error.message === 'NEXT_REDIRECT') return
         toast({
-          variant: "destructive",
           title: "Erro ao criar conta",
           description: error.message || "Ocorreu um erro inesperado.",
         })
@@ -82,10 +78,10 @@ export default function SignUpPage() {
             Preencha os dados abaixo para começar.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="px-8 pb-8">
           <form onSubmit={onFormSubmit} className="space-y-4">
-            
+
             <div className="space-y-2">
               <Label htmlFor="user_name" className="text-sm font-semibold text-gray-700">Nome de Usuário</Label>
               <div className="relative group">
@@ -116,7 +112,7 @@ export default function SignUpPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password"  className="text-sm font-semibold text-gray-700">Senha</Label>
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Senha</Label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 <Input
@@ -140,13 +136,13 @@ export default function SignUpPage() {
 
               {/* Indicador de Requisitos */}
               <div className="grid grid-cols-2 gap-2 mt-2">
-                <RequirementItem 
-                  label="8+ caracteres" 
-                  met={passwordRequirements.hasMinLength} 
+                <RequirementItem
+                  label="8+ caracteres"
+                  met={passwordRequirements.hasMinLength}
                 />
-                <RequirementItem 
-                  label="Uma letra maiúscula" 
-                  met={passwordRequirements.hasUppercase} 
+                <RequirementItem
+                  label="Uma letra maiúscula"
+                  met={passwordRequirements.hasUppercase}
                 />
               </div>
             </div>
@@ -166,9 +162,9 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            <Button 
-              disabled={isPending || !isPasswordValid}
-              type="submit" 
+            <Button
+              disabled={isPending}
+              type="submit"
               className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-500/30 disabled:opacity-50 transition-all active:scale-[0.98] mt-2"
             >
               {isPending ? (
