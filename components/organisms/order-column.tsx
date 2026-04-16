@@ -15,7 +15,7 @@ export function OrderColumn({ title, orders, status, ...actions }: OrderColumnPr
   const filteredOrders = orders.filter(o => o.status === status);
 
   return (
-    <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col h-full">
+    <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col h-full" data-testid={`order-column-${status}`}>
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="font-bold text-gray-700 flex items-center gap-2">
           {title}
