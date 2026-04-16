@@ -29,6 +29,30 @@ describe("User sign up", () => {
 
     })
 
+    it("should create establishment automatically after user signup", async () => {
+        const email = `test_${Date.now()}@email.com`
+        const password = "12345678A"
+
+        const user = new SignUpUser("fulano", email, password, password)
+
+        const result = await signupService(user)
+        const userId = result.user!.id
+        createdUserIds.push(userId)
+
+        const supabase = createClient()
+
+        const { data: establishment, error } = await (await supabase)
+            .from("establishments")
+            .select("*")
+            .eq("owner_id", userId)
+            .single()
+
+        expect(error).toBeNull()
+        expect(establishment).toBeDefined()
+        expect(establishment.owner_id).toBe(userId)
+        expect(establishment.name).toBe(`Estabelecimento de Fulano`)
+    })
+
     describe("Invalid cases", () => {
         it("should not let duplicated emails", async () => {
             const email = `test_${Date.now()}@email.com`
