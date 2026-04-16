@@ -1,9 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { revalidatePath } from "next/cache";
 import { Order, OrderLine, OrderType, OrderStatus } from "@/lib/entities/order";
+import { getEstablishmentId } from "./establisment_actions";
 
 export interface OrderRequestDTO {
   id?: string;
@@ -16,7 +16,7 @@ export interface OrderRequestDTO {
   orderLines: Array<OrderLine>;
 }
 
-export async function createOrder(orderDTO: OrderRequestDTO) {
+export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId?: string) {
   const orderEntity = Order.fromDTO(orderDTO);
 
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export async function createOrder(orderDTO: OrderRequestDTO) {
       total: orderEntity.total.toFixed(2),
       type: orderEntity.type,
       status: orderEntity.status,
-      establishment_id: ESTABLISHMENT_ID,
+      establishment_id: testEstablishmentId ? testEstablishmentId : await getEstablishmentId(),
       detail: orderDTO.detail,
       delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
       estimated_time: orderEntity.estimatedTime ?? 0,

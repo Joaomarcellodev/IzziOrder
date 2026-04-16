@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/organisms/app-shell";
 import { getOrders } from "@/app/actions/order-actions";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { getMenuItems } from "@/app/actions/menu-item-actions";
 import { getCategories } from "@/app/actions/category-actions";
 import OrdersDashboard from "@/components/organisms/orders-dashboard";
 import { getUser } from "@/app/actions/user-actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
 
 function getErrorMessage(error: unknown) {
   if (typeof error === "object" && error !== null && "message" in error) {
@@ -16,9 +16,11 @@ function getErrorMessage(error: unknown) {
 export default async function OrdersPage() {
   let orders: any = null;
   let user: any = null;
+  let establishment_id: any = null;
 
   try {
-    orders = await getOrders(ESTABLISHMENT_ID);
+    establishment_id = await getEstablishmentId()
+    orders = await getOrders(establishment_id);
     user = await getUser();
   } catch (error: unknown) {
     console.error("Erro ao carregar pedidos/usuário:", error);
@@ -27,10 +29,10 @@ export default async function OrdersPage() {
   }
 
   const { data: categories, error: errorCategories } =
-    await getCategories(ESTABLISHMENT_ID);
+    await getCategories(establishment_id);
 
   const { data: menuItems, error: errorMenuItems } =
-    await getMenuItems(ESTABLISHMENT_ID);
+    await getMenuItems(establishment_id);
 
   if (errorMenuItems) {
     console.error("Erro menuItems:", errorMenuItems);
@@ -56,7 +58,7 @@ export default async function OrdersPage() {
       <OrdersDashboard
         orders={orders ?? []}
         categories={categories ?? []
-}
+        }
         menuItems={menuItems ?? []}
       />
     </AppShell>
