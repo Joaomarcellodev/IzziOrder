@@ -43,7 +43,7 @@ test.describe('Order operations', () => {
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
 
-      const orderCard = page.locator('div.p-3.border.rounded-lg', { hasText: `Mesa: ${mesa}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
       await expect(orderCard).toBeVisible();
 
       // Cleanup
@@ -72,7 +72,7 @@ test.describe('Order operations', () => {
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
 
-      const orderCard = page.locator('div.p-3.border.rounded-lg', { hasText: `Cliente: ${cliente}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).first();
       await expect(orderCard).toBeVisible();
 
       // Cleanup
@@ -92,18 +92,18 @@ test.describe('Order operations', () => {
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
 
-      const orderCard = page.locator('div.p-3.border.rounded-lg', { hasText: `Mesa: ${mesa}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
       await expect(orderCard).toBeVisible();
 
       // Editar
-      await orderCard.locator('button.text-yellow-600').click();
+      await orderCard.getByTestId('edit-order-button').click();
       await expect(page.getByText(/Editar Pedido/i)).toBeVisible();
 
       await page.getByPlaceholder('Ex: 5').fill(novaMesa);
       await page.getByRole('button', { name: 'Salvar Edição' }).click();
       await page.waitForTimeout(2000);
 
-      const editedCard = page.locator('div.p-3.border.rounded-lg', { hasText: `Mesa: ${novaMesa}` }).first();
+      const editedCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${novaMesa}` }).first();
       await expect(editedCard).toBeVisible();
 
       // Cleanup
@@ -121,7 +121,7 @@ test.describe('Order operations', () => {
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
 
-      const orderCard = page.locator('div.p-3.border.rounded-lg', { hasText: `Mesa: ${mesa}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
       await expect(orderCard).toBeVisible();
 
       await deleteOrder(page, orderCard);

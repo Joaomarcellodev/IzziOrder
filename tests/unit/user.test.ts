@@ -1,4 +1,4 @@
-import { User } from "@/lib/user";
+import { User } from "@/lib/entities/sign-up-user";
 
 describe("User unit tests", () => {
     describe("Valid cases", () => {

@@ -11,8 +11,8 @@ test.describe('should display user profile details correctly on every page', () 
     test.beforeEach(async ({ page }) => {
         await page.goto('/login');
 
-        await page.getByRole('textbox', { name: 'e-mail' }).fill(user.email);
-        await page.getByRole('textbox', { name: 'senha' }).fill(user.password);
+        await page.getByLabel('E-mail').fill(user.email);
+        await page.getByLabel('Senha').fill(user.password);
 
         await page.getByRole('button', { name: 'Entrar' }).click()
 

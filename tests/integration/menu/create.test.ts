@@ -1,90 +1,103 @@
-import { supabase } from "@/utils/supabase/supabaseClient";
+import { signupService } from "@/app/actions/auth-actions";
+import { createCategory } from "@/app/actions/category-actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
+import { createMenuItem, MenuItemRequestDTO } from "@/app/actions/menu-item-actions";
+import { SignUpUser } from "@/lib/entities/sign-up-user";
+import { createClient } from "@/utils/supabase/server";
 
 describe("Menu CREATE Integration", () => {
-  const testCategoryId = "c1d8bc12-dfce-463c-914a-91265b8aaf0b";
-  const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
+  let createdUserIds: string[] = []
+  let categoryId: string;
+  const email = `test_menu_create_${Date.now()}@email.com`
+  const password = "12345678A"
+  const name = "Menu Create User"
 
-  // Casos válidos
-  it("should create a valid menu item", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .insert({
+  beforeAll(async () => {
+    const user = new SignUpUser(name, email, password, password)
+    const result = await signupService(user)
+    createdUserIds.push(result.user!.id)
+
+    const supabase = await createClient()
+    await supabase.auth.signInWithPassword({ email, password })
+
+    await getEstablishmentId(supabase);
+
+    const categoryResult = await createCategory("Categoria Teste");
+    categoryId = categoryResult.data!.id;
+  });
+
+  afterAll(async () => {
+    const supabase = await createClient()
+    for (const id of createdUserIds) {
+      await supabase.auth.admin.deleteUser(id)
+    }
+  });
+
+  describe("Valid Cases", () => {
+    it("should create a valid menu item", async () => {
+      const menuItem: MenuItemRequestDTO = {
+        id: null,
         name: "Item Válido",
         description: "Criado via teste",
         price: 20,
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .single();
+        categoryId: categoryId,
+        available: true
+      };
 
-    expect(error).toBeNull();
-    expect(data?.id).toBeDefined();
-  });
+      const result = await createMenuItem(menuItem);
 
-  it("should allow price = 0", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .insert({
+      expect(result.success).toBe(true);
+      expect(result.data.id).toBeDefined();
+      expect(result.data.name).toBe("Item Válido");
+    });
+
+    it("should aceppt price = 0", async () => {
+      const menuItem: MenuItemRequestDTO = {
+        id: null,
         name: "Item Grátis",
         description: "Preço zero",
         price: 0,
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .single();
+        categoryId: categoryId,
+        available: true
+      };
 
-    expect(error).toBeNull();
-    expect(data?.price).toBe(0);
+      const result = await createMenuItem(menuItem);
+
+      expect(result.success).toBe(true);
+    })
   });
 
-  // Casos inválidos
-  it("should reject creation with negative price", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .insert({
+  describe("Invalid Cases", () => {
+    it("should reject creation with negative price", async () => {
+      const menuItem: MenuItemRequestDTO = {
+        id: null,
         name: "Preço Negativo",
+        description: "Preço negativo",
         price: -10,
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .maybeSingle();
+        categoryId: categoryId,
+        available: true
+      };
 
-    expect(Boolean(error) || !data).toBe(true);
-  });
+      const result = await createMenuItem(menuItem);
 
-  it("should reject creation without name", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .insert({
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("O preço não pode ser negativo.");
+    });
+
+    it("should reject creation without name", async () => {
+      const menuItem: MenuItemRequestDTO = {
+        id: null,
+        name: "",
+        description: "Sem nome",
         price: 10,
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .maybeSingle();
+        categoryId: categoryId,
+        available: true
+      };
 
-    expect(Boolean(error) || !data).toBe(true);
-  });
+      const result = await createMenuItem(menuItem);
 
-  it("should reject creation without price", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .insert({
-        name: "Sem preço",
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .maybeSingle();
-
-    expect(Boolean(error) || !data).toBe(true);
-  });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("O nome deve ter pelo menos 3 caracteres.");
+    });
+  })
 });

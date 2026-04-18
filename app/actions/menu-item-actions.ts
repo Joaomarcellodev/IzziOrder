@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { getEstablishmentId } from "./establisment_actions";
 
 interface ActionResponse {
   success: boolean;
@@ -91,6 +91,7 @@ export async function createMenuItem(
 
   const supabase = createClient();
   menuItem.imageUrl = PLACEHOLDER_IMAGE_URL;
+  const establishmentId = await getEstablishmentId()
 
   // Lógica para upload de imagem, se houver
   if (menuItem.imageFile && menuItem.imageFile.size > 0) {
@@ -110,7 +111,7 @@ export async function createMenuItem(
     .eq("id", menuItem.categoryId)
     .single();
 
-  if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
+  if (!category || category.establishment_id !== establishmentId) {
     return { success: false, error: "Categoria inválida." };
   }
 
@@ -126,7 +127,7 @@ export async function createMenuItem(
       available: menuItem.available,
       image: menuItem.imageUrl,
       position: nextPosition,
-      establishment_id: ESTABLISHMENT_ID
+      establishment_id: establishmentId
     })
     .select()
     .single();
@@ -177,6 +178,7 @@ export async function updateMenuItem(
 
   const imageFile = menuItem.imageFile as File | null;
   const existingImage = menuItem.imageUrl as string;
+  const establishmentId = await getEstablishmentId()
 
   if (menuItem.imageFile && menuItem.imageFile.size > 0) {
     const uploadResult = await uploadImage(menuItem.imageFile);
@@ -204,7 +206,7 @@ export async function updateMenuItem(
     .eq("id", menuItem.categoryId)
     .single();
 
-  if (!category || category.establishment_id !== ESTABLISHMENT_ID) {
+  if (!category || category.establishment_id !== establishmentId) {
     return { success: false, error: "Categoria inválida para este estabelecimento." };
   }
 

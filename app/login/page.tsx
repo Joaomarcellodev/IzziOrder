@@ -104,7 +104,7 @@ export default function LoginPage() {
                   <Loader2 className="h-4 w-4 animate-spin" /> Entrando...
                 </span>
               ) : (
-                "Acessar Painel"
+                "Entrar"
               )}
             </Button>
 

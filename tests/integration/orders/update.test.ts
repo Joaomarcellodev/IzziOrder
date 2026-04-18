@@ -1,9 +1,8 @@
 import { updateOrder, createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { createClient } from "@/utils/supabase/server";
 
 describe("Orders UPDATE Integration", () => {
-  const testEstablishmentId = ESTABLISHMENT_ID;
+  const testEstablishmentId = process.env.TEST_ESTABLISHMENT_ID;
   let mockMenuItemId = "6cfd93ee-1e3d-430d-b525-f5a30bc96338";
   let testLocalOrderId: string;
   let testPickupOrderId: string;
@@ -28,7 +27,7 @@ describe("Orders UPDATE Integration", () => {
       status: "OPEN",
       detail: "5",
       orderLines: initialOrderLines
-    });
+    }, testEstablishmentId);
     testLocalOrderId = localOrder.id!;
 
     // Create a PICKUP order
@@ -38,7 +37,7 @@ describe("Orders UPDATE Integration", () => {
       status: "OPEN",
       detail: "João Silva",
       orderLines: [{ menuItemId: mockMenuItemId, name: "Burger", quantity: 1, price: 60.00 }]
-    });
+    }, testEstablishmentId);
     testPickupOrderId = pickupOrder.id!;
   });
 
