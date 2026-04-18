@@ -26,20 +26,20 @@ test.describe("Configurações do Usuário - E2E", () => {
         await page.waitForSelector("#name", { timeout: 15000 });
     });
 
-     test("Deve alterar as informações de perfil (Nome)", async ({ page }) => {
+    test("Deve alterar as informações de perfil (Nome)", async ({ page }) => {
         // Salva valores originais para restaurar ao final
         const campoNome = page.locator("#name");
 
         const nomeOriginal = await campoNome.inputValue();
         await page.waitForTimeout(800);
 
-        // Limpa e digita o novo nome
+    
         await campoNome.clear();
         await page.waitForTimeout(500);
         await campoNome.fill("Nome Editado E2E");
         await page.waitForTimeout(800);
 
-        // Salva
+        
         await page.click('button:has-text("Salvar Alterações")');
         await page.waitForTimeout(1000);
 
@@ -68,31 +68,61 @@ test.describe("Configurações do Usuário - E2E", () => {
     });
 
     test("Deve iniciar processo de alteração de E-mail", async ({ page }) => {
-        // Nota: No Supabase, a alteração de e-mail geralmente exige confirmação no e-mail novo.
-        // Este teste verifica apenas se o sistema processa o pedido.
-        
-        await page.fill('input[name="email"]', "novo_email_teste@gmail.com");
-        await page.click('button:has-text("Salvar Alterações")');
+           // Nota: No Supabase, a alteração de e-mail geralmente exige confirmação no e-mail novo.
+    // Este teste verifica apenas se o sistema processa o pedido.
 
-        // Verifica se aparece mensagem de sucesso ou de confirmação enviada
-        const mensagem = page.locator('span[role="status"]').filter({ hasText: /sucesso|confirmação|enviado/i });
-        await expect(mensagem).toBeVisible({ timeout: 15000 });
+    const campoEmail = page.locator("#email");
+
+    await campoEmail.clear();
+    await page.waitForTimeout(500);
+    await campoEmail.fill("novo_email_teste@gmail.com");
+    await page.waitForTimeout(800);
+
+    await page.click('button:has-text("Salvar Alterações")');
+    await page.waitForTimeout(1000);
+
+    // Verifica se aparece mensagem de sucesso ou de confirmação enviada
+    const mensagem = page
+        .locator('li[role="status"]')
+        .filter({ hasText: /sucesso|confirmação|enviado/i })
+        .first();
+
+    await expect(mensagem).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(2000);
     });
 
     test("Deve validar erro ao tentar trocar senha com a senha atual incorreta", async ({ page }) => {
-        // Abre o modal/seção de troca de senha
-        const btnTrocar = page.getByRole('button', { name: /Trocar Senha|Alterar Senha/i });
-        await btnTrocar.click();
+            await page.waitForSelector("#current", { timeout: 15000 });
+    await page.waitForTimeout(500);
         
-        await page.fill('input[name="currentPassword"]', "SenhaErrada123!");
-        await page.fill('input[name="newPassword"]', "MinhaNovaSenha456!");
-        await page.fill('input[name="confirmPassword"]', "MinhaNovaSenha456!");
-        
-        await page.click('button:has-text("Atualizar Senha")');
+        const campoSenhaAtual = page.locator("#current")
+        const campoNovaSenha = page.locator("#new")
+        const campoConfirmarSenha = page.locator("#confirm")
 
-        // Verifica se a mensagem de erro aparece
-        const erro = page.locator('span[role="status"]').filter({ hasText: /Senha atual incorreta/i });
+        await campoSenhaAtual.fill("SenhaErrada123")
+        await page.waitForTimeout(500)
+        await campoNovaSenha.fill("Minhanovasenha123")
+        await page.waitForTimeout(500)
+        await campoConfirmarSenha.fill("Minhanovasenha123")
+        await page.waitForTimeout(500)
+
+        await page.click('button:has-text("Atualizar Senha")');
+        await page.waitForTimeout(1000);
+
+        const erro = page
+        .locator('li[role="status"]')
+        .filter({ hasText: /Senha atual incorreta/i })
+        .first();
+
         await expect(erro).toBeVisible({ timeout: 15000 });
+        await page.waitForTimeout(2000);
+
+        await campoSenhaAtual.clear();
+        await campoNovaSenha.clear();
+        await campoConfirmarSenha.clear();
+        await page.waitForTimeout(500);
+
+
     });
 
     test("Deve realizar a troca de senha com sucesso", async ({ page }) => {
