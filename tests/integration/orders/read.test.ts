@@ -1,9 +1,8 @@
 import { createOrder, getOrders, getOrderById, OrderRequestDTO } from "@/app/actions/order-actions";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { createClient } from "@/utils/supabase/server";
 
 describe("Orders READ Integration", () => {
-  const testEstablishmentId = ESTABLISHMENT_ID;
+  const testEstablishmentId = process.env.TEST_ESTABLISHMENT_ID!;
   const mockMenuItemId = "6cfd93ee-1e3d-430d-b525-f5a30bc96338";
   let testOrderId1: string;
   let testOrderId2: string;
@@ -31,8 +30,8 @@ describe("Orders READ Integration", () => {
       orderLines: [{ menuItemId: mockMenuItemId, name: "Burger", quantity: 1, price: 64.90 }]
     };
 
-    const order1 = await createOrder(order1DTO);
-    const order2 = await createOrder(order2DTO);
+    const order1 = await createOrder(order1DTO, testEstablishmentId);
+    const order2 = await createOrder(order2DTO, testEstablishmentId);
 
     testOrderId1 = order1.id!;
     testOrderId2 = order2.id!;

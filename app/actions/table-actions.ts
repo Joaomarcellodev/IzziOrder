@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { ESTABLISHMENT_ID } from "@/utils/config";
+import { getEstablishmentId } from "./establisment_actions";
 
 export async function getTables(id: string) {
     const supabase = createClient();
@@ -21,7 +21,7 @@ export async function createTable(number: number) {
 
     const { data, error } = await (await supabase)
         .from("tables")
-        .insert({ table_number: number, establishment_id: ESTABLISHMENT_ID })
+        .insert({ table_number: number, establishment_id: await getEstablishmentId() })
         .select()
         .single();
 
@@ -40,7 +40,7 @@ export async function updateTable(id: string, new_number: number) {
         .from("tables")
         .update({ table_number: new_number })
         .eq("id", id)
-        .eq("establishment_id", ESTABLISHMENT_ID)
+        .eq("establishment_id", await getEstablishmentId())
         .select()
         .single();
 
@@ -59,7 +59,7 @@ export async function deleteTable(id: string) {
         .from("tables")
         .delete()
         .eq("id", id)
-        .eq("establishment_id", ESTABLISHMENT_ID)
+        .eq("establishment_id", await getEstablishmentId())
         .select()
         .single();
 

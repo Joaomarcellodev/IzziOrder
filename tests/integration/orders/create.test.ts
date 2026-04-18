@@ -1,9 +1,8 @@
 import { createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
-import { ESTABLISHMENT_ID } from "@/utils/config";
 import { createClient } from "@/utils/supabase/server";
 
 describe("Orders CREATE Integration", () => {
-  const testEstablishmentId = ESTABLISHMENT_ID;
+  const testEstablishmentId = process.env.TEST_ESTABLISHMENT_ID;
   const mockMenuItemId = "6cfd93ee-1e3d-430d-b525-f5a30bc96338"; // Item existente no banco de teste
   const supabase = createClient()
 
@@ -24,7 +23,7 @@ describe("Orders CREATE Integration", () => {
         ]
       };
 
-      const result = await createOrder(orderDTO);
+      const result = await createOrder(orderDTO, testEstablishmentId);
 
       expect(result).toBeDefined();
       expect(result.type).toBe("LOCAL");
@@ -48,7 +47,7 @@ describe("Orders CREATE Integration", () => {
         ]
       };
 
-      const result = await createOrder(orderDTO);
+      const result = await createOrder(orderDTO, testEstablishmentId);
 
       expect(result).toBeDefined();
       expect(result.type).toBe("PICKUP");
@@ -110,5 +109,5 @@ describe("Orders CREATE Integration", () => {
       .from("orders")
       .delete()
       .eq("establishment_id", testEstablishmentId);
-  });
+  }, 10000);
 });

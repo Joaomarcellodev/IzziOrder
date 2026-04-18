@@ -13,9 +13,9 @@ interface AppShellProps {
   children: React.ReactNode;
   currentPage: string;
   breadcrumb: string;
-  user: { 
-    name: string; 
-    email: string; 
+  user: {
+    name: string;
+    email: string;
   };
 }
 
@@ -23,7 +23,7 @@ const navigationItems = [
   { id: "orders", label: "Pedidos", icon: Calendar, href: "/auth/orders" },
   { id: "menu", label: "Cardápio", icon: ChefHat, href: "/auth/menu" },
   { id: "reports", label: "Relatórios", icon: BarChart3, href: "/auth/reports" },
-  { id: "settings", label: "Configurações", icon: Settings, href: "/auth/services" },
+  { id: "settings", label: "Configurações", icon: Settings, href: "/auth/settings" },
 ];
 
 export function AppShell({ children, currentPage, breadcrumb, user }: AppShellProps) {
@@ -44,12 +44,12 @@ export function AppShell({ children, currentPage, breadcrumb, user }: AppShellPr
       )}>
         <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <img src="/android-chrome-512x512.png" className="w-full h-full object-cover" alt="Logo" />
-             </div>
-             <div className="text-xl font-bold tracking-tight text-gray-900">
-                <span className="text-blue-600">izzi</span><span className="text-orange-500">Order</span>
-             </div>
+            <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+              <img src="/android-chrome-512x512.png" className="w-full h-full object-cover" alt="Logo" />
+            </div>
+            <div className="text-xl font-bold tracking-tight text-gray-900">
+              <span className="text-blue-600">izzi</span><span className="text-orange-500">Order</span>
+            </div>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsSidebarOpen(false)}>
             <X className="w-5 h-5 text-gray-500" />

@@ -1,55 +1,72 @@
-import { supabase } from "@/utils/supabase/supabaseClient";
+import { signupService } from "@/app/actions/auth-actions";
+import { createCategory } from "@/app/actions/category-actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
+import { createMenuItem, getMenuItems, MenuItemRequestDTO } from "@/app/actions/menu-item-actions";
+import { SignUpUser } from "@/lib/entities/sign-up-user";
+import { createClient } from "@/utils/supabase/server";
 
 describe("Menu READ Integration", () => {
-  const testCategoryId = "c1d8bc12-dfce-463c-914a-91265b8aaf0b";
-  const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
+  let createdUserIds: string[] = []
+  let categoryId: string;
   let itemId: string;
+  let establishmentId: string;
+  const email = `test_menu_read_${Date.now()}@email.com`
+  const password = "12345678A"
+  const name = "Menu Read User"
 
   beforeAll(async () => {
-    const { data } = await supabase
-      .from("menu_items")
-      .insert({
-        name: "Item para Leitura",
-        price: 10,
-        category_id: testCategoryId,
-        available: true,
-        establishment_id: testEstablishmentId,
-      })
-      .select()
-      .single();
-    itemId = data!.id;
+    const user = new SignUpUser(name, email, password, password)
+    const result = await signupService(user)
+    createdUserIds.push(result.user!.id)
+
+    const supabase = await createClient()
+    await supabase.auth.signInWithPassword({ email, password })
+
+    establishmentId = await getEstablishmentId(supabase);
+
+    const categoryResult = await createCategory("Categoria Teste");
+    categoryId = categoryResult.data!.id;
+
+    const menuItem: MenuItemRequestDTO = {
+      id: null,
+      name: "Item para Leitura",
+      description: "Original",
+      price: 10,
+      categoryId: categoryId,
+      available: true
+    };
+    const itemResult = await createMenuItem(menuItem);
+    itemId = itemResult.data.id;
   });
 
-  // Casos válidos
-  it("should fetch an item by ID", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .select()
-      .eq("id", itemId)
-      .single();
-
-    expect(error).toBeNull();
-    expect(data?.id).toBe(itemId);
+  afterAll(async () => {
+    const supabase = await createClient()
+    for (const id of createdUserIds) {
+      await supabase.auth.admin.deleteUser(id)
+    }
   });
 
-  it("should list available items", async () => {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .select()
-      .eq("available", true);
+  describe("Valid Cases", () => {
+    it("should fetch an item by ID using getMenuItems", async () => {
+      const result = await getMenuItems(establishmentId);
 
-    expect(error).toBeNull();
-    expect(Array.isArray(data)).toBe(true);
-  });
+      expect(result.success).toBe(true);
+      const item = result.data!.find((i: any) => i.id === itemId);
+      expect(item).toBeDefined();
+      expect(item!.name).toBe("Item para Leitura");
+    });
+  })
 
-  // Casos inválidos
-  it("should return null for non-existent item", async () => {
-    const { data } = await supabase
-      .from("menu_items")
-      .select()
-      .eq("id", "00000000-0000-0000-0000-000000000000")
-      .maybeSingle();
+  describe("Invalid Cases", () => {
+    it("should return null for non-existent item (direct supabase as no server action for single item)", async () => {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("menu_items")
+        .select()
+        .eq("id", "00000000-0000-0000-0000-000000000000")
+        .maybeSingle();
 
-    expect(data).toBeNull();
-  });
+      expect(data).toBeNull();
+    });
+  })
 });

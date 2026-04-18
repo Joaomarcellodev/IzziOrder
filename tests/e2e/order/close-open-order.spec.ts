@@ -34,44 +34,36 @@ test.describe('Close and reopen order', () => {
         await page.getByRole('button', { name: /Novo Pedido/i }).click();
         await page.getByPlaceholder('Ex: 5').fill(mesa);
 
-        const pizzaBtn = page.getByRole('button', { name: /Pizza Teste/i }).first();
-        await expect(pizzaBtn).toBeVisible();
-        await pizzaBtn.click();
+        const menuItemBtn = page.locator('button.justify-start.h-auto').first();
+        await expect(menuItemBtn).toBeVisible();
+        await menuItemBtn.click();
 
         await page.getByRole('button', { name: 'Criar Pedido' }).click();
 
-        const orderCard = page
-            .locator('div.p-3.border.rounded-lg', { hasText: `Mesa: ${mesa}` })
+        const openColumn = page.getByTestId('order-column-OPEN');
+        const orderCard = openColumn
+            .locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` })
             .first();
 
         await expect(orderCard).toBeVisible();
 
         // Finalizar Pedido
-        await orderCard.getByRole('button', { name: 'Finalizar' }).click();
+        await orderCard.getByTestId('finish-order-button').click();
 
-        const finalizadosSection = page.locator(
-            'div.bg-white.p-4.rounded-xl.shadow',
-            { hasText: 'Finalizados' }
-        );
-
-        const finishedCard = finalizadosSection.locator(
-            'div.p-3.border.rounded-lg',
+        const closedColumn = page.getByTestId('order-column-CLOSED');
+        const finishedCard = closedColumn.locator(
+            '[data-testid="order-card"]',
             { hasText: `Mesa: ${mesa}` }
         ).first();
 
         await expect(finishedCard).toBeVisible();
 
         // Reabrir Pedido
-        await finishedCard.getByRole('button', { name: 'Reabrir' }).click();
+        await finishedCard.getByTestId('reopen-order-button').click();
 
         // Verificar se voltou para abertos
-        const abertosSection = page.locator(
-            'div.bg-white.p-4.rounded-xl.shadow',
-            { hasText: 'Abertos' }
-        );
-
-        const reopenedCard = abertosSection.locator(
-            'div.p-3.border.rounded-lg',
+        const reopenedCard = openColumn.locator(
+            '[data-testid="order-card"]',
             { hasText: `Mesa: ${mesa}` }
         ).first();
 

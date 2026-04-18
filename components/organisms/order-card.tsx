@@ -8,7 +8,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
   const isClosed = order.status === "CLOSED";
 
   return (
-    <div className="p-4 border border-gray-100 rounded-xl mb-3 bg-white hover:shadow-md transition-shadow">
+    <div className="p-4 border border-gray-100 rounded-xl mb-3 bg-white hover:shadow-md transition-shadow" data-testid="order-card">
       <div className="flex justify-between items-start mb-2">
         <div>
           <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
@@ -47,6 +47,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
               size="sm" 
               onClick={() => onFinish?.(order.id!)} 
               className="bg-green-600 hover:bg-green-700 h-8 gap-2 text-white"
+              data-testid="finish-order-button"
             >
               <CheckCircle className="w-3.5 h-3.5" /> Finalizar
             </Button>
@@ -55,6 +56,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
               variant="ghost" 
               onClick={() => onEdit?.(order)} 
               className="text-yellow-600 hover:bg-yellow-50 h-8 w-8 p-0"
+              data-testid="edit-order-button"
             >
               <Pencil className="w-3.5 h-3.5" />
             </Button>
@@ -63,6 +65,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
               variant="ghost" 
               onClick={() => onDelete?.(order.id!)} 
               className="text-red-500 hover:bg-red-50 h-8 w-8 p-0"
+              data-testid="delete-order-button"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
@@ -73,6 +76,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
             variant="outline" 
             onClick={() => onReopen?.(order.id!)} 
             className="h-8 gap-2 text-gray-600 border-gray-200"
+            data-testid="reopen-order-button"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reabrir
           </Button>
