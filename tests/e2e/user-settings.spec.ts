@@ -125,17 +125,38 @@ test.describe("Configurações do Usuário - E2E", () => {
 
     });
 
-    test("Deve realizar a troca de senha com sucesso", async ({ page }) => {
-        const btnTrocar = page.getByRole('button', { name: /Trocar Senha|Alterar Senha/i });
-        await btnTrocar.click();
-        
-        await page.fill('input[name="currentPassword"]', senhaPadrao);
-        await page.fill('input[name="newPassword"]', senhaPadrao); // Mantendo a mesma para não travar seu próximo login
-        await page.fill('input[name="confirmPassword"]', senhaPadrao);
-        
-        await page.click('button:has-text("Atualizar Senha")');
+    test("Deve realizar a troca de senha e restaurar senha original", async ({ page }) => {
+        const senhaAtual = senhaPadrao;
+        const novaSenha = "SenhaNova123";
 
-        const sucesso = page.locator('span[role="status"]').filter({ hasText: /Senha atualizada com sucesso/i });
-        await expect(sucesso).toBeVisible({ timeout: 15000 });
-    });
+        const campoSenhaAtual = page.locator("#current");
+        const campoNovaSenha = page.locator("#new");
+        const campoConfirmarSenha = page.locator("#confirm");
+        const botao = page.getByRole('button', { name: 'Atualizar Senha' });
+
+        const toast = page.locator('li[role="status"]');
+
+        await campoSenhaAtual.waitFor({ state: 'visible' });
+
+   
+        await campoSenhaAtual.fill(senhaAtual);
+        await campoNovaSenha.fill(novaSenha);
+        await campoConfirmarSenha.fill(novaSenha);
+
+        await botao.click();
+
+        await expect(toast).toContainText(/senha alterada/i);
+
+   
+        await expect(toast).not.toBeVisible();
+
+       // Voltar senha padrão
+        await campoSenhaAtual.fill(novaSenha);
+        await campoNovaSenha.fill(senhaAtual);
+        await campoConfirmarSenha.fill(senhaAtual);
+
+        await botao.click();
+
+        await expect(toast).toContainText(/senha alterada/i);
+});
 });
