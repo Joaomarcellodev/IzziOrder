@@ -14,12 +14,23 @@ export interface OrderRequestDTO {
   deliveryFee?: number;
   estimatedTime?: number;
   orderLines: Array<OrderLine>;
+  dailySeq?: number;
 }
 
 export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId?: string) {
   const orderEntity = Order.fromDTO(orderDTO);
 
   const supabase = await createClient();
+  const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
+
+  const { data: nextSeq, error: rpcError } = await supabase.rpc('get_next_daily_seq', { 
+    p_establishment_id: establishment_id 
+  });
+
+  if (rpcError) {
+    console.error("Erro ao gerar daily_seq (RPC):", rpcError);
+    throw new Error("Erro ao gerar numeração do pedido.");
+  }
 
   const { data, error } = await supabase
     .from("orders")
@@ -27,12 +38,13 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
       total: orderEntity.total.toFixed(2),
       type: orderEntity.type,
       status: orderEntity.status,
-      establishment_id: testEstablishmentId ? testEstablishmentId : await getEstablishmentId(),
+      establishment_id,
       detail: orderDTO.detail,
       delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
       estimated_time: orderEntity.estimatedTime ?? 0,
+      daily_seq: nextSeq,
     })
-    .select("id")
+    .select("id, daily_seq")
     .single();
 
   if (error) {
@@ -60,13 +72,14 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
     }
   }
 
-  const createdOrder = await getOrderById(data.id);
+  orderEntity.id = data.id;
+  orderEntity.dailySeq = data.daily_seq;
 
   if (process.env.TEST_CONTEXT !== "integration") {
     revalidatePath("/orders");
   }
 
-  return createdOrder;
+  return orderEntity.toJSON();
 }
 
 export async function getOrders(establishment_id: string): Promise<any> {
@@ -197,7 +210,7 @@ export async function deleteOrder(id: string): Promise<void> {
   }
 }
 
-export async function updateToClosedOrder(id: string): Promise<void> {
+export async function updateToClosedOrder(id: string): Promise<any> {
   if (!id) throw new Error("ID do pedido inválido.");
 
   const order = Order.fromDTO(await getOrderById(id));
@@ -209,7 +222,7 @@ export async function updateToClosedOrder(id: string): Promise<void> {
     revalidatePath("/orders");
   }
 
-  return adjustOrderLines(order.toJSON());
+  return order.toJSON();
 }
 
 export async function updateToOpenOrder(id: string): Promise<any> {
@@ -224,7 +237,7 @@ export async function updateToOpenOrder(id: string): Promise<any> {
     revalidatePath("/orders");
   }
 
-  return adjustOrderLines(order.toJSON());
+  return order.toJSON();
 }
 
 async function updateOrderStatus(order: Order, id: string) {
@@ -241,6 +254,16 @@ async function updateOrderStatus(order: Order, id: string) {
 }
 
 function adjustOrderLines(orderData: any) {
-  orderData.orderLines = orderData.order_lines
-  return orderData
+  const mappedLines = (orderData.order_lines || []).map((line: any) => ({
+    ...line,
+    menuItemId: line.menu_item_id,
+  }));
+
+  return Order.fromDTO({
+    ...orderData,
+    orderLines: mappedLines,
+    dailySeq: orderData.daily_seq,
+    deliveryFee: orderData.delivery_fee,
+    estimatedTime: orderData.estimated_time,
+  }).toJSON();
 }
