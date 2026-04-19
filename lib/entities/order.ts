@@ -49,22 +49,10 @@ export abstract class Order {
 
   get code(): string {
     if (this.dailySeq) {
-      return `${this.dailySeq}`;
+      return `#${this.dailySeq}`;
     }
     if (!this.id) return "";
-    let prefix = "";
-    switch (this.type) {
-      case "LOCAL":
-        prefix = "LOC";
-        break;
-      case "DELIVERY":
-        prefix = "DLV";
-        break;
-      case "PICKUP":
-        prefix = "PIC";
-        break;
-    }
-    return `${prefix}-${this.id.slice(0, 6).toUpperCase()}`;
+    return `#${this.id.slice(0, 6).toUpperCase()}`;
   }
 
   get itemsCount(): number {
