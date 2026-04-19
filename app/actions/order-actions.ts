@@ -16,21 +16,11 @@ export interface OrderRequestDTO {
   orderLines: Array<OrderLine>;
   dailySeq?: number;
 }
-
 export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId?: string) {
   const orderEntity = Order.fromDTO(orderDTO);
 
   const supabase = await createClient();
   const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
-
-  const { data: nextSeq, error: rpcError } = await supabase.rpc('get_next_daily_seq', { 
-    p_establishment_id: establishment_id 
-  });
-
-  if (rpcError) {
-    console.error("Erro ao gerar daily_seq (RPC):", rpcError);
-    throw new Error("Erro ao gerar numeração do pedido.");
-  }
 
   const { data, error } = await supabase
     .from("orders")
@@ -42,7 +32,6 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
       detail: orderDTO.detail,
       delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
       estimated_time: orderEntity.estimatedTime ?? 0,
-      daily_seq: nextSeq,
     })
     .select("id, daily_seq")
     .single();
