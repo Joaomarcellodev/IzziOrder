@@ -26,6 +26,7 @@ export abstract class Order {
     date?: string;
     estimatedTime?: number;
     dailySeq?: number;
+    detail?: string;
   }) {
     this.id = data.id;
     this.status = data.status || "OPEN";
@@ -33,6 +34,7 @@ export abstract class Order {
     this.date = data.date || new Date().toISOString();
     this.estimatedTime = data.estimatedTime;
     this.dailySeq = data.dailySeq;
+    this.detail = data.detail;
     this.validateBase();
   }
 
@@ -47,7 +49,7 @@ export abstract class Order {
 
   get code(): string {
     if (this.dailySeq) {
-      return `#${this.dailySeq}`;
+      return `${this.dailySeq}`;
     }
     if (!this.id) return "";
     let prefix = "";
@@ -62,7 +64,7 @@ export abstract class Order {
         prefix = "PIC";
         break;
     }
-    return `#${prefix}-${this.id.slice(0, 6).toUpperCase()}`;
+    return `${prefix}-${this.id.slice(0, 6).toUpperCase()}`;
   }
 
   get itemsCount(): number {
@@ -163,7 +165,7 @@ export class LocalOrder extends Order {
     estimatedTime?: number;
     dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.tableNumber });
     this.tableNumber = data.tableNumber;
     this.validate();
   }
@@ -191,7 +193,7 @@ export class PickupOrder extends Order {
     estimatedTime?: number;
     dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.customerName });
     this.customerName = data.customerName;
     this.validate();
   }
@@ -223,7 +225,7 @@ export class DeliveryOrder extends Order {
     estimatedTime?: number;
     dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.address });
     this.address = data.address;
     this.deliveryFee = data.deliveryFee;
     this.validate();
