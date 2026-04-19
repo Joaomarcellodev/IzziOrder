@@ -13,7 +13,7 @@ describe("Order Entity Hierarchy", () => {
         orderLines: commonLines,
       });
       expect(order.type).toBe("LOCAL");
-      expect(order.code).toBe("#LOC-123456");
+      expect(order.code).toBe("#123456");
       expect(order.tableNumber).toBe("5");
     });
 
@@ -34,7 +34,7 @@ describe("Order Entity Hierarchy", () => {
         orderLines: commonLines,
       });
       expect(order.type).toBe("PICKUP");
-      expect(order.code).toBe("#PIC-987654");
+      expect(order.code).toBe("#987654");
       expect(order.customerName).toBe("Tiago");
     });
 
@@ -56,7 +56,7 @@ describe("Order Entity Hierarchy", () => {
         orderLines: commonLines,
       });
       expect(order.type).toBe("DELIVERY");
-      expect(order.code).toBe("#DLV-555666");
+      expect(order.code).toBe("#555666");
       expect(order.total).toBe(60); // 50 + 10
     });
 
