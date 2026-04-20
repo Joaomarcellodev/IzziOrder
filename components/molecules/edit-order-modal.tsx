@@ -229,7 +229,8 @@ export function EditOrderModal({
                   <div className="space-y-2">
                     <Label>Número da Mesa</Label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="Ex: 5"
                       value={editedDetail}
                       onChange={(e) => setEditedDetail(e.target.value)}

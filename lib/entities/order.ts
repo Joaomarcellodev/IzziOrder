@@ -16,7 +16,8 @@ export abstract class Order {
   orderLines: OrderLine[];
   date?: string;
   estimatedTime?: number;
-  detail?: string
+  detail?: string;
+  dailySeq?: number;
 
   constructor(data: {
     id?: string;
@@ -24,12 +25,16 @@ export abstract class Order {
     orderLines: OrderLine[];
     date?: string;
     estimatedTime?: number;
+    dailySeq?: number;
+    detail?: string;
   }) {
     this.id = data.id;
     this.status = data.status || "OPEN";
     this.orderLines = data.orderLines;
     this.date = data.date || new Date().toISOString();
     this.estimatedTime = data.estimatedTime;
+    this.dailySeq = data.dailySeq;
+    this.detail = data.detail;
     this.validateBase();
   }
 
@@ -43,20 +48,11 @@ export abstract class Order {
   }
 
   get code(): string {
-    if (!this.id) return "";
-    let prefix = "";
-    switch (this.type) {
-      case "LOCAL":
-        prefix = "LOC";
-        break;
-      case "DELIVERY":
-        prefix = "DLV";
-        break;
-      case "PICKUP":
-        prefix = "PIC";
-        break;
+    if (this.dailySeq) {
+      return `#${this.dailySeq}`;
     }
-    return `#${prefix}-${this.id.slice(0, 6).toUpperCase()}`;
+    if (!this.id) return "";
+    return `#${this.id.slice(0, 6).toUpperCase()}`;
   }
 
   get itemsCount(): number {
@@ -95,6 +91,7 @@ export abstract class Order {
       total: this.total,
       code: this.code,
       itemsCount: this.itemsCount,
+      dailySeq: this.dailySeq,
     };
   }
 
@@ -107,6 +104,7 @@ export abstract class Order {
     address?: string;
     estimatedTime?: number;
     orderLines: OrderLine[];
+    dailySeq?: number;
   }): Order {
     switch (dto.type) {
       case "LOCAL":
@@ -116,6 +114,7 @@ export abstract class Order {
           orderLines: dto.orderLines,
           tableNumber: dto.detail || "",
           estimatedTime: dto.estimatedTime,
+          dailySeq: dto.dailySeq,
         });
       case "PICKUP":
         return new PickupOrder({
@@ -124,6 +123,7 @@ export abstract class Order {
           orderLines: dto.orderLines,
           customerName: dto.detail || "",
           estimatedTime: dto.estimatedTime,
+          dailySeq: dto.dailySeq,
         });
       case "DELIVERY":
         return new DeliveryOrder({
@@ -133,6 +133,7 @@ export abstract class Order {
           address: dto.address || dto.detail || "",
           deliveryFee: dto.deliveryFee || 0,
           estimatedTime: dto.estimatedTime,
+          dailySeq: dto.dailySeq,
         });
       default:
         throw new Error("Tipo de pedido inválido.");
@@ -150,8 +151,9 @@ export class LocalOrder extends Order {
     tableNumber: string;
     date?: string;
     estimatedTime?: number;
+    dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.tableNumber });
     this.tableNumber = data.tableNumber;
     this.validate();
   }
@@ -177,8 +179,9 @@ export class PickupOrder extends Order {
     customerName: string;
     date?: string;
     estimatedTime?: number;
+    dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.customerName });
     this.customerName = data.customerName;
     this.validate();
   }
@@ -208,8 +211,9 @@ export class DeliveryOrder extends Order {
     deliveryFee: number;
     date?: string;
     estimatedTime?: number;
+    dailySeq?: number;
   }) {
-    super(data);
+    super({ ...data, detail: data.address });
     this.address = data.address;
     this.deliveryFee = data.deliveryFee;
     this.validate();

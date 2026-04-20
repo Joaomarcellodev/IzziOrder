@@ -12,7 +12,7 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
       <div className="flex justify-between items-start mb-2">
         <div>
           <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-            #{order.code}
+          {order.code}
           </span>
           <p className="text-sm font-semibold text-gray-800 mt-2">
             {order.type === "LOCAL" ? `Mesa: ${order.detail}` : `Cliente: ${order.detail}`}

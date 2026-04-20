@@ -174,7 +174,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
               <div className="space-y-2">
                 <Label>Número da Mesa</Label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="Ex: 5"
                   value={orderDetail}
                   onChange={(e) => setOrderDetail(e.target.value)}
