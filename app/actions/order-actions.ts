@@ -2,8 +2,9 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Order, OrderLine, OrderType, OrderStatus } from "@/lib/entities/order";
+import { Order, OrderLine, OrderType, OrderStatus, PaymentMethod } from "@/lib/entities/order";
 import { getEstablishmentId } from "./establisment_actions";
+
 
 export interface OrderRequestDTO {
   id?: string;
@@ -15,6 +16,8 @@ export interface OrderRequestDTO {
   estimatedTime?: number;
   orderLines: Array<OrderLine>;
   dailySeq?: number;
+  paymentMethod?: PaymentMethod;
+  changeValue?: number;    
 }
 export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId?: string) {
   const orderEntity = Order.fromDTO(orderDTO);
@@ -32,6 +35,8 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
       detail: orderDTO.detail,
       delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
       estimated_time: orderEntity.estimatedTime ?? 0,
+      payment_method: orderDTO.paymentMethod,
+      change_value: orderDTO.changeValue ?? 0,
     })
     .select("id, daily_seq")
     .single();
@@ -148,6 +153,8 @@ export async function updateOrder(orderDTO: OrderRequestDTO) {
       detail: orderDTO.detail,
       delivery_fee: orderEntity.type === "DELIVERY" ? (orderEntity as any).deliveryFee : 0,
       estimated_time: orderEntity.estimatedTime,
+      payment_method: orderDTO.paymentMethod,
+      change_value: orderDTO.changeValue ?? 0,
     })
     .eq("id", orderDTO.id);
 
