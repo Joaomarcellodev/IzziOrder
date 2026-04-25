@@ -41,7 +41,6 @@ export default function UpdatePasswordPage() {
 
     if (password !== confirmation) {
       toast({
-        variant: "destructive",
         title: "Erro na validação",
         description: "As senhas não coincidem.",
       })
@@ -54,7 +53,6 @@ export default function UpdatePasswordPage() {
         
         if (result?.error) {
           toast({
-            variant: "destructive",
             title: "Erro ao atualizar",
             description: result.error,
           })
@@ -63,7 +61,6 @@ export default function UpdatePasswordPage() {
         if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) return
 
         toast({
-          variant: "destructive",
           title: "Erro inesperado",
           description: "Ocorreu um erro ao tentar salvar sua nova senha.",
         })

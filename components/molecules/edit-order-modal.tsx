@@ -130,7 +130,6 @@ export function EditOrderModal({
       toast({
         title: "Erro",
         description: "Pedido não encontrado para edição.",
-        variant: "destructive",
       });
       setIsSubmitting(false);
       return;
@@ -141,7 +140,7 @@ export function EditOrderModal({
     if (editedOrderType === "PICKUP" && (!editedDetail || !editedDetail.trim())) {
       toast({
         title: "Por favor, insira o nome do cliente",
-        variant: "destructive",
+        
       });
       setIsSubmitting(false);
       return;
@@ -149,7 +148,7 @@ export function EditOrderModal({
     if (editedOrderType === "LOCAL" && (!editedDetail || !editedDetail.trim())) {
       toast({
         title: "Por favor, insira o número da mesa",
-        variant: "destructive",
+        
       });
       setIsSubmitting(false);
       return;
@@ -157,7 +156,7 @@ export function EditOrderModal({
     if (editedItems.length === 0) {
       toast({
         title: "O pedido deve conter pelo menos um item.",
-        variant: "destructive",
+        
       });
       setIsSubmitting(false);
       return;
@@ -182,7 +181,7 @@ export function EditOrderModal({
       toast({
         title: "Erro ao salvar edição",
         description: "Tente novamente mais tarde.",
-        variant: "destructive",
+        
       });
     } finally {
       setIsSubmitting(false);
