@@ -87,6 +87,28 @@ export async function getOrders(establishment_id: string): Promise<any> {
   return data.map((o: any) => adjustOrderLines(o));
 }
 
+export async function getTodayOrders(establishment_id: string): Promise<any> {
+  const supabase = await createClient();
+
+  const today = new Date()
+  const start = new Date(today.setHours(0, 0, 0, 0)).toISOString()
+  const end = new Date(today.setHours(23, 59, 59, 999)).toISOString()
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, order_lines(*)")
+    .eq("establishment_id", establishment_id)
+    .gte("date", start)
+    .lte("date", end)
+
+  if (error) {
+    console.error("Erro Supabase (getOrders):", error);
+    throw new Error("Erro ao buscar pedidos.");
+  }
+
+  return data.map((o: any) => adjustOrderLines(o));
+}
+
 export async function getOrderById(id: string) {
   const supabase = await createClient();
 
