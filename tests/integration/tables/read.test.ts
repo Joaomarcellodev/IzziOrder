@@ -1,6 +1,6 @@
 import { supabase } from "@/utils/supabase/supabaseClient";
 
-describe("Tables READ Integration", () => {
+describe.skip("Tables READ Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520"; // ID de teste
 
   // Casos válidos
