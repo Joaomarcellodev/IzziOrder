@@ -97,6 +97,46 @@ describe("Orders UPDATE Integration", () => {
       expect(sodaLine?.quantity).toBe(2);
     });
 
+    it("should update order line observation", async () => {
+      // Fetch current order to get line IDs
+      const { data: orderWithLines } = await (await supabase)
+        .from("orders")
+        .select("*, order_lines(*)")
+        .eq("id", testLocalOrderId)
+        .single();
+
+      const existingLine = orderWithLines.order_lines[0];
+
+      const updateDTO: OrderRequestDTO = {
+        id: testLocalOrderId,
+        total: 50.00,
+        type: "LOCAL",
+        detail: "5",
+        orderLines: [
+          {
+            id: existingLine.id,
+            menuItemId: existingLine.menu_item_id,
+            name: existingLine.name,
+            quantity: existingLine.quantity,
+            price: existingLine.price,
+            observation: "Sem pimenta"
+          }
+        ]
+      };
+
+      const result = await updateOrder(updateDTO);
+      expect(result.orderLines[0].observation).toBe("Sem pimenta");
+
+      // Verify in DB directly
+      const { data: lineInDb } = await (await supabase)
+        .from("order_lines")
+        .select("observation")
+        .eq("id", existingLine.id)
+        .single();
+      
+      expect(lineInDb.observation).toBe("Sem pimenta");
+    });
+
     it("should update customer name for PICKUP order", async () => {
       const updateDTO: OrderRequestDTO = {
         id: testPickupOrderId,

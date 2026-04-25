@@ -88,7 +88,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     if (orderType === "LOCAL" && !orderDetail.trim()) {
       toast({
         title: "Por favor, insira o número da mesa",
-        variant: "destructive",
+        
       });
       return;
     }
@@ -96,7 +96,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     if (selectedItems.length === 0) {
       toast({
         title: "O pedido deve conter pelo menos um item.",
-        variant: "destructive",
+        
       });
       return;
     }
@@ -130,7 +130,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       toast({
         title: "Erro ao criar pedido",
         description: "Tente novamente mais tarde.",
-        variant: "destructive",
+        
       });
     } finally {
       setIsSubmitting(false);

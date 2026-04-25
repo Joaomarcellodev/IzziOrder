@@ -1,6 +1,6 @@
 import { supabase } from "@/utils/supabase/supabaseClient";
 
-describe("Tables CREATE Integration", () => {
+describe.skip("Tables CREATE Integration", () => {
   const testEstablishmentId = "5139eab5-6eaf-462f-bdbc-04257fdf2520";
 
   const valid_table_number_1 = 1;

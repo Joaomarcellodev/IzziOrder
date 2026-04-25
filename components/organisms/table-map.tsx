@@ -102,7 +102,7 @@ const AddTableModal = ({
       toast({
         title: "Número inválido",
         description: "Por favor, insira um número de mesa válido.",
-        variant: "destructive",
+        
       });
       return;
     }
@@ -117,7 +117,7 @@ const AddTableModal = ({
       toast({
         title: "Erro ao adicionar",
         description: "Não foi possível adicionar a mesa.",
-        variant: "destructive",
+        
       });
     }
   };
@@ -179,7 +179,7 @@ const EditTableModal = ({
       toast({
         title: "Número inválido",
         description: "Por favor, insira um número de mesa válido.",
-        variant: "destructive",
+        
       });
       return;
     }
@@ -303,7 +303,7 @@ export function TableMap({
       toast({
         title: "Mesa já existe",
         description: `A mesa ${newTable.table_number} já está no mapa.`,
-        variant: "destructive",
+        
       });
       return;
     }
@@ -326,7 +326,7 @@ export function TableMap({
       toast({
         title: "Número de Mesa Duplicado",
         description: `A mesa ${newNumber} já existe.`,
-        variant: "destructive",
+        
       });
       return;
     }
@@ -430,7 +430,7 @@ export function TableMap({
       toast({
         title: "Pedido Vazio",
         description: "Adicione itens ao pedido antes de enviar.",
-        variant: "destructive",
+        
       });
       return;
     }
