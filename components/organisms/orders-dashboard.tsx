@@ -9,7 +9,7 @@ import { Order } from "@/lib/entities/order";
 import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { EditOrderModal } from "../molecules/edit-order-modal";
-import { ViewOrderModal } from "../molecules/ViewOrderModal";
+import { DeleteConfirmModal } from "../molecules/delete-confirm-modal";
 
 import {
   createOrder,
@@ -36,8 +36,10 @@ export default function OrdersDashboard({
 }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<OrderDTO | null>(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { toast } = useToast();
 
   const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
@@ -103,17 +105,27 @@ export default function OrdersDashboard({
     }
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
-    const deletedOrder = orders.find((o) => o.id === orderId);
+  const handleDeleteClick = (orderId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (order) {
+      setOrderToDelete(order);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async (orderId: string) => {
     try {
       await deleteOrder(orderId);
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
       toast({
         title: "Pedido removido",
-        description: `O pedido ${deletedOrder?.code} foi excluído.`,
+        description: `O pedido ${orderToDelete?.code} foi excluído.`,
       });
+      setIsDeleteModalOpen(false);
+      setOrderToDelete(null);
     } catch (error: any) {
       toast({ title: "Erro ao remover pedido", description: error.message });
+      throw error;
     }
   };
 
@@ -150,7 +162,7 @@ export default function OrdersDashboard({
           orders={orders}
           status="OPEN"
           onEdit={handleEditClick}
-          onDelete={handleDeleteOrder}
+          onDelete={handleDeleteClick}
           onFinish={handleFinishOrder}
         />
         <OrderColumn
@@ -182,6 +194,16 @@ export default function OrdersDashboard({
           categories={categories}
         />
       )}
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setOrderToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        order={orderToDelete}
+      />
     </div>
   );
 }
