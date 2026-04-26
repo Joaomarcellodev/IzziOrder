@@ -10,6 +10,7 @@ import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { DeleteConfirmModal } from "../molecules/delete-confirm-modal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../molecules/tabs";
 
 import {
   createOrder,
@@ -135,28 +136,68 @@ export default function OrdersDashboard({
   };
 
   return (
-    <div className="p-6 space-y-8 bg-white min-h-screen">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b pb-8 border-gray-100">
+    <div className="px-0 py-2 md:p-6 space-y-4 md:space-y-8 bg-white min-h-screen">
+      {/* Header Compacto para Mobile / Normal para PC */}
+      <div className="flex items-center justify-between gap-4 border-b pb-4 md:pb-8 border-gray-100 px-4 md:px-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
             Gestão de Pedidos
           </h1>
-
-          <p className="text-gray-500 font-medium flex items-center gap-2">
+          <p className="text-gray-500 text-xs md:text-base font-medium hidden sm:block">
             Monitoramento em tempo real do seu estabelecimento
           </p>
         </div>
 
         <Button
           onClick={() => setIsNewOrderModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100 gap-2 h-12 px-8 text-base font-semibold transition-all hover:scale-[1.02] active:scale-95"
+          className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 gap-2 h-10 md:h-12 px-4 md:px-8 text-sm md:text-base font-semibold transition-all"
         >
-          <Plus className="w-5 h-5 stroke-[3px]" />
-          Novo Pedido
+          <Plus className="w-4 h-4 md:w-5 md:h-5 stroke-[3px]" />
+          <span>Novo Pedido</span>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)]">
+      {/* Layout Mobile com Tabs */}
+      <div className="lg:hidden">
+        <Tabs defaultValue="OPEN" className="w-full px-0">
+          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
+            <TabsTrigger 
+              value="OPEN" 
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+            >
+              Abertos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="CLOSED" 
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600"
+            >
+              Finalizados
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="OPEN" className="mt-0 outline-none">
+            <OrderColumn
+              title="PEDIDOS ABERTOS"
+              orders={orders}
+              status="OPEN"
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+              onFinish={handleFinishOrder}
+            />
+          </TabsContent>
+          <TabsContent value="CLOSED" className="mt-0 outline-none">
+            <OrderColumn
+              title="FINALIZADOS"
+              orders={orders}
+              status="CLOSED"
+              onReopen={handleReopenOrder}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Layout Desktop com Colunas Lado a Lado */}
+      <div className="hidden lg:grid grid-cols-2 gap-8 h-[calc(100vh-200px)] px-4">
         <OrderColumn
           title="PEDIDOS ABERTOS"
           orders={orders}
