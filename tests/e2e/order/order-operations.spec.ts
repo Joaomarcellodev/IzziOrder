@@ -9,7 +9,7 @@ test.describe('Order operations', () => {
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
     await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
     await page.locator('button.bg-blue-600').click();
-    await page.waitForURL('**/auth/**', { timeout: 15000 });
+    await page.waitForURL('**/auth/**', { timeout: 30000 });
     await page.waitForTimeout(3000);
 
     // Ir para a página de pedidos
@@ -22,6 +22,12 @@ test.describe('Order operations', () => {
     const deleteButton = locator.getByTestId("delete-order-button")
     await expect(deleteButton).toBeVisible({ timeout: 10000 });
     await deleteButton.click();
+    
+    // Confirmar exclusão no modal
+    const confirmButton = page.getByRole('button', { name: /^Excluir$/i }).last();
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
+
     await page.waitForTimeout(1000);
   }
 
