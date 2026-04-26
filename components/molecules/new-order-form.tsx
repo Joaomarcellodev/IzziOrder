@@ -183,7 +183,10 @@ export function NewOrderForm({
                 type="text"
                 placeholder={orderType === "LOCAL" ? "Ex: 5" : "Ex: João"}
                 value={orderDetail}
-                onChange={(e) => setOrderDetail(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setOrderDetail(orderType === "LOCAL" ? val.replace(/\D/g, "") : val);
+                }}
               />
             </div>
           </div>
@@ -238,13 +241,13 @@ export function NewOrderForm({
           <CardHeader>
             <CardTitle className="text-orange-900">Itens Selecionados</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4 px-3 sm:px-6">
             {selectedItems.map((item) => (
               <div key={item.menuItemId} className="flex-col overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded-lg border border-orange-200 gap-3">
-                  <div className="flex-1 min-w-0 pr-1">
-                    <p className="font-medium text-sm truncate">{item.name}</p>
-                    <p className="text-[10px] text-gray-500">R$ {item.price.toFixed(2)} cada</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate text-gray-800">{item.name}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">R$ {item.price.toFixed(2)} cada</p>
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
@@ -275,12 +278,12 @@ export function NewOrderForm({
                           className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
                           onClick={() => handleRemoveItem(item.menuItemId)}
                         >
-                          <Trash2 className="size-4" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
 
-                    <span className="text-sm font-bold text-gray-900 min-w-[70px] text-right">
+                    <span className="text-sm font-black text-gray-900 min-w-[70px] text-right">
                       R$ {(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -291,7 +294,7 @@ export function NewOrderForm({
                       type="text"
                       placeholder="Observação"
                       value={item.observation ?? ""}
-                      className="text-xs"
+                      className="text-xs h-9"
                       onChange={(e) => handleUpdateObservation(item.menuItemId, e.target.value)}
                     />
                   </div>
@@ -300,7 +303,7 @@ export function NewOrderForm({
             ))}
             <div className="border-t border-orange-200 pt-3 flex items-center justify-between font-bold text-orange-900">
               <span className="text-lg">Total:</span>
-              <span className="text-xl">R$ {totalPrice.toFixed(2)}</span>
+              <span className="text-2xl text-orange-600">R$ {totalPrice.toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
