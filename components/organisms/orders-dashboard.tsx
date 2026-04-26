@@ -169,7 +169,7 @@ export default function OrdersDashboard({
             </TabsTrigger>
             <TabsTrigger 
               value="CLOSED" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600"
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
             >
               Finalizados
             </TabsTrigger>
