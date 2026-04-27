@@ -73,6 +73,7 @@ export function EditOrderModal({
 
       setEditedEstimatedTime(String(order.estimatedTime || ""));
       setEditedItems(order.orderLines || []);
+<<<<<<< HEAD
 
       const initialObservations: Record<string, boolean> = {};
       (order.orderLines || []).forEach((item: any) => {
@@ -88,6 +89,9 @@ export function EditOrderModal({
       if ((order as any).paymentMethod === "ESPECIE_COM_TROCO" && savedChangeValue > 0) {
       setReceivedValue(String(savedTotal + savedChangeValue));
       } else {
+=======
+      setPaymentMethod((order as any).payment_method ?? (order as any).paymentMethod ??  "");
+>>>>>>> a790a7d (fix(actions): map payment_method and change_value from database to camelCase)
       setReceivedValue("");
 }
     }
