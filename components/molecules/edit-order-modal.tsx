@@ -11,7 +11,7 @@ import { Label } from "../atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../organisms/select";
 import { Button } from "../atoms/button";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Order, LocalOrder, PickupOrder, DeliveryOrder } from "@/lib/entities/order";
 
 interface EditOrderModalProps {
@@ -42,6 +42,7 @@ export function EditOrderModal({
   const [editedStatus, setEditedStatus] = useState<Order['status']>("OPEN");
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
 
   const { toast } = useToast();
 
@@ -50,6 +51,7 @@ export function EditOrderModal({
     if (order) {
       setEditedStatus(order.status);
       setEditedOrderType(order.type);
+
       if (order.type === "LOCAL") {
         const local = order as LocalOrder;
         setEditedDetail(local.tableNumber || "");
@@ -61,8 +63,17 @@ export function EditOrderModal({
         setEditedAddress(delivery.address || "");
         setEditedDeliveryFee(delivery.deliveryFee?.toString() || "0");
       }
+
       setEditedEstimatedTime(String(order.estimatedTime || ""));
       setEditedItems(order.orderLines || []);
+
+      const initialObservations: Record<string, boolean> = {};
+      (order.orderLines || []).forEach((item: any) => {
+        if (item.observation != null) {
+          initialObservations[item.menuItemId] = true
+        }
+      })
+      setObservationOpen(initialObservations)
     }
   }, [order]);
 
@@ -130,7 +141,6 @@ export function EditOrderModal({
       toast({
         title: "Erro",
         description: "Pedido não encontrado para edição.",
-        variant: "destructive",
       });
       setIsSubmitting(false);
       return;
@@ -141,7 +151,7 @@ export function EditOrderModal({
     if (editedOrderType === "PICKUP" && (!editedDetail || !editedDetail.trim())) {
       toast({
         title: "Por favor, insira o nome do cliente",
-        variant: "destructive",
+
       });
       setIsSubmitting(false);
       return;
@@ -149,7 +159,7 @@ export function EditOrderModal({
     if (editedOrderType === "LOCAL" && (!editedDetail || !editedDetail.trim())) {
       toast({
         title: "Por favor, insira o número da mesa",
-        variant: "destructive",
+
       });
       setIsSubmitting(false);
       return;
@@ -157,7 +167,7 @@ export function EditOrderModal({
     if (editedItems.length === 0) {
       toast({
         title: "O pedido deve conter pelo menos um item.",
-        variant: "destructive",
+
       });
       setIsSubmitting(false);
       return;
@@ -182,7 +192,7 @@ export function EditOrderModal({
       toast({
         title: "Erro ao salvar edição",
         description: "Tente novamente mais tarde.",
-        variant: "destructive",
+
       });
     } finally {
       setIsSubmitting(false);
@@ -194,6 +204,15 @@ export function EditOrderModal({
     return null;
   }
 
+  const handleUpdateObservation = (id: string, value: string) => {
+    setEditedItems(prev =>
+      prev.map(item =>
+        item.menuItemId === id
+          ? { ...item, observation: value }
+          : item
+      )
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -229,7 +248,8 @@ export function EditOrderModal({
                   <div className="space-y-2">
                     <Label>Número da Mesa</Label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="Ex: 5"
                       value={editedDetail}
                       onChange={(e) => setEditedDetail(e.target.value)}
@@ -317,44 +337,72 @@ export function EditOrderModal({
 
               <CardContent className="space-y-5">
                 {editedItems.map((item) => {
+
                   return (
                     <div
                       key={item.menuItemId + order.id}
-                      className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
+                      className="flex-col"
                     >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
-                          }
-                          className="w-12 px-2 py-1 text-sm border rounded text-center"
-                        />
-
-                        <span className="text-sm font-semibold min-w-20 text-right">
-                          R$ {(item.price * item.quantity).toFixed(2)}
-                        </span>
+                      <div
+                        className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.name}</p>
+                          <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
+                        </div>
 
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
-                          onClick={() => handleRemoveItem(item.menuItemId)}
+                          onClick={() =>
+                            setObservationOpen((prev) => ({
+                              ...prev,
+                              [item.menuItemId]: true
+                            }))}
+                          className="text-yellow-600 hover:bg-yellow-100 h-8 w-8 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
+                            }
+                            className="w-12 px-2 py-1 text-sm border rounded text-center"
+                          />
+
+                          <span className="text-sm font-semibold min-w-20 text-right">
+                            R$ {(item.price * item.quantity).toFixed(2)}
+                          </span>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
+                            onClick={() => handleRemoveItem(item.menuItemId)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
+                      {observationOpen[item.menuItemId] && (<div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Observação"
+                          value={item.observation ?? ""}
+                          onChange={(e) => handleUpdateObservation(item.menuItemId, e.target.value)}
+                        />
+                      </div>)}
                     </div>
                   )
-                })}
+                }
+                )}
 
                 <div className="border-t border-orange-200 pt-3">
                   <div className="flex items-center justify-between">

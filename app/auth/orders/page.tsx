@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/organisms/app-shell";
-import { getOrders } from "@/app/actions/order-actions";
+import { getOrders, getTodayOrders } from "@/app/actions/order-actions";
 import { getMenuItems } from "@/app/actions/menu-item-actions";
 import { getCategories } from "@/app/actions/category-actions";
 import OrdersDashboard from "@/components/organisms/orders-dashboard";
@@ -20,7 +20,7 @@ export default async function OrdersPage() {
 
   try {
     establishment_id = await getEstablishmentId()
-    orders = await getOrders(establishment_id);
+    orders = await getTodayOrders(establishment_id);
     user = await getUser();
   } catch (error: unknown) {
     console.error("Erro ao carregar pedidos/usuário:", error);

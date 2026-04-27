@@ -20,7 +20,7 @@ test.describe("Sign Up", () => {
         if (email) {
             const { data } = await supabaseAdmin.auth.admin.listUsers();
             const user = data.users.find(u => u.email === email);
-            
+
             if (user) {
                 await supabaseAdmin.auth.admin.deleteUser(user.id);
             }
@@ -84,13 +84,13 @@ test.describe("Sign Up", () => {
                 await page.fill('input[name="password_confirmation"]', "12345678A");
 
                 await page.click('button[type="submit"]');
-                
+
                 if (index === 0) {
                     await page.waitForURL("**/auth/menu")
                 }
             }
 
-            const notification = page.getByText("User already registered", { exact: true });
+            const notification = page.getByText("Email já registrado.", { exact: true });
             await expect(notification).toBeVisible({ timeout: 10000 });
         })
     })

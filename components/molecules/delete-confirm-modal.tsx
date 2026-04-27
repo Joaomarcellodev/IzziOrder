@@ -1,62 +1,84 @@
-// components/molecules/delete-confirm-modal.tsx
 "use client";
 
-import { Card, CardContent, CardHeader } from "@/components/molecules/card";
+import * as React from "react";
 import { Button } from "@/components/atoms/button";
-import { AlertTriangle, X } from "lucide-react";
-import { Order } from "@/app/actions/order-actions";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { OrderDTO } from "@/app/auth/orders/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/molecules/dialog";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  order: Order | null;
+  onConfirm: (orderId: string) => Promise<void>;
+  order: OrderDTO | null;
 }
 
-export function DeleteConfirmModal({ isOpen, onClose, onConfirm, order }: DeleteConfirmModalProps) {
-  if (!isOpen || !order) return null;
+export function DeleteConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  order,
+}: DeleteConfirmModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  if (!order) return null;
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm(order.id!);
+      onClose();
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const TitleText = `Tem certeza que deseja excluir o pedido "${order.code}"?`;
+  const MessageText = "Esta ação é permanente e removerá o pedido do sistema.";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md border-2 border-red-300 shadow-xl">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <div className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-            <span className="font-semibold">Confirmar Exclusão</span>
-          </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{TitleText}</DialogTitle>
+          <DialogDescription>{MessageText}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
           <Button
-            variant="ghost"
-            size="sm"
+            variant="outline"
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            disabled={isDeleting}
+            className="w-full sm:flex-1"
           >
-            <X className="h-4 w-4" />
+            Cancelar
           </Button>
-        </CardHeader>
-
-        <CardContent className="space-y-4 pt-0">
-          <p className="text-gray-700">
-            Tem certeza que deseja excluir o pedido <strong>{order.code}</strong>?
-          </p>
-
-          <div className="flex gap-3 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              onClick={onConfirm}
-            >
-              <X className="w-4 h-4 mr-2" />
-              Excluir
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Button
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isDeleting}
+            className="w-full sm:flex-1 bg-red-600 hover:bg-red-700"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Excluindo...
+              </>
+            ) : (
+              "Excluir"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

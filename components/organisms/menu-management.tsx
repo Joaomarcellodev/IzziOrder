@@ -440,7 +440,7 @@ export function MenuManagement({
       toast({
         title: "Erro ao excluir item",
         description: error,
-        variant: "destructive",
+        
       });
     }
 
@@ -646,7 +646,7 @@ export function MenuManagement({
       toast({
         title: "Erro ao atualizar a ordem.",
         description: error,
-        variant: "destructive",
+        
       });
     }
   }, [localMenuItems, toast]);

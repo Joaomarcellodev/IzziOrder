@@ -37,6 +37,9 @@ export async function signup(formData: FormData) {
       throw error;
     }
     console.error("Erro no Signup Action:", error.message);
+
+    if (error.message == "User already registered") throw new Error("Email já registrado.")
+
     return { success: false, error: error.message || "Erro ao criar conta." };
   }
   redirect("/auth/menu");
