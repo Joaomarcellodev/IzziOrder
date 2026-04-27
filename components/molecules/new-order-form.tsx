@@ -86,7 +86,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   );
 
   const changeValue = paymentMethod === "ESPECIE_COM_TROCO" && receivedValue
-  ? Math.max( parseFloat(receivedValue) - totalPrice)
+  ? Math.max(0, parseFloat(receivedValue) - totalPrice)
   : 0;  
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,7 +108,11 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       return;
     }
 
+<<<<<<< HEAD
     if (orderType !== "LOCAL" && !paymentMethod){ 
+=======
+    if (orderType !== "LOCAL" && !paymentMethod){
+>>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
       toast({
         title: "Selecione sua forma de pagamento.",
       });
@@ -365,9 +369,15 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
 
       {/* Forma de Pagamento */}
       {orderType !== "LOCAL" &&(
+<<<<<<< HEAD
 <Card>
   <CardHeader>
     <CardTitle>Forma de Pagamento</CardTitle>
+=======
+    <Card>
+        <CardHeader>
+          <CardTitle>Forma de Pagamento</CardTitle>
+>>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
   </CardHeader>
   <CardContent className="space-y-4">
     <div className="space-y-2">
@@ -405,13 +415,19 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
         {receivedValue && parseFloat(receivedValue) >= totalPrice && (
           <p className="text-sm font-semibold text-green-600">
             Troco: R$ {changeValue.toFixed(2)}
-          </p>
-        )}
-      </div>
+            </p>
+          )}
+        </div>
+      )}
+      </CardContent>
+    </Card>
     )}
+<<<<<<< HEAD
   </CardContent>
 </Card>
 )}
+=======
+>>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
 
       {/* Submit */}
       <div className="flex gap-3">
