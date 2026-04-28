@@ -10,7 +10,7 @@ import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { DeleteConfirmModal } from "../molecules/delete-confirm-modal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../molecules/tabs";
+import { Tabs, TabsList, TabsTrigger } from "../molecules/tabs";
 
 import {
   createOrder,
@@ -41,6 +41,7 @@ export default function OrdersDashboard({
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("OPEN");
   const { toast } = useToast();
 
   const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
@@ -157,9 +158,9 @@ export default function OrdersDashboard({
         </Button>
       </div>
 
-      <div className="w-full">
-        <Tabs defaultValue="OPEN" className="w-full px-0">
-          <TabsList className="grid lg:hidden w-[calc(100%-2rem)] mx-auto grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
+      <div className="w-full px-2 md:px-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid lg:hidden grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
             <TabsTrigger 
               value="OPEN" 
               className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
@@ -174,11 +175,8 @@ export default function OrdersDashboard({
             </TabsTrigger>
           </TabsList>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full md:h-[calc(100vh-200px)] px-2 md:px-0">
-            <TabsContent 
-              value="OPEN" 
-              className="mt-0 outline-none data-[state=inactive]:hidden lg:data-[state=inactive]:block"
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full md:h-[calc(100vh-200px)]">
+            <div className={activeTab === "OPEN" ? "block" : "hidden lg:block"}>
               <OrderColumn
                 title="PEDIDOS ABERTOS"
                 orders={orders}
@@ -187,18 +185,15 @@ export default function OrdersDashboard({
                 onDelete={handleDeleteClick}
                 onFinish={handleFinishOrder}
               />
-            </TabsContent>
-            <TabsContent 
-              value="CLOSED" 
-              className="mt-0 outline-none data-[state=inactive]:hidden lg:data-[state=inactive]:block"
-            >
+            </div>
+            <div className={activeTab === "CLOSED" ? "block" : "hidden lg:block"}>
               <OrderColumn
                 title="FINALIZADOS"
                 orders={orders}
                 status="CLOSED"
                 onReopen={handleReopenOrder}
               />
-            </TabsContent>
+            </div>
           </div>
         </Tabs>
       </div>
