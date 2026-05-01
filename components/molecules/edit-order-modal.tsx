@@ -82,7 +82,14 @@ export function EditOrderModal({
       })
       setObservationOpen(initialObservations)
       setPaymentMethod((order as any).paymentMethod ?? (order as any).payment_method ?? "");
+      // Se for espécie com troco, recalcula o valor recebido a partir do troco salvo
+      const savedChangeValue = (order as any).changeValue ?? 0;
+      const savedTotal = order.total ?? 0;
+      if ((order as any).paymentMethod === "ESPECIE_COM_TROCO" && savedChangeValue > 0) {
+      setReceivedValue(String(savedTotal + savedChangeValue));
+      } else {
       setReceivedValue("");
+}
     }
   }, [order]);
 
