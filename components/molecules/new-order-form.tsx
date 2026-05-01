@@ -108,11 +108,10 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       return;
     }
 
-<<<<<<< HEAD
-    if (orderType !== "LOCAL" && !paymentMethod){ 
-=======
+    
+
     if (orderType !== "LOCAL" && !paymentMethod){
->>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
+
       toast({
         title: "Selecione sua forma de pagamento.",
       });
@@ -369,15 +368,12 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
 
       {/* Forma de Pagamento */}
       {orderType !== "LOCAL" &&(
-<<<<<<< HEAD
-<Card>
-  <CardHeader>
-    <CardTitle>Forma de Pagamento</CardTitle>
-=======
+
+
     <Card>
         <CardHeader>
           <CardTitle>Forma de Pagamento</CardTitle>
->>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
+
   </CardHeader>
   <CardContent className="space-y-4">
     <div className="space-y-2">
@@ -409,25 +405,19 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
           step="0.01"
           value={receivedValue}
           onChange={(e) => setReceivedValue(e.target.value)}
-          className="w-40[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           style={{ width: '170px' }} 
         />
         {receivedValue && parseFloat(receivedValue) >= totalPrice && (
           <p className="text-sm font-semibold text-green-600">
             Troco: R$ {changeValue.toFixed(2)}
-            </p>
-          )}
-        </div>
-      )}
-      </CardContent>
-    </Card>
+          </p>
+        )}
+      </div>
     )}
-<<<<<<< HEAD
   </CardContent>
 </Card>
 )}
-=======
->>>>>>> b879d29 (feat(ui): make payment method optional for local orders)
 
       {/* Submit */}
       <div className="flex gap-3">

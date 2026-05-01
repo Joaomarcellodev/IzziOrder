@@ -286,11 +286,7 @@ function adjustOrderLines(orderData: any) {
     dailySeq: orderData.daily_seq,
     deliveryFee: orderData.delivery_fee,
     estimatedTime: orderData.estimated_time,
-    paymentMethod: orderData.payment_method,  
-<<<<<<< HEAD
-    changeValue: orderData.change_value,  
-=======
-    changeValue: orderData.change_value, 
->>>>>>> a790a7d (fix(actions): map payment_method and change_value from database to camelCase)
+    paymentMethod: orderData.payment_method,
+    changeValue: orderData.change_value
   }).toJSON();
 }
