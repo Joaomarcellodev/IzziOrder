@@ -114,6 +114,8 @@ export abstract class Order {
     estimatedTime?: number;
     orderLines: OrderLine[];
     dailySeq?: number;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }): Order {
     switch (dto.type) {
       case "LOCAL":
