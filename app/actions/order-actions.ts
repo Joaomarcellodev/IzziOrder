@@ -68,6 +68,9 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
 
   orderEntity.id = data.id;
   orderEntity.dailySeq = data.daily_seq;
+  orderEntity.paymentMethod = orderDTO.paymentMethod;
+  orderEntity.changeValue = orderDTO.changeValue ?? 0;
+
 
   if (process.env.TEST_CONTEXT !== "integration") {
     revalidatePath("/orders");
@@ -283,5 +286,7 @@ function adjustOrderLines(orderData: any) {
     dailySeq: orderData.daily_seq,
     deliveryFee: orderData.delivery_fee,
     estimatedTime: orderData.estimated_time,
+    paymentMethod: orderData.payment_method,  
+    changeValue: orderData.change_value,  
   }).toJSON();
 }

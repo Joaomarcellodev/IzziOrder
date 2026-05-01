@@ -40,13 +40,35 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
         ))}
       </div>
 
+{(order as any).paymentMethod && (
+  <div className="text-xs text-gray-500 mt-2">
+    <span className="font-medium">Pagamento: </span>
+    {({
+      PIX: "Pix",
+      CREDITO: "Crédito",
+      DEBITO: "Débito",
+      ESPECIE_SEM_TROCO: "Espécie sem troco",
+      ESPECIE_COM_TROCO: "Espécie com troco",
+    } as Record<string, string>)[(order as any).paymentMethod]}
+    {(order as any).paymentMethod === "ESPECIE_COM_TROCO" && (
+      <span className="text-green-600 font-semibold ml-1">
+        — Troco: R$ {((order as any).changeValue ?? 0).toFixed(2)}
+      </span>
+    )}
+  </div>
+)}
+
       <div className="flex justify-end gap-2 pt-3 border-t border-gray-50">
         {!isClosed ? (
           <>
             <Button 
               size="sm" 
               onClick={() => onFinish?.(order.id!)} 
-              className="bg-green-600 hover:bg-green-700 h-8 gap-2 text-white"
+              className="bg-green-600 hover:bg-green-700 h-8 gap-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={order.type === "LOCAL" && !(order as any).paymentMethod}
+              title={order.type === "LOCAL" && !(order as any).paymentMethod 
+              ? "Informe a forma de pagamento para finalizar" 
+              : ""}
               data-testid="finish-order-button"
             >
               <CheckCircle className="w-3.5 h-3.5" /> Finalizar

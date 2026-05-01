@@ -108,19 +108,16 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       return;
     }
 
-    if (!paymentMethod){
+    if (orderType !== "LOCAL" && !paymentMethod){ 
       toast({
         title: "Selecione sua forma de pagamento.",
-        variant: "destructive",
       });
       return;
     }
 
     if (paymentMethod === "ESPECIE_COM_TROCO" &&  (!receivedValue || parseFloat(receivedValue) < totalPrice)){
       toast({
-        title: "Valor recebido inválido.",
-        description: "O valor deve ser maior que o total do pedido",
-        variant: "destructive",
+        title: "Informe o valor recebido.",
       });
       return;
     }
@@ -134,7 +131,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
         detail: orderDetail,
         estimatedTime: parseInt(estimatedTime) || 0,
         orderLines: selectedItems,
-        paymentMethod: paymentMethod as PaymentMethod,
+        paymentMethod: paymentMethod ? paymentMethod as PaymentMethod: undefined,
         changeValue: changeValue,
       };
 
@@ -367,6 +364,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       )}
 
       {/* Forma de Pagamento */}
+      {orderType !== "LOCAL" &&(
 <Card>
   <CardHeader>
     <CardTitle>Forma de Pagamento</CardTitle>
@@ -393,14 +391,16 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
 
     {paymentMethod === "ESPECIE_COM_TROCO" && (
       <div className="space-y-2">
-        <Label>Valor recebido (R$)</Label>
+        <Label>Troco para quanto?</Label>
         <Input
           type="number"
-          placeholder="Ex: 50"
+          placeholder="R$"
           min={totalPrice}
           step="0.01"
           value={receivedValue}
           onChange={(e) => setReceivedValue(e.target.value)}
+          className="w-40[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ width: '170px' }} 
         />
         {receivedValue && parseFloat(receivedValue) >= totalPrice && (
           <p className="text-sm font-semibold text-green-600">
@@ -411,6 +411,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     )}
   </CardContent>
 </Card>
+)}
 
       {/* Submit */}
       <div className="flex gap-3">
