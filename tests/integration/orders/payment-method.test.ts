@@ -277,5 +277,53 @@ describe("Payment Method Integration", () => {
     });
   });
 
+   // VALID CASES — getOrderById com pagamento
+ 
+  describe("Valid Cases - getOrderById retorna paymentMethod e changeValue", () => {
+ 
+    it("should return paymentMethod when fetching order by id", async () => {
+      const created = await createOrder({
+        total: 50.00,
+        type: "PICKUP",
+        detail: "João Silva",
+        orderLines: baseOrderLines,
+        paymentMethod: "PIX",
+      }, testEstablishmentId);
+ 
+      const result = await getOrderById(created.id!);
+ 
+      expect(result.paymentMethod).toBe("PIX");
+    });
+ 
+    it("should return changeValue when fetching order with ESPECIE_COM_TROCO", async () => {
+      const created = await createOrder({
+        total: 27.00,
+        type: "PICKUP",
+        detail: "João Silva",
+        orderLines: [{ menuItemId: mockMenuItemId, name: "Lanche", quantity: 1, price: 27.00 }],
+        paymentMethod: "ESPECIE_COM_TROCO",
+        changeValue: 3.00,
+      }, testEstablishmentId);
+ 
+      const result = await getOrderById(created.id!);
+ 
+      expect(result.paymentMethod).toBe("ESPECIE_COM_TROCO");
+      expect(result.changeValue).toBe(3.00);
+    });
+ 
+    it("should return paymentMethod as undefined for LOCAL order without payment", async () => {
+      const created = await createOrder({
+        total: 50.00,
+        type: "LOCAL",
+        detail: "5",
+        orderLines: baseOrderLines,
+      }, testEstablishmentId);
+ 
+      const result = await getOrderById(created.id!);
+ 
+      expect(result.paymentMethod).toBeUndefined();
+    });
+  });
+
 
   });
