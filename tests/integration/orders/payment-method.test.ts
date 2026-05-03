@@ -325,5 +325,48 @@ describe("Payment Method Integration", () => {
     });
   });
 
+   // INVALID CASES
+ 
+  describe("Invalid Cases", () => {
+ 
+    it("should reject order with invalid payment method", async () => {
+      const orderDTO: OrderRequestDTO = {
+        total: 50.00,
+        type: "PICKUP",
+        detail: "João Silva",
+        orderLines: baseOrderLines,
+        paymentMethod: "INVALIDO" as any,
+      };
+ 
+      await expect(createOrder(orderDTO, testEstablishmentId)).rejects.toThrow();
+    });
+ 
+    it("should not save negative change_value", async () => {
+      const orderDTO: OrderRequestDTO = {
+        total: 50.00,
+        type: "PICKUP",
+        detail: "João Silva",
+        orderLines: baseOrderLines,
+        paymentMethod: "ESPECIE_COM_TROCO",
+        changeValue: -5, // troco negativo não faz sentido
+      };
+ 
+      // O banco salva 0 no mínimo pois o frontend garante Math.max(0, ...)
+      const result = await createOrder(orderDTO, testEstablishmentId);
+ 
+      const { data } = await supabase
+        .from("orders")
+        .select("change_value")
+        .eq("id", result.id)
+        .single();
+ 
+      expect(Number(data.change_value)).toBeGreaterThanOrEqual(0);
+    });
+  });
+ 
+  afterAll(async () => {
+    await supabase.from("orders").delete().eq("establishment_id", testEstablishmentId);
+  });
+
 
   });
