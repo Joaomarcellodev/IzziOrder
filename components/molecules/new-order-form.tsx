@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Category } from "@/app/actions/category-actions";
 import { MenuItem } from "@/app/actions/menu-item-actions";
 import { OrderRequestDTO } from "@/app/actions/order-actions";
+import { PaymentMethod } from "@/lib/entities/order";
 
 interface NewOrderFormProps {
   menuItems: MenuItem[];
@@ -26,6 +27,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [receivedValue, setReceivedValue] = useState("");
 
   const { toast } = useToast();
 
@@ -82,6 +85,10 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
     0
   );
 
+  const changeValue = paymentMethod === "ESPECIE_COM_TROCO" && receivedValue
+  ? Math.max(0, parseFloat(receivedValue) - totalPrice)
+  : 0;  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -101,6 +108,23 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       return;
     }
 
+    
+
+    if (orderType !== "LOCAL" && !paymentMethod){
+
+      toast({
+        title: "Selecione sua forma de pagamento.",
+      });
+      return;
+    }
+
+    if (paymentMethod === "ESPECIE_COM_TROCO" &&  (!receivedValue || parseFloat(receivedValue) < totalPrice)){
+      toast({
+        title: "Informe o valor recebido.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -109,7 +133,9 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
         type: orderType,
         detail: orderDetail,
         estimatedTime: parseInt(estimatedTime) || 0,
-        orderLines: selectedItems
+        orderLines: selectedItems,
+        paymentMethod: paymentMethod ? paymentMethod as PaymentMethod: undefined,
+        changeValue: changeValue,
       };
 
       onSubmit?.(orderData);
@@ -125,6 +151,8 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       setOrderDetail("");
       setEstimatedTime("");
       setSelectedItems([]);
+      setPaymentMethod("");
+      setReceivedValue("");
 
     } catch (error) {
       toast({
@@ -337,6 +365,59 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
           </CardContent>
         </Card>
       )}
+
+      {/* Forma de Pagamento */}
+      {orderType !== "LOCAL" &&(
+
+
+    <Card>
+        <CardHeader>
+          <CardTitle>Forma de Pagamento</CardTitle>
+
+  </CardHeader>
+  <CardContent className="space-y-4">
+    <div className="space-y-2">
+      <Label>Selecione a forma de pagamento</Label>
+      <Select value={paymentMethod} onValueChange={(value: any) => {
+        setPaymentMethod(value);
+        setReceivedValue("");
+      }}>
+        <SelectTrigger>
+          <SelectValue placeholder="Selecione" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="PIX">Pix</SelectItem>
+          <SelectItem value="CREDITO">Crédito</SelectItem>
+          <SelectItem value="DEBITO">Débito</SelectItem>
+          <SelectItem value="ESPECIE_SEM_TROCO">Espécie sem troco</SelectItem>
+          <SelectItem value="ESPECIE_COM_TROCO">Espécie com troco</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    {paymentMethod === "ESPECIE_COM_TROCO" && (
+      <div className="space-y-2">
+        <Label>Troco para quanto?</Label>
+        <Input
+          type="number"
+          placeholder="R$"
+          min={totalPrice}
+          step="0.01"
+          value={receivedValue}
+          onChange={(e) => setReceivedValue(e.target.value)}
+          className="w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ width: '170px' }} 
+        />
+        {receivedValue && parseFloat(receivedValue) >= totalPrice && (
+          <p className="text-sm font-semibold text-green-600">
+            Troco: R$ {changeValue.toFixed(2)}
+          </p>
+        )}
+      </div>
+    )}
+  </CardContent>
+</Card>
+)}
 
       {/* Submit */}
       <div className="flex gap-3">

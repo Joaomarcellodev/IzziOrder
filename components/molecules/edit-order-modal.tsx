@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Button } from "../atoms/button";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2 } from 'lucide-react';
-import { Order, LocalOrder, PickupOrder, DeliveryOrder } from "@/lib/entities/order";
+import { Order, LocalOrder, PickupOrder, DeliveryOrder, PaymentMethod } from "@/lib/entities/order";
+
+
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -43,6 +45,11 @@ export function EditOrderModal({
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [receivedValue, setReceivedValue] = useState("");
+
+
+
 
   const { toast } = useToast();
 
@@ -65,8 +72,7 @@ export function EditOrderModal({
       }
 
       setEditedEstimatedTime(String(order.estimatedTime || ""));
-      setEditedItems(order.orderLines || []);
-
+      setEditedItems(order.orderLines || []);   
       const initialObservations: Record<string, boolean> = {};
       (order.orderLines || []).forEach((item: any) => {
         if (item.observation != null) {
@@ -74,6 +80,18 @@ export function EditOrderModal({
         }
       })
       setObservationOpen(initialObservations)
+      setPaymentMethod((order as any).paymentMethod ?? (order as any).payment_method ?? "");
+      // Se for espécie com troco, recalcula o valor recebido a partir do troco salvo
+      const savedChangeValue = (order as any).changeValue ?? 0;
+      const savedTotal = order.total ?? 0;
+      if ((order as any).paymentMethod === "ESPECIE_COM_TROCO" && savedChangeValue > 0) {
+      setReceivedValue(String(savedTotal + savedChangeValue));
+      } else {
+
+      setPaymentMethod((order as any).payment_method ?? (order as any).paymentMethod ??  "");
+ 
+      setReceivedValue("");
+}
     }
   }, [order]);
 
@@ -132,6 +150,10 @@ export function EditOrderModal({
     0
   );
 
+  const changeValue = paymentMethod === "ESPECIE_COM_TROCO" && receivedValue
+  ? Math.max(0, parseFloat(receivedValue) - totalPrice)
+  : 0;
+
   // --- Submissão do Formulário ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +206,8 @@ export function EditOrderModal({
         estimatedTime: parseInt(editedEstimatedTime) || 0,
         orderLines: editedItems,
         total: totalPrice + (editedOrderType === "DELIVERY" ? parseFloat(editedDeliveryFee) || 0 : 0),
+        paymentMethod: paymentMethod as PaymentMethod,
+        changeValue: changeValue,
       };
 
       onUpdateOrder(updatedOrder);
@@ -415,6 +439,57 @@ export function EditOrderModal({
               </CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Forma de Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent
+            className= "space-y-4">
+              <div className="space-y-2">
+                <Label>Selecione a forma de pagamento</Label>
+                <Select value={paymentMethod} onValueChange={(value: any) =>{
+                  setPaymentMethod(value);
+                  setReceivedValue("");
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value= "PIX">Pix</SelectItem>
+                    <SelectItem value= "CREDITO">Crédito</SelectItem>
+                    <SelectItem value= "DEBITO">Débito</SelectItem>
+                    <SelectItem value= "ESPECIE_SEM_TROCO">Espécie sem troco</SelectItem>
+                    <SelectItem value= "ESPECIE_COM_TROCO">Espécie com troco</SelectItem>
+                  </SelectContent>
+                </Select>
+
+              </div>
+              {paymentMethod === "ESPECIE_COM_TROCO" &&(
+                <div className="space-y-2">
+                  <Label>Troco para quanto?</Label>
+                  <Input
+                  type="number"
+                  placeholder="R$"
+                  min={totalPrice}
+                  step="0.01"
+                  value={receivedValue}
+                  onChange={(e) => setReceivedValue(e.target.value)}
+                  className="w-40[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ width: '170px' }} 
+                  />
+                  {receivedValue && parseFloat(receivedValue) >= totalPrice &&(
+                    <p className="text-sm font-semibold text-green-600">
+                      Troco: R$ {changeValue.toFixed(2)}
+                    </p>
+                  )}
+                  
+                  
+                </div>
+              )}
+              
+            </CardContent>
+          </Card>
 
           <DialogFooter>
             <Button variant="outline" onClick={onClose} type="button">Cancelar</Button>
