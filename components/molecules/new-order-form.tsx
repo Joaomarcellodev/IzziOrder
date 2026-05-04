@@ -367,9 +367,6 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
       )}
 
       {/* Forma de Pagamento */}
-      {orderType !== "LOCAL" &&(
-
-
     <Card>
         <CardHeader>
           <CardTitle>Forma de Pagamento</CardTitle>
@@ -408,16 +405,23 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
           className="w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           style={{ width: '170px' }} 
         />
-        {receivedValue && parseFloat(receivedValue) >= totalPrice && (
+
+        {selectedItems.length === 0 ? (
+                <p className="text-sm text-yellow-600 font-medium">
+        Adicione um item ao pedido para calcular o troco.
+      </p>
+        ) : (
+        receivedValue && parseFloat(receivedValue) >= totalPrice && (
           <p className="text-sm font-semibold text-green-600">
             Troco: R$ {changeValue.toFixed(2)}
           </p>
+        )
         )}
       </div>
-    )}
+      )}
+    
   </CardContent>
 </Card>
-)}
 
       {/* Submit */}
       <div className="flex gap-3">
