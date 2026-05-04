@@ -46,6 +46,18 @@ export function ViewOrderModal({ isOpen, onClose, order }: ViewOrderModalProps) 
     return null;
   };
 
+  const paymentLabels: Record<string, string> ={
+    PIX: "Pix",
+    CREDITO: "Crédito",
+    DEBITO: "Débito",
+    ESPECIE_SEM_TROCO: "Espécie sem troco",
+    ESPECIE_COM_TROCO: "Espécie com troco",
+  }
+
+  const paymentLabel = (order as any).paymentMethod
+    ? paymentLabels[(order as any).paymentMethod]
+    : "Não informado";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -87,6 +99,16 @@ export function ViewOrderModal({ isOpen, onClose, order }: ViewOrderModalProps) 
             <span className="font-bold text-lg">Total:</span>
             <span className="font-bold text-lg">R$ {total.toFixed(2)}</span>
           </div>
+
+          <div className="border-t pt-3 mt-3">
+            <p className="text-sm font-semibold text-gray-700">Forma de Pagamento</p>
+            <p className="text-sm text-gray-600">{paymentLabel}</p>
+            {(order as any).paymentMethod === "ESPECIE_COM_TROCO" && (
+              <p className="text-sm text-green-600 font-semibold mt-1">
+                Troco: R$ {((order as any).changeValue ?? 0).toFixed(2)}
+              </p>
+            )}</div>
+
         </div>
 
         <div className="flex justify-end">

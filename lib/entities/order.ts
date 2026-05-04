@@ -1,5 +1,6 @@
 export type OrderStatus = "OPEN" | "CLOSED";
 export type OrderType = "DELIVERY" | "LOCAL" | "PICKUP";
+export type PaymentMethod = "PIX" | "CREDITO" | 'DEBITO' | "ESPECIE_SEM_TROCO" | "ESPECIE_COM_TROCO";
 
 export interface OrderLine {
   id?: string;
@@ -17,6 +18,8 @@ export abstract class Order {
   date?: string;
   estimatedTime?: number;
   detail?: string;
+  paymentMethod?: PaymentMethod;
+  changeValue?: number;
   dailySeq?: number;
 
   constructor(data: {
@@ -27,12 +30,16 @@ export abstract class Order {
     estimatedTime?: number;
     dailySeq?: number;
     detail?: string;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }) {
     this.id = data.id;
     this.status = data.status || "OPEN";
     this.orderLines = data.orderLines;
     this.date = data.date || new Date().toISOString();
     this.estimatedTime = data.estimatedTime;
+    this.paymentMethod = data.paymentMethod;
+    this.changeValue = data.changeValue ?? 0;
     this.dailySeq = data.dailySeq;
     this.detail = data.detail;
     this.validateBase();
@@ -92,6 +99,8 @@ export abstract class Order {
       code: this.code,
       itemsCount: this.itemsCount,
       dailySeq: this.dailySeq,
+      paymentMethod: this.paymentMethod,
+      changeValue: this.changeValue,
     };
   }
 
@@ -105,6 +114,8 @@ export abstract class Order {
     estimatedTime?: number;
     orderLines: OrderLine[];
     dailySeq?: number;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }): Order {
     switch (dto.type) {
       case "LOCAL":
@@ -115,6 +126,8 @@ export abstract class Order {
           tableNumber: dto.detail || "",
           estimatedTime: dto.estimatedTime,
           dailySeq: dto.dailySeq,
+          paymentMethod: dto.paymentMethod,
+          changeValue: dto.changeValue
         });
       case "PICKUP":
         return new PickupOrder({
@@ -124,6 +137,8 @@ export abstract class Order {
           customerName: dto.detail || "",
           estimatedTime: dto.estimatedTime,
           dailySeq: dto.dailySeq,
+          paymentMethod: dto.paymentMethod,
+          changeValue: dto.changeValue,
         });
       case "DELIVERY":
         return new DeliveryOrder({
@@ -134,6 +149,8 @@ export abstract class Order {
           deliveryFee: dto.deliveryFee || 0,
           estimatedTime: dto.estimatedTime,
           dailySeq: dto.dailySeq,
+          paymentMethod: dto.paymentMethod,
+          changeValue: dto.changeValue,
         });
       default:
         throw new Error("Tipo de pedido inválido.");
@@ -152,6 +169,8 @@ export class LocalOrder extends Order {
     date?: string;
     estimatedTime?: number;
     dailySeq?: number;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }) {
     super({ ...data, detail: data.tableNumber });
     this.tableNumber = data.tableNumber;
@@ -180,6 +199,8 @@ export class PickupOrder extends Order {
     date?: string;
     estimatedTime?: number;
     dailySeq?: number;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }) {
     super({ ...data, detail: data.customerName });
     this.customerName = data.customerName;
@@ -212,6 +233,8 @@ export class DeliveryOrder extends Order {
     date?: string;
     estimatedTime?: number;
     dailySeq?: number;
+    paymentMethod?: PaymentMethod;
+    changeValue?: number;
   }) {
     super({ ...data, detail: data.address });
     this.address = data.address;
