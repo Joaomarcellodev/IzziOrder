@@ -10,7 +10,7 @@ import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
 import { EditOrderModal } from "../molecules/edit-order-modal";
 import { DeleteConfirmModal } from "../molecules/delete-confirm-modal";
-import { Tabs, TabsList, TabsTrigger } from "../molecules/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../molecules/tabs";
 
 import {
   createOrder,
@@ -41,7 +41,6 @@ export default function OrdersDashboard({
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("OPEN");
   const { toast } = useToast();
 
   const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
@@ -158,9 +157,10 @@ export default function OrdersDashboard({
         </Button>
       </div>
 
-      <div className="w-full px-2 md:px-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid lg:hidden grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
+      {/* Layout Mobile com Tabs */}
+      <div className="lg:hidden">
+        <Tabs defaultValue="OPEN" className="w-full px-0">
+          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
             <TabsTrigger 
               value="OPEN" 
               className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
@@ -169,33 +169,49 @@ export default function OrdersDashboard({
             </TabsTrigger>
             <TabsTrigger 
               value="CLOSED" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600"
             >
               Finalizados
             </TabsTrigger>
           </TabsList>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full md:h-[calc(100vh-200px)]">
-            <div className={activeTab === "OPEN" ? "block" : "hidden lg:block"}>
-              <OrderColumn
-                title="PEDIDOS ABERTOS"
-                orders={orders}
-                status="OPEN"
-                onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
-                onFinish={handleFinishOrder}
-              />
-            </div>
-            <div className={activeTab === "CLOSED" ? "block" : "hidden lg:block"}>
-              <OrderColumn
-                title="FINALIZADOS"
-                orders={orders}
-                status="CLOSED"
-                onReopen={handleReopenOrder}
-              />
-            </div>
-          </div>
+          <TabsContent value="OPEN" className="mt-0 outline-none px-2">
+            <OrderColumn
+              title="PEDIDOS ABERTOS"
+              orders={orders}
+              status="OPEN"
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+              onFinish={handleFinishOrder}
+            />
+          </TabsContent>
+          <TabsContent value="CLOSED" className="mt-0 outline-none px-2">
+            <OrderColumn
+              title="FINALIZADOS"
+              orders={orders}
+              status="CLOSED"
+              onReopen={handleReopenOrder}
+            />
+          </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Layout Desktop com Colunas Lado a Lado */}
+      <div className="hidden lg:grid grid-cols-2 gap-8 h-[calc(100vh-200px)] px-4">
+        <OrderColumn
+          title="PEDIDOS ABERTOS"
+          orders={orders}
+          status="OPEN"
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          onFinish={handleFinishOrder}
+        />
+        <OrderColumn
+          title="FINALIZADOS"
+          orders={orders}
+          status="CLOSED"
+          onReopen={handleReopenOrder}
+        />
       </div>
 
       <NewOrderModal
