@@ -206,7 +206,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   inputMode="numeric"
                   placeholder="Ex: 5"
                   value={orderDetail}
-                  onChange={(e) => setOrderDetail(e.target.value)}
+                  onChange={(e) => setOrderDetail(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
             )}

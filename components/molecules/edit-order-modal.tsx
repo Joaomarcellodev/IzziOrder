@@ -235,7 +235,7 @@ export function EditOrderModal({
                         inputMode="numeric"
                         placeholder="Ex: 5"
                         value={editedDetail}
-                        onChange={(e) => setEditedDetail(e.target.value)}
+                        onChange={(e) => setEditedDetail(e.target.value.replace(/\D/g, ""))}
                       />
                     </div>
                   )}
