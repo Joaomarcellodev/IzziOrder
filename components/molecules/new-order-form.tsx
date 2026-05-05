@@ -206,7 +206,7 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
                   inputMode="numeric"
                   placeholder="Ex: 5"
                   value={orderDetail}
-                  onChange={(e) => setOrderDetail(e.target.value)}
+                  onChange={(e) => setOrderDetail(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
             )}
@@ -253,8 +253,10 @@ export function NewOrderForm({ menuItems, categories, onSubmit }: NewOrderFormPr
             if (categoryItems.length === 0) return null;
 
             return (
-              <div key={category.id} className="space-y-3">
-                <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
+              <div key={category.id} className="space-y-3 pt-4 first:pt-0">
+                <h4 className="font-black text-[11px] text-blue-600 uppercase tracking-widest ml-1">
+                  {category.name}
+                </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   {categoryItems.map((item) => (
