@@ -14,10 +14,10 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <span className="text-sm font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-md border border-blue-100">
+          <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
             {order.code}
           </span>
-          <p className="text-sm font-bold text-gray-800 mt-3">
+          <p className="text-sm font-bold text-gray-800 mt-2.5">
             {order.type === "LOCAL" ? `Mesa: ${order.detail}` : `Cliente: ${order.detail}`}
           </p>
           <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5 font-medium">
