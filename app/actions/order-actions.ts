@@ -25,6 +25,8 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
   const supabase = await createClient();
   const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
 
+  const currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
   const { data, error } = await supabase
     .from("orders")
     .insert({
@@ -37,8 +39,9 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
       estimated_time: orderEntity.estimatedTime ?? 0,
       payment_method: orderDTO.paymentMethod,
       change_value: orderDTO.changeValue ?? 0,
+      date: currentDate
     })
-    .select("id, daily_seq")
+    .select("id, daily_seq, date")
     .single();
 
   if (error) {
@@ -68,6 +71,7 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
 
   orderEntity.id = data.id;
   orderEntity.dailySeq = data.daily_seq;
+  orderEntity.date = data.date;
   orderEntity.paymentMethod = orderDTO.paymentMethod;
   orderEntity.changeValue = orderDTO.changeValue ?? 0;
 
