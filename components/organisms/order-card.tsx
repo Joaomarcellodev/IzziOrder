@@ -21,11 +21,13 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
             {order.date && (
               <span className="text-[10px] text-gray-400 font-medium">
                 {(() => {
-                  const parts = order.date.split('-');
+                  // Pega apenas a parte da data (YYYY-MM-DD) e ignora o resto
+                  const cleanDate = order.date.split('T')[0];
+                  const parts = cleanDate.split('-');
                   if (parts.length === 3) {
                     return `${parts[2]}/${parts[1]}`;
                   }
-                  return order.date;
+                  return cleanDate;
                 })()}
               </span>
             )}
