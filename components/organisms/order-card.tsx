@@ -14,9 +14,22 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
-            {order.code}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
+              {order.code}
+            </span>
+            {order.date && (
+              <span className="text-[10px] text-gray-400 font-medium">
+                {(() => {
+                  const parts = order.date.split('-');
+                  if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}`;
+                  }
+                  return order.date;
+                })()}
+              </span>
+            )}
+          </div>
           <p className="text-sm font-bold text-gray-800 mt-2.5">
             {order.type === "LOCAL" ? `Mesa: ${order.detail}` : `Cliente: ${order.detail}`}
           </p>
