@@ -20,15 +20,19 @@ export function OrderColumn({ title, orders, status, serverDate, ...actions }: O
   const filteredOrders = orders.filter(o => o.status === status);
   const today = serverDate;
 
-  const backlogOrders = filteredOrders
-    .filter(o => o.date && o.date < today)
-    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.dailySeq || 0) - (b.dailySeq || 0));
+  const backlogOrders = filteredOrders.filter(order => order.date && order.date < today);
+  const todayOrders = filteredOrders.filter(order => !order.date || order.date >= today);
 
-  const todayOrders = filteredOrders
-    .filter(o => !o.date || o.date >= today)
-    .sort((a, b) => (a.dailySeq || 0) - (b.dailySeq || 0));
+  backlogOrders.sort((a, b) => {
+    const dateComparison = (a.date || "").localeCompare(b.date || "");
+    if (dateComparison !== 0) return dateComparison;
+    return (a.dailySeq || 0) - (b.dailySeq || 0);
+  });
+
+  todayOrders.sort((a, b) => (a.dailySeq || 0) - (b.dailySeq || 0));
 
   const hasBacklog = status === "OPEN" && backlogOrders.length > 0;
+
 
   return (
     <div className="bg-gray-50/50 p-0 md:p-4 rounded-2xl border border-gray-100 flex flex-col h-full" data-testid={`order-column-${status}`}>
