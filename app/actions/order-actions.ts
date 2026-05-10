@@ -110,8 +110,33 @@ export async function getTodayOrders(establishment_id: string): Promise<any> {
     .lte("date", end)
 
   if (error) {
-    console.error("Erro Supabase (getOrders):", error);
+    console.error("Erro Supabase (getTodayOrders):", error);
     throw new Error("Erro ao buscar pedidos.");
+  }
+
+  return data.map((o: any) => adjustOrderLines(o));
+}
+
+export async function getOldPendingOrders(establishment_id?: string): Promise<any> {
+  const supabase = await createClient();
+
+  const actualId = establishment_id && establishment_id !== "" 
+    ? establishment_id 
+    : await getEstablishmentId();
+
+  const today = new Date();
+  const startOfToday = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, order_lines(*)")
+    .eq("establishment_id", actualId)
+    .eq("status", "OPEN")
+    .lt("date", startOfToday);
+
+  if (error) {
+    console.error("Erro Supabase (getOldPendingOrders):", error);
+    throw new Error("Erro ao buscar pedidos pendentes antigos.");
   }
 
   return data.map((o: any) => adjustOrderLines(o));
@@ -287,6 +312,7 @@ function adjustOrderLines(orderData: any) {
     deliveryFee: orderData.delivery_fee,
     estimatedTime: orderData.estimated_time,
     paymentMethod: orderData.payment_method,
-    changeValue: orderData.change_value
+    changeValue: orderData.change_value,
+    date: orderData.date
   }).toJSON();
 }
