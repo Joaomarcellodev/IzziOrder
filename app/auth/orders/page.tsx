@@ -49,6 +49,8 @@ export default async function OrdersPage() {
   const safeUser =
     user && typeof user.toJSON === "function" ? user.toJSON() : user ?? {};
 
+  const serverDate = new Date().toISOString().split('T')[0];
+
   return (
     <AppShell
       currentPage="Painel de Pedidos"
@@ -57,10 +59,10 @@ export default async function OrdersPage() {
     >
       <OrdersDashboard
         orders={orders ?? []}
-        categories={categories ?? []
-        }
+        categories={categories ?? []}
         menuItems={menuItems ?? []}
+        serverDate={serverDate}
       />
     </AppShell>
   );
-}
+  }
