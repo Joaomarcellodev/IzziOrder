@@ -8,6 +8,8 @@ interface DistributionProps {
 }
 
 export function DistributionChart({ data }: DistributionProps) {
+  const total = data.reduce((acc, item) => acc + item.value, 0);
+
   return (
     <Card className="border-none shadow-sm ring-1 ring-gray-100 h-full">
       <CardHeader>
@@ -32,6 +34,10 @@ export function DistributionChart({ data }: DistributionProps) {
               </Pie>
               <Tooltip 
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                formatter={(value: number) => [
+                  `R$ ${value.toFixed(2)} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
+                  "Valor"
+                ]}
               />
               <Legend verticalAlign="bottom" height={36}/>
             </PieChart>
@@ -39,15 +45,18 @@ export function DistributionChart({ data }: DistributionProps) {
         </div>
         
         <div className="mt-4 space-y-2">
-          {data.map((item) => (
-            <div key={item.name} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-gray-600">{item.name}</span>
+          {data.map((item) => {
+            const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+            return (
+              <div key={item.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-gray-600">{item.name}</span>
+                </div>
+                <span className="font-bold text-gray-900">{percentage}%</span>
               </div>
-              <span className="font-bold text-gray-900">{item.value}%</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

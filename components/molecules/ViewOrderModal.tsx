@@ -68,7 +68,7 @@ export function ViewOrderModal({ isOpen, onClose, order }: ViewOrderModalProps) 
         <div className="py-4 space-y-4">
           <div className="space-y-1">
             <p className="text-sm text-gray-600">
-              Tipo: <span className="font-medium">{order.type}</span>
+              Tipo: <span className="font-medium">{order.type === "LOCAL" ? "Local" : order.type === "PICKUP" ? "Retirada" : "Delivery"}</span>
             </p>
             {renderDetails()}
             <p className="text-sm text-gray-600">
