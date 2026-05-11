@@ -39,9 +39,10 @@ export async function getCategories(establishment_id: string) {
  * @returns Um objeto ActionResponse com sucesso ou erro.
  */
 export async function createCategory(
-  name: string
+  name: string,
+  supabaseClient?: any
 ): Promise<ActionResponse<Category>> {
-  const supabase = createClient();
+  const supabase = supabaseClient ?? await createClient();
   const trimmedName = name?.trim();
 
   // Validação do nome
@@ -52,7 +53,7 @@ export async function createCategory(
   // Tenta inserir a categoria
   const { data, error } = await (await supabase)
     .from("categories")
-    .insert({ name: trimmedName, establishment_id: await getEstablishmentId() })
+    .insert({ name: trimmedName, establishment_id: await getEstablishmentId(supabase) })
     .select()
     .single();
 
