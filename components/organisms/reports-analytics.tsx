@@ -13,10 +13,9 @@ import { TopItemsTable } from "./top-items-table";
 import { ReportFilters } from "@/components/molecules/report-filters";
 
 import {
-  kpiData as staticKpis,
-  revenueData as staticRevenue,
-  topItemsData as staticTopItems,
-  orderDistributionData as staticDistribution
+  COLORS,
+  CHART_COLORS,
+  ORDER_TYPE_LABELS
 } from "@/app/auth/reports/constants";
 import { useSalesReport } from "@/hooks/use-sales-report";
 import { format, parseISO } from "date-fns";
@@ -29,10 +28,10 @@ export function ReportsAnalytics() {
   };
 
   const dynamicKpis = report ? [
-    { title: "Total de Vendas", value: `R$ ${report.generalTotalSales.toFixed(2)}`, trend: 0, icon: DollarSign, borderColor: "#007BFF" },
-    { title: "Taxa de Entrega", value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`, trend: 0, icon: ShoppingBag, borderColor: "#FD7E14" },
-    { title: "Total de Pedidos", value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`, trend: 0, icon: Users, borderColor: "#28A745" },
-    { title: "Ticket Médio", value: `R$ ${report.generalTotalSales > 0 ? (report.generalTotalSales / (report.salesByDay.length || 1)).toFixed(2) : '0.00'}`, trend: 0, icon: Clock, borderColor: "#DC3545" },
+    { title: "Total de Vendas", value: `R$ ${report.generalTotalSales.toFixed(2)}`, trend: 0, icon: DollarSign, borderColor: COLORS.primary },
+    { title: "Taxa de Entrega", value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`, trend: 0, icon: ShoppingBag, borderColor: COLORS.secondary },
+    { title: "Total de Pedidos", value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`, trend: 0, icon: Users, borderColor: COLORS.success },
+    { title: "Ticket Médio", value: `R$ ${report.generalTotalSales > 0 ? (report.generalTotalSales / (report.salesByDay.length || 1)).toFixed(2) : '0.00'}`, trend: 0, icon: Clock, borderColor: COLORS.danger },
   ] : [];
 
   const dynamicRevenue = report?.salesByDay.map(d => ({
@@ -41,9 +40,9 @@ export function ReportsAnalytics() {
   })) || [];
 
   const dynamicDistribution = report?.salesByType.map((t, idx) => ({
-    name: t.type === "LOCAL" ? "Local" : t.type === "PICKUP" ? "Retirada" : t.type === "DELIVERY" ? "Delivery" : t.type,
+    name: ORDER_TYPE_LABELS[t.type] || t.type,
     value: t.total,
-    color: idx === 0 ? "#007BFF" : idx === 1 ? "#FD7E14" : "#28A745"
+    color: CHART_COLORS[idx % CHART_COLORS.length]
   })) || [];
 
   const dynamicTopItems = report?.salesByProduct.map(p => ({
