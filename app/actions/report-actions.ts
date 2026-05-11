@@ -19,10 +19,10 @@ export interface SalesReport {
   deliveryFeeTotal: number;
   generalTotalSales: number;
   salesByDay: { date: string; total: number; count: number }[];
-  salesByProduct: { 
-    name: string; 
-    quantity: number; 
-    total: number; 
+  salesByProduct: {
+    name: string;
+    quantity: number;
+    total: number;
     category?: string;
     taxa: number;
     troco: number;
@@ -30,19 +30,20 @@ export interface SalesReport {
   }[];
   salesByPaymentMethod: { method: PaymentMethod; total: number }[];
   salesByType: { type: OrderType; total: number }[];
-  ordersByDay: { 
-    date: string; 
+  ordersByDay: {
+    date: string;
     orders: any[];
   }[];
 }
 
 export async function getSalesReport(filters: SalesReportFilters): Promise<SalesReport> {
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("orders")
     .select("*, order_lines(*, menu_items(categories(name)))")
-    .eq("establishment_id", filters.establishmentId);
+    .eq("establishment_id", filters.establishmentId)
+    .eq("status", "CLOSED")
 
   // Default to last 7 days if no dates are provided
   if (!filters.startDate && !filters.endDate && !filters.month && !filters.year) {
@@ -82,7 +83,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
 
   // Filter by product if provided
   if (filters.productId) {
-    filteredOrders = filteredOrders.filter(o => 
+    filteredOrders = filteredOrders.filter(o =>
       o.order_lines.some((line: any) => line.menu_item_id === filters.productId)
     );
   }
@@ -99,10 +100,10 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
 
   const salesByDayMap = new Map<string, { total: number; count: number }>();
   const ordersByDayMap = new Map<string, any[]>();
-  const salesByProductMap = new Map<string, { 
-    name: string, 
-    quantity: number, 
-    total: number, 
+  const salesByProductMap = new Map<string, {
+    name: string,
+    quantity: number,
+    total: number,
     category?: string,
     taxa: number,
     troco: number,
@@ -115,7 +116,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
     const total = parseFloat(order.total);
     const deliveryFee = parseFloat(order.delivery_fee || 0);
     const changeValue = parseFloat(order.change_value || 0);
-    
+
     report.generalTotalSales += total;
     report.deliveryFeeTotal += deliveryFee;
 
@@ -134,7 +135,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
     // Sales by Payment Method
     if (order.payment_method) {
       salesByPaymentMethodMap.set(
-        order.payment_method, 
+        order.payment_method,
         (salesByPaymentMethodMap.get(order.payment_method) || 0) + total
       );
     }
@@ -148,16 +149,16 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
       if (filters.productId && line.menu_item_id !== filters.productId) return;
 
       const categoryName = line.menu_items?.categories?.name;
-      const productData = salesByProductMap.get(line.menu_item_id) || { 
-        name: line.name, 
-        quantity: 0, 
+      const productData = salesByProductMap.get(line.menu_item_id) || {
+        name: line.name,
+        quantity: 0,
         total: 0,
         category: categoryName,
         taxa: 0,
         troco: 0,
         paymentMethods: new Set<string>()
       };
-      
+
       productData.quantity += line.quantity;
       productData.total += (line.price * line.quantity);
       if (lineCount > 0) {
@@ -167,7 +168,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
       if (order.payment_method) {
         productData.paymentMethods.add(order.payment_method);
       }
-      
+
       salesByProductMap.set(line.menu_item_id, productData);
     });
   });
