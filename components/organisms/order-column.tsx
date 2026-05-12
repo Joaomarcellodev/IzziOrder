@@ -29,7 +29,12 @@ export function OrderColumn({ title, orders, status, serverDate, ...actions }: O
     return (a.dailySeq || 0) - (b.dailySeq || 0);
   });
 
-  todayOrders.sort((a, b) => (a.dailySeq || 0) - (b.dailySeq || 0));
+  todayOrders.sort((a, b) => {
+    if (status === "CLOSED") {
+      return (b.dailySeq || 0) - (a.dailySeq || 0);
+    }
+    return (a.dailySeq || 0) - (b.dailySeq || 0);
+  });
 
   const hasBacklog = status === "OPEN" && backlogOrders.length > 0;
 
@@ -72,6 +77,12 @@ export function OrderColumn({ title, orders, status, serverDate, ...actions }: O
                 <OrderCard order={order} {...actions} />
               </div>
             ))}
+            <button
+              onClick={() => setShowBacklog(false)}
+              className="w-full py-2 text-[10px] font-black text-orange-600 uppercase tracking-widest bg-orange-50 hover:bg-orange-100 rounded-xl transition-all border border-orange-100/50"
+            >
+              Esconder Pendências
+            </button>
           </div>
         )}
 
