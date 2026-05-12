@@ -2,7 +2,8 @@
 
 import { PaymentMethod, OrderType } from "@/lib/entities/order";
 import { SalesReportFilters } from "@/app/actions/report-actions";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/atoms/label";
 import { Input } from "@/components/atoms/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/organisms/select";
@@ -14,6 +15,27 @@ interface ReportFiltersProps {
 }
 
 export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersProps) {
+  const handleMonthYearChange = (month?: number, year?: number) => {
+    const newFilters = { ...filters, month, year };
+
+    const m = month !== undefined ? month : filters.month;
+    const y = year !== undefined ? year : filters.year;
+
+    if (y) {
+      if (m) {
+        const baseDate = new Date(y, m - 1, 1);
+        newFilters.startDate = startOfMonth(baseDate).toISOString();
+        newFilters.endDate = endOfMonth(baseDate).toISOString();
+      } else {
+        const baseDate = new Date(y, 0, 1);
+        newFilters.startDate = startOfYear(baseDate).toISOString();
+        newFilters.endDate = endOfYear(baseDate).toISOString();
+      }
+    }
+
+    setFilters(newFilters);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100 print:hidden">
       <div className="space-y-2">
@@ -88,7 +110,7 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
         <Label>Mês</Label>
         <Select
           value={filters.month?.toString() || "all"}
-          onValueChange={(v) => setFilters({ ...filters, month: v === "all" ? undefined : parseInt(v) })}
+          onValueChange={(v) => handleMonthYearChange(v === "all" ? undefined : parseInt(v), filters.year)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos" />
@@ -97,7 +119,7 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
             <SelectItem value="all">Todos</SelectItem>
             {Array.from({ length: 12 }, (_, i) => (
               <SelectItem key={i + 1} value={(i + 1).toString()}>
-                {format(new Date(2024, i, 1), "MMMM")}
+                {format(new Date(2024, i, 1), "MMMM", { locale: ptBR })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -107,7 +129,7 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
         <Label>Ano</Label>
         <Select
           value={filters.year?.toString() || "all"}
-          onValueChange={(v) => setFilters({ ...filters, year: v === "all" ? undefined : parseInt(v) })}
+          onValueChange={(v) => handleMonthYearChange(filters.month, v === "all" ? undefined : parseInt(v))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos" />
