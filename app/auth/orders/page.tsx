@@ -49,7 +49,7 @@ export default async function OrdersPage() {
   const safeUser =
     user && typeof user.toJSON === "function" ? user.toJSON() : user ?? {};
 
-  const serverDate = new Date().toISOString().split('T')[0];
+  const serverDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
   return (
     <AppShell
