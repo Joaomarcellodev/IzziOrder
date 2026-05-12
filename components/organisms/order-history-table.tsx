@@ -74,14 +74,19 @@ export function OrderHistoryTable({ data }: { data: DayGroup[] }) {
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   )}
                   <span className="font-bold text-gray-700">
-                    {format(parseISO(dayGroup.date), "eeee, dd 'de' MMMM", { locale: ptBR })}
+                    {format(parseISO(dayGroup.date), "dd/MM/yy", { locale: ptBR })}
                   </span>
                   <span className="text-sm text-gray-500 font-medium">
                     ({dayGroup.orders.length} pedidos)
                   </span>
                 </div>
-                <div className="text-blue-600 font-bold">
-                  R$ {dayGroup.orders.reduce((acc, o) => acc + Number(o.total), 0).toFixed(2)}
+                <div className="text-right">
+                  <div className="text-blue-600 font-bold text-lg">
+                    R$ {dayGroup.orders.reduce((acc, o) => acc + Number(o.total), 0).toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-400 font-medium">
+                    Troco total: R$ {dayGroup.orders.reduce((acc, o) => acc + Number(o.change_value || 0), 0).toFixed(2)}
+                  </div>
                 </div>
               </button>
 
@@ -137,7 +142,7 @@ export function OrderHistoryTable({ data }: { data: DayGroup[] }) {
                             )}
                             {Number(order.change_value) > 0 && (
                               <div className="flex justify-between">
-                                <span>Troco para:</span>
+                                <span>Troco:</span>
                                 <span>R$ {Number(order.change_value).toFixed(2)}</span>
                               </div>
                             )}

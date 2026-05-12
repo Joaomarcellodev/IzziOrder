@@ -37,7 +37,7 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100 print:hidden">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100 print:hidden">
       <div className="space-y-2">
         <Label>Início</Label>
         <Input
