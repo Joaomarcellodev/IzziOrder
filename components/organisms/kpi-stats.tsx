@@ -29,17 +29,6 @@ export function KPIStats({ kpis }: { kpis: KPIProps[] }) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
-              <div className="flex items-center gap-1 mt-1">
-                {isPositive ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-3.5 h-3.5 text-red-600" />
-                )}
-                <span className={`text-xs font-bold ${isPositive ? "text-green-600" : "text-red-600"}`}>
-                  {Math.abs(kpi.trend)}%
-                </span>
-                <span className="text-[10px] text-gray-400 font-medium ml-1">vs anterior</span>
-              </div>
             </CardContent>
           </Card>
         );

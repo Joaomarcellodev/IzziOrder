@@ -28,10 +28,30 @@ export function ReportsAnalytics() {
   };
 
   const dynamicKpis = report ? [
-    { title: "Total de Vendas", value: `R$ ${report.generalTotalSales.toFixed(2)}`, trend: 0, icon: DollarSign, borderColor: COLORS.primary },
-    { title: "Taxa de Entrega", value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`, trend: 0, icon: ShoppingBag, borderColor: COLORS.secondary },
-    { title: "Total de Pedidos", value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`, trend: 0, icon: Users, borderColor: COLORS.success },
-    { title: "Ticket Médio", value: `R$ ${report.generalTotalSales > 0 ? (report.generalTotalSales / (report.salesByDay.length || 1)).toFixed(2) : '0.00'}`, trend: 0, icon: Clock, borderColor: COLORS.danger },
+    {
+      title: "Total de Vendas",
+      value: `R$ ${report.generalTotalSales.toFixed(2)}`,
+      trend: 0, icon: DollarSign,
+      borderColor: COLORS.primary
+    },
+    {
+      title: "Taxa de Entrega",
+      value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`,
+      trend: 0, icon: ShoppingBag,
+      borderColor: COLORS.secondary
+    },
+    {
+      title: "Total de Pedidos",
+      value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`,
+      trend: 0, icon: Users,
+      borderColor: COLORS.success
+    },
+    {
+      title: "Ticket Médio",
+      value: `R$ ${report.generalTotalSales > 0 ? (report.generalTotalSales / (report.salesByDay.length || 1)).toFixed(2) : '0.00'}`,
+      trend: 0, icon: Clock,
+      borderColor: COLORS.danger
+    },
   ] : [];
 
   const dynamicRevenue = report?.salesByDay.map(d => ({
