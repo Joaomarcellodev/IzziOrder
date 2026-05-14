@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/atoms/label";
 import { Input } from "@/components/atoms/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/organisms/select";
+import { MonthYearPicker } from "./month-year-picker";
 
 interface ReportFiltersProps {
   filters: SalesReportFilters;
@@ -18,41 +19,90 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
   const handleMonthYearChange = (month?: number, year?: number) => {
     const newFilters = { ...filters, month, year };
 
-    const m = month !== undefined ? month : filters.month;
-    const y = year !== undefined ? year : filters.year;
-
-    if (y) {
-      if (m) {
-        const baseDate = new Date(y, m - 1, 1);
+    if (year) {
+      const now = new Date();
+      if (month) {
+        const baseDate = new Date(year, month - 1, 1);
         newFilters.startDate = startOfMonth(baseDate).toISOString();
-        newFilters.endDate = endOfMonth(baseDate).toISOString();
+        const end = endOfMonth(baseDate);
+        newFilters.endDate = (end > now ? now : end).toISOString();
       } else {
-        const baseDate = new Date(y, 0, 1);
+        const baseDate = new Date(year, 0, 1);
         newFilters.startDate = startOfYear(baseDate).toISOString();
-        newFilters.endDate = endOfYear(baseDate).toISOString();
+        const end = endOfYear(baseDate);
+        newFilters.endDate = (end > now ? now : end).toISOString();
       }
     }
 
     setFilters(newFilters);
   };
 
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2024 + 1 }, (_, i) => 2024 + i).reverse();
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100 print:hidden">
+      <div className="col-span-2 space-y-2 border border-border rounded-lg p-4">
+        <Label>Filtrar por datas:</Label>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Início</Label>
+            <Input
+              type="date"
+              max={filters.endDate ? format(parseISO(filters.endDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+              value={filters.startDate ? format(parseISO(filters.startDate), "yyyy-MM-dd") : ""}
+              onChange={(e) => setFilters({
+                ...filters,
+                startDate: e.target.value ? parseISO(e.target.value).toISOString() : undefined,
+                month: undefined,
+                year: undefined
+              })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Fim</Label>
+            <Input
+              type="date"
+              min={filters.startDate ? format(parseISO(filters.startDate), "yyyy-MM-dd") : undefined}
+              max={format(new Date(), "yyyy-MM-dd")}
+              value={filters.endDate ? format(parseISO(filters.endDate), "yyyy-MM-dd") : ""}
+              onChange={(e) => setFilters({
+                ...filters,
+                endDate: e.target.value ? parseISO(e.target.value).toISOString() : undefined,
+                month: undefined,
+                year: undefined
+              })}
+            />
+          </div>
+        </div>
+      </div>
       <div className="space-y-2">
-        <Label>Início</Label>
-        <Input
-          type="date"
-          value={filters.startDate ? format(parseISO(filters.startDate), "yyyy-MM-dd") : ""}
-          onChange={(e) => setFilters({ ...filters, startDate: e.target.value ? parseISO(e.target.value).toISOString() : undefined })}
+        <Label>Filtrar por mês:</Label>
+        <MonthYearPicker
+          month={filters.month}
+          year={filters.year}
+          onChange={handleMonthYearChange}
         />
       </div>
       <div className="space-y-2">
-        <Label>Fim</Label>
-        <Input
-          type="date"
-          value={filters.endDate ? format(parseISO(filters.endDate), "yyyy-MM-dd") : ""}
-          onChange={(e) => setFilters({ ...filters, endDate: e.target.value ? parseISO(e.target.value).toISOString() : undefined })}
-        />
+        <Label>Filtrar por ano:</Label>
+        <Select
+          value={filters.year?.toString() || "all"}
+          onValueChange={(v) => {
+            const y = v === "all" ? undefined : parseInt(v);
+            handleMonthYearChange(undefined, y);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            {years.map(y => (
+              <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label>Pagamento</Label>
@@ -84,7 +134,10 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="LOCAL">Local</SelectItem>
-            <SelectItem value="DELIVERY">Delivery</SelectItem>
+            {/*
+              TODO: readicionar quando DELIVERY for inplementado:
+              <SelectItem value="DELIVERY">Delivery</SelectItem>
+            */}
             <SelectItem value="PICKUP">Retirada</SelectItem>
           </SelectContent>
         </Select>
@@ -102,42 +155,6 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
             <SelectItem value="all">Todos</SelectItem>
             {menuItems.map(item => (
               <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Mês</Label>
-        <Select
-          value={filters.month?.toString() || "all"}
-          onValueChange={(v) => handleMonthYearChange(v === "all" ? undefined : parseInt(v), filters.year)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            {Array.from({ length: 12 }, (_, i) => (
-              <SelectItem key={i + 1} value={(i + 1).toString()}>
-                {format(new Date(2024, i, 1), "MMMM", { locale: ptBR })}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Ano</Label>
-        <Select
-          value={filters.year?.toString() || "all"}
-          onValueChange={(v) => handleMonthYearChange(filters.month, v === "all" ? undefined : parseInt(v))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            {[2024, 2025, 2026].map(year => (
-              <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
             ))}
           </SelectContent>
         </Select>
