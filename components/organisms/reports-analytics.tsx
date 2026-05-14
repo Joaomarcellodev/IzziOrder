@@ -63,13 +63,14 @@ export function ReportsAnalytics() {
       icon: Users,
       borderColor: COLORS.danger
     },
-    {
-      title: "Taxa de Entrega",
-      value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`,
-      trend: 0,
-      icon: ShoppingBag,
-      borderColor: COLORS.secondary
-    },
+    // TODO: Readicionar quando DELIVERY for implementado:
+    // {
+    //   title: "Taxa de Entrega",
+    //   value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`,
+    //   trend: 0,
+    //   icon: ShoppingBag,
+    //   borderColor: COLORS.secondary
+    // },
   ] : [];
 
   const dynamicRevenue = report?.salesByDay.map(d => ({
