@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, ShoppingBag, Users, Clock, FileDown, LayoutDashboard, Utensils, ClipboardList, Filter, ChevronDown } from "lucide-react";
+import { DollarSign, ShoppingBag, Users, Clock, FileDown, LayoutDashboard, Utensils, ClipboardList, Filter, ChevronDown, Coins } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/molecules/tabs";
 import { Button } from "@/components/atoms/button";
 import { Collapsible, CollapsibleContent } from "@/components/atoms/collapsible";
@@ -38,10 +38,17 @@ export function ReportsAnalytics() {
       borderColor: COLORS.primary
     },
     {
+      title: "Total de Troco",
+      value: `R$ ${report.totalChange.toFixed(2)}`,
+      trend: 0,
+      icon: Coins,
+      borderColor: "#f59e0b"
+    },
+    {
       title: "Total de Pedidos",
       value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`,
       trend: 0,
-      icon: Users,
+      icon: ShoppingBag,
       borderColor: COLORS.success
     },
     {
@@ -53,7 +60,7 @@ export function ReportsAnalytics() {
           : '0.00';
       })()}`,
       trend: 0,
-      icon: Clock,
+      icon: Users,
       borderColor: COLORS.danger
     },
     {
