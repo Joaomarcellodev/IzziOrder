@@ -18,6 +18,7 @@ export interface SalesReportFilters {
 export interface SalesReport {
   deliveryFeeTotal: number;
   generalTotalSales: number;
+  totalChange: number;
   salesByDay: { date: string; total: number; count: number }[];
   salesByProduct: {
     name: string;
@@ -91,6 +92,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
   const report: SalesReport = {
     deliveryFeeTotal: 0,
     generalTotalSales: 0,
+    totalChange: 0,
     salesByDay: [],
     salesByProduct: [],
     salesByPaymentMethod: [],
@@ -119,6 +121,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
 
     report.generalTotalSales += total;
     report.deliveryFeeTotal += deliveryFee;
+    report.totalChange += changeValue;
 
     // Sales by Day
     const day = format(parseISO(order.date), "yyyy-MM-dd");
