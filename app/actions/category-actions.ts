@@ -158,43 +158,55 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
     };
   }
 
-  // 3. Se houver apenas itens inativos, limpa eles
+  // 3. Se houver apenas itens inativos, tentamos desvincular eles
   const inactiveItems = items?.filter((item) => item.is_active === false) || [];
   if (inactiveItems.length > 0) {
-    // Tenta deletar as imagens dos itens inativos do Blob
-    for (const item of inactiveItems) {
-      if (item.image && item.image !== PLACEHOLDER_IMAGE_URL) {
-        try {
-          await del(item.image);
-        } catch (err: any) {
-          console.warn(
-            `Aviso: Falha ao excluir imagem do item inativo ${item.id}:`,
-            err.message
-          );
-        }
-      }
-    }
-
-    // Deleta os itens inativos do banco de dados (limpeza física)
-    const { error: deleteItemsError } = await supabase
+    // Tenta desvincular os itens da categoria (setando NULL)
+    // Isso é o mais seguro para manter o histórico de pedidos antigos.
+    const { error: unlinkError } = await supabase
       .from("menu_items")
-      .delete()
+      .update({ category_id: null })
       .eq("category_id", id)
       .eq("is_active", false);
 
-    if (deleteItemsError) {
-      if (deleteItemsError.code === "23503") {
-        return {
-          success: false,
-          error:
-            "Não foi possível excluir os itens antigos desta categoria pois eles estão vinculados a pedidos existentes. Contate o suporte para limpeza manual.",
-        };
+    if (unlinkError) {
+      // Se não foi possível setar NULL (provavelmente por restrição NOT NULL no banco),
+      // tentamos a exclusão física dos itens inativos.
+      
+      // Tenta deletar as imagens dos itens inativos do Blob antes da exclusão física
+      for (const item of inactiveItems) {
+        if (item.image && item.image !== PLACEHOLDER_IMAGE_URL) {
+          try {
+            await del(item.image);
+          } catch (err: any) {
+            console.warn(
+              `Aviso: Falha ao excluir imagem do item inativo ${item.id}:`,
+              err.message
+            );
+          }
+        }
       }
-      console.error(
-        "Erro ao excluir itens inativos da categoria:",
-        deleteItemsError
-      );
-      return { success: false, error: "Erro ao limpar itens da categoria." };
+
+      const { error: deleteItemsError } = await supabase
+        .from("menu_items")
+        .delete()
+        .eq("category_id", id)
+        .eq("is_active", false);
+
+      if (deleteItemsError) {
+        if (deleteItemsError.code === "23503") {
+          return {
+            success: false,
+            error:
+              "Não foi possível excluir a categoria pois ela contém itens que estão vinculados a pedidos existentes no sistema. Remova os itens ou altere a categoria deles antes de tentar novamente.",
+          };
+        }
+        console.error(
+          "Erro ao excluir itens inativos da categoria:",
+          deleteItemsError
+        );
+        return { success: false, error: "Erro ao limpar itens da categoria." };
+      }
     }
   }
 
