@@ -3,27 +3,46 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
 
+  // Helper para fechar toasts que bloqueiam a UI
+  async function fecharToasts(page: Page) {
+    // Aguarda os toasts desaparecerem ou tenta fechá-los
+    const toasts = page.locator('[role="status"][data-state="open"]');
+    const count = await toasts.count();
+    for (let i = 0; i < count; i++) {
+      try {
+        const closeBtn = toasts.nth(i).locator('button[data-dismiss]');
+        if (await closeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+          await closeBtn.click();
+        }
+      } catch { /* toast já desapareceu */ }
+    }
+    // Espera os toasts sumirem completamente
+    await page.waitForTimeout(2000);
+  }
+
   // Helper para excluir a categoria residual se existir
   async function excluirCategoriaSeExistir(page: Page, nome: string) {
-    const categoriaLocator = page.locator('div, li, article, section')
-      .filter({ hasText: nome })
-      .filter({ has: page.locator('button:has(svg.lucide-trash)') })
-      .last();
+    const categoriaLocator = page.locator('div.flex.items-center.p-2')
+      .filter({ hasText: nome });
 
     if (await categoriaLocator.isVisible({ timeout: 2000 }).catch(() => false)) {
       await categoriaLocator.locator('button:has(svg.lucide-trash)').click();
       await page.waitForTimeout(1000);
 
-      const botaoConfirmar = page.getByRole('button', { name: /excluir|confirmar|sim/i });
-      if (await botaoConfirmar.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await botaoConfirmar.click();
-        await page.waitForTimeout(2000);
+      const botaoExcluir = page.getByRole('button', { name: /excluir/i }).last();
+      if (await botaoExcluir.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await botaoExcluir.click();
+        await page.waitForTimeout(3000); // Espera mais tempo para toast sumir
         console.log('Categoria residual excluída: ' + nome);
       }
+
+      // Garante que toasts não bloqueiem a próxima ação
+      await fecharToasts(page);
     }
   }
 
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(120000);
     console.log('Preparando ambiente de teste para categorias...');
 
     await page.goto('http://localhost:3000/login');
@@ -35,15 +54,18 @@ test.describe('Editar Categoria', () => {
     await page.waitForTimeout(3000);
 
     await page.goto('http://localhost:3000/auth/menu');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     categoriaDeTeste = 'Categoria Para Editar';
 
-    // Limpa categoria residual de rodadas anteriores, se existir
+    // Limpa categorias residuais de rodadas anteriores
     await excluirCategoriaSeExistir(page, categoriaDeTeste);
-    // Limpa também possíveis resíduos de edição
     await excluirCategoriaSeExistir(page, 'Categoria Editada');
     await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
+
+    // Recarrega a página para garantir estado limpo (sem overlays, sem toasts)
+    await page.goto('http://localhost:3000/auth/menu');
+    await page.waitForTimeout(3000);
 
     await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
     await page.waitForTimeout(2000);
@@ -59,21 +81,12 @@ test.describe('Editar Categoria', () => {
 
 
   test.afterEach(async ({ page }) => {
-    console.log('Limpando categoria: ' + categoriaDeTeste);
+    console.log('Limpando categorias...');
 
-    if (!page.url().includes('/auth/menu')) {
-      await page.goto('http://localhost:3000/auth/menu');
-      await page.waitForTimeout(2000);
-    }
+    // Recarrega a página para estado limpo
+    await page.goto('http://localhost:3000/auth/menu');
+    await page.waitForTimeout(3000);
 
-    // Fecha qualquer modal que possa estar aberto
-    const cancelarBtn = page.getByRole('button', { name: /cancelar/i });
-    if (await cancelarBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await cancelarBtn.click();
-      await page.waitForTimeout(1000);
-    }
-
-    // Limpa a categoria de teste e possíveis resíduos
     await excluirCategoriaSeExistir(page, categoriaDeTeste);
     await excluirCategoriaSeExistir(page, 'Categoria Editada');
     await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
