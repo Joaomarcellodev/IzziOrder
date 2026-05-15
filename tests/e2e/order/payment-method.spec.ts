@@ -141,14 +141,22 @@ async function deleteOrder(page: any, orderCard: any) {
       await page.waitForTimeout(500);
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
-      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).last();;
       await expect(orderCard).toBeVisible();
 
       // Edita o pedido para adicionar forma de pagamento
-      await orderCard.getByTestId('edit-order-button').click();
-      const modal = page.getByRole('dialog');
-      await expect(modal).toBeVisible();
-      await page.waitForTimeout(500);
+const editButton =
+  orderCard.getByTestId('edit-order-button');
+
+await expect(editButton).toBeVisible();
+
+await editButton.click();
+
+const modal = page.getByRole('dialog');
+
+await expect(modal).toBeVisible({
+  timeout: 10000,
+});
 
       // Scrolla dentro do modal de edição e seleciona PIX
       await modal.evaluate((el: Element) => {
