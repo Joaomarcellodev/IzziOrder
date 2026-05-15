@@ -123,8 +123,9 @@ async function deleteOrder(page: any, orderCard: any) {
       await page.waitForTimeout(500);
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
-      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
-      await expect(orderCard).toBeVisible();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).last();;
+      await expect(orderCard).toBeVisible({timeout: 10000},);
+      
       const finishButton = orderCard.getByTestId('finish-order-button');
       await expect(finishButton).toBeDisabled();
       await deleteOrder(page, orderCard);
