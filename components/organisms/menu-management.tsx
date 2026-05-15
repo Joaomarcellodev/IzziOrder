@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -40,6 +40,7 @@ import {
   CategoryDeleteConfirmationModal,
 } from "./menu-management/delete-confirmation-modal";
 import { CategoryManagement } from "./menu-management/category-management";
+import { printMenu } from "./menu-management/printable-menu";
 
 // Interfaces
 interface Category {
@@ -339,6 +340,13 @@ export function MenuManagement({
           </div>
 
           <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => printMenu({ menuItems: localMenuItems, categories: localCategories })}
+              className="w-full sm:w-auto font-semibold"
+            >
+              <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
+            </Button>
             <Button
               onClick={addNewItem}
               className="w-full sm:w-auto text-white font-semibold"
