@@ -19,7 +19,7 @@ export interface MenuItem {
   description: string;
   price: number;
   categoryId: string;
-  image: string;
+  imageUrl: string;
   available: boolean;
 }
 
@@ -66,10 +66,22 @@ export async function getMenuItems(establishment_id: string) {
  */
 async function uploadImage(file: File): Promise<ActionResponse> {
   try {
-    const { url } = await put(file.name, file, { access: "public" });
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      throw new Error("BLOB_READ_WRITE_TOKEN não configurada no servidor.");
+    }
+
+    // Criar um nome de arquivo único para evitar colisões
+    const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+
+    const { url } = await put(filename, file, { 
+      access: "public",
+      token: token
+    });
+    
     return { success: true, data: { url } };
   } catch (err: any) {
-    console.error("Erro ao fazer upload da imagem:", err);
+    console.error("Erro detalhado no upload da imagem:", err);
     return {
       success: false,
       error: `Falha no upload da imagem: ${err.message}`,
@@ -138,7 +150,7 @@ export async function createMenuItem(
   }
 
   revalidatePath("/menu");
-  return { success: true, data };
+  return { success: true, data: mapDataToMenuItem(data) };
 }
 
 export async function calculateNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
@@ -230,7 +242,7 @@ export async function updateMenuItem(
   }
 
   revalidatePath("/menu");
-  return { success: true, data };
+  return { success: true, data: mapDataToMenuItem(data) };
 }
 
 /**
@@ -355,7 +367,7 @@ function mapDataToMenuItem(orderData: any): MenuItem {
     description: orderData.description,
     price: orderData.price,
     categoryId: orderData.category_id,
-    image: orderData.image,
+    imageUrl: orderData.image,
     available: orderData.available
   }
 

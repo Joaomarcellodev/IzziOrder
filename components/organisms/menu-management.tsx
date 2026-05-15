@@ -174,12 +174,8 @@ export function MenuManagement({
     if (editingItem.id) {
       const { success, error, data } = await updateMenuItem(editingItem.id, editingItem);
       if (success && data) {
-        const itemAtualizado = {
-          ...data,
-          categoryId: data.category_id ?? data.categoryId,
-        };
         setLocalMenuItems((prevItems) =>
-          prevItems.map((item) => (item.id === itemAtualizado.id ? itemAtualizado : item))
+          prevItems.map((item) => (item.id === data.id ? data : item))
         );
       } else {
         toast({ title: `Erro: ${error}` });
@@ -187,11 +183,7 @@ export function MenuManagement({
     } else {
       const { success, error, data } = await createMenuItem(editingItem);
       if (success && data) {
-        const itemCriado = {
-          ...data,
-          categoryId: data.category_id ?? data.categoryId,
-        };
-        setLocalMenuItems((prevItems) => [...prevItems, itemCriado]);
+        setLocalMenuItems((prevItems) => [...prevItems, data]);
         toast({ title: "Item adicionado com sucesso" });
       } else {
         toast({ title: `Erro: ${error}` });
