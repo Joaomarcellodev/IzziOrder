@@ -3,6 +3,25 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
 
+  // Helper para excluir a categoria residual se existir
+  async function excluirCategoriaSeExistir(page: Page, nome: string) {
+    const categoriaLocator = page.locator('div, li, article, section')
+      .filter({ hasText: nome })
+      .filter({ has: page.locator('button:has(svg.lucide-trash)') })
+      .last();
+
+    if (await categoriaLocator.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await categoriaLocator.locator('button:has(svg.lucide-trash)').click();
+      await page.waitForTimeout(1000);
+
+      const botaoConfirmar = page.getByRole('button', { name: /excluir|confirmar|sim/i });
+      if (await botaoConfirmar.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await botaoConfirmar.click();
+        await page.waitForTimeout(2000);
+        console.log('Categoria residual excluída: ' + nome);
+      }
+    }
+  }
 
   test.beforeEach(async ({ page }) => {
     console.log('Preparando ambiente de teste para categorias...');
@@ -15,11 +34,16 @@ test.describe('Editar Categoria', () => {
     await page.waitForURL('**/auth/**', { timeout: 20000 });
     await page.waitForTimeout(3000);
 
-
     await page.goto('http://localhost:3000/auth/menu');
     await page.waitForTimeout(2000);
 
     categoriaDeTeste = 'Categoria Para Editar';
+
+    // Limpa categoria residual de rodadas anteriores, se existir
+    await excluirCategoriaSeExistir(page, categoriaDeTeste);
+    // Limpa também possíveis resíduos de edição
+    await excluirCategoriaSeExistir(page, 'Categoria Editada');
+    await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
 
     await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
     await page.waitForTimeout(2000);
@@ -42,21 +66,19 @@ test.describe('Editar Categoria', () => {
       await page.waitForTimeout(2000);
     }
 
-    if (categoriaDeTeste) {
-      try {
-        await page.locator('button:has(svg.lucide-trash)').last().click();
-        await page.waitForTimeout(1000);
-
-        const botaoConfirmar = page.getByRole('button', { name: /excluir|confirmar|sim/i });
-        if (await botaoConfirmar.isVisible({ timeout: 2000 })) {
-          await botaoConfirmar.click();
-          await page.waitForTimeout(1000);
-          console.log('Ultima categoria excluída: ' + categoriaDeTeste);
-        }
-      } catch (error) {
-        console.log('Categoria não encontrada para exclusão: ' + categoriaDeTeste);
-      }
+    // Fecha qualquer modal que possa estar aberto
+    const cancelarBtn = page.getByRole('button', { name: /cancelar/i });
+    if (await cancelarBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await cancelarBtn.click();
+      await page.waitForTimeout(1000);
     }
+
+    // Limpa a categoria de teste e possíveis resíduos
+    await excluirCategoriaSeExistir(page, categoriaDeTeste);
+    await excluirCategoriaSeExistir(page, 'Categoria Editada');
+    await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
+
+    console.log('Limpeza concluída');
   });
 
   // 1. EDITAR NOME DA CATEGORIA
