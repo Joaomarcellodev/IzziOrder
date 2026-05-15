@@ -188,7 +188,8 @@ await expect(modal).toBeVisible({
       test.setTimeout(60000);
       await page.getByRole('button', { name: /Novo Pedido/i }).click();
       await page.waitForTimeout(1000);
-      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox').click();
+      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox') .first()
+  .click();
       await page.getByRole('option', { name: 'Retirada' }).click();
       await page.waitForTimeout(500);
       await page.getByPlaceholder('Ex: João').fill('João Silva');
