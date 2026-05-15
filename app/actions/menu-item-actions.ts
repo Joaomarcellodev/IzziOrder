@@ -6,6 +6,7 @@ import { put, del } from "@vercel/blob";
 import { validateMenuItem } from "@/lib/validators/menuItem";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getEstablishmentId } from "./establisment_actions";
+import { PLACEHOLDER_IMAGE_URL } from "@/lib/constants";
 
 interface ActionResponse {
   success: boolean;
@@ -34,7 +35,7 @@ export interface MenuItemRequestDTO {
   imageUrl?: string;
 }
 
-export const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
+
 
 export async function getMenuItems(establishment_id: string) {
   const supabase = createClient();

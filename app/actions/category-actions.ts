@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { getEstablishmentId } from "./establisment_actions";
 import { del } from "@vercel/blob";
-import { PLACEHOLDER_IMAGE_URL } from "./menu-item-actions";
+import { PLACEHOLDER_IMAGE_URL } from "@/lib/constants";
 
 // Tipo para a resposta das Server Actions
 interface ActionResponse<T = any> {
