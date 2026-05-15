@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { GripVertical, Edit, Trash, CameraOff, MoreVertical } from "lucide-react";
+import { GripVertical, SquarePen, Trash, CameraOff, MoreVertical } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/molecules/card";
@@ -192,7 +192,7 @@ export const MenuItemCard = ({
                 onClick={() => openEditModal(item)}
                 className="h-7 w-7 sm:h-8 sm:w-8"
               >
-                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -243,7 +243,7 @@ export const MenuItemCard = ({
           }}
           className="h-8 w-8"
         >
-          <Edit className="w-4 h-4" />
+          <SquarePen className="w-4 h-4" />
         </Button>
 
         <Button
