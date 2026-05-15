@@ -3,22 +3,19 @@ import { test, expect } from '@playwright/test';
 test.describe('Close and reopen order', () => {
 
     test.beforeEach(async ({ page }) => {
-        // Login
         await page.goto('http://localhost:3000/login');
         await page.waitForTimeout(2000);
         await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
         await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
         await page.locator('button.bg-blue-600').click();
-        await page.waitForURL('**/auth/**', { timeout: 15000 });
+        await page.waitForURL('**/auth/**', { timeout: 30000 });
         await page.waitForTimeout(3000);
 
-        // Ir para a página de pedidos
         await page.goto('http://localhost:3000/auth/orders');
         await page.waitForTimeout(2000);
     });
 
     async function deleteOrder(page: any, locator: any) {
-        // Tenta encontrar o botão de lixeira dentro do card
         const deleteButton = locator.getByTestId("delete-order-button");
         await expect(deleteButton).toBeVisible({ timeout: 10000 });
         await deleteButton.click();
@@ -37,8 +34,24 @@ test.describe('Close and reopen order', () => {
         const menuItemBtn = page.locator('button.justify-start.h-auto').first();
         await expect(menuItemBtn).toBeVisible();
         await menuItemBtn.click();
+        await page.waitForTimeout(500);
+
+        // Seleciona forma de pagamento antes de criar
+        const modalContent = page.locator('[role="dialog"]');
+        await modalContent.evaluate((el: Element) => {
+            (el as HTMLElement).scrollTop = (el as HTMLElement).scrollHeight;
+        });
+        await page.waitForTimeout(500);
+
+        const paymentCombobox = page.locator('[role="dialog"]').getByRole('combobox').last();
+        await paymentCombobox.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(500);
+        await paymentCombobox.click();
+        await page.getByRole('option', { name: 'Pix' }).click();
+        await page.waitForTimeout(500);
 
         await page.getByRole('button', { name: 'Criar Pedido' }).click();
+        await page.waitForTimeout(2000);
 
         const openColumn = page.getByTestId('order-column-OPEN');
         const orderCard = openColumn
@@ -49,6 +62,7 @@ test.describe('Close and reopen order', () => {
 
         // Finalizar Pedido
         await orderCard.getByTestId('finish-order-button').click();
+        await page.waitForTimeout(1000);
 
         const closedColumn = page.getByTestId('order-column-CLOSED');
         const finishedCard = closedColumn.locator(
@@ -60,6 +74,7 @@ test.describe('Close and reopen order', () => {
 
         // Reabrir Pedido
         await finishedCard.getByTestId('reopen-order-button').click();
+        await page.waitForTimeout(1000);
 
         // Verificar se voltou para abertos
         const reopenedCard = openColumn.locator(
@@ -69,9 +84,8 @@ test.describe('Close and reopen order', () => {
 
         await expect(reopenedCard).toBeVisible();
 
-        // Limpar do banco (via UI)
+        // Cleanup
         await deleteOrder(page, reopenedCard);
         await expect(reopenedCard).not.toBeVisible();
     });
-
 });

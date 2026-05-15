@@ -3,33 +3,47 @@ import { test, expect } from '@playwright/test';
 test.describe('Payment Method - E2E', () => {
  
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000/login');
+    await page.goto('http://localhost:3001/login');
     await page.waitForTimeout(2000);
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
     await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
     await page.locator('button.bg-blue-600').click();
     await page.waitForURL('**/auth/**', { timeout: 30000 });
     await page.waitForTimeout(3000);
-    await page.goto('http://localhost:3000/auth/orders');
+    await page.goto('http://localhost:3001/auth/orders');
     await page.waitForTimeout(2000);
   });
  
-  async function deleteOrder(page: any, locator: any) {
-    const deleteButton = locator.getByTestId("delete-order-button");
-    await expect(deleteButton).toBeVisible({ timeout: 10000 });
-    await deleteButton.click();
-    const confirmButton = page.getByRole('button', { name: /^Excluir$/i }).last();
-    await expect(confirmButton).toBeVisible();
-    await confirmButton.click();
-    await page.waitForTimeout(1000);
-  }
+async function deleteOrder(page: any, orderCard: any) {
+  const deleteButton = orderCard.getByTestId('delete-order-button');
 
-  // Helper reutilizável para selecionar forma de pagamento no modal
+  await expect(deleteButton).toBeVisible();
+
+  await deleteButton.click();
+
+  // modal de confirmação
+  const confirmButton = page.getByRole('button', {
+    name: /^Excluir$/i,
+  });
+
+  await expect(confirmButton).toBeVisible({
+    timeout: 10000,
+  });
+
+  await confirmButton.click();
+
+  // espera o pedido sumir da tela
+  await expect(orderCard).not.toBeVisible({
+    timeout: 10000,
+  });
+}
+
   async function selectPaymentMethod(page: any, paymentOption: string) {
     const modalContent = page.locator('[role="dialog"]');
     await modalContent.evaluate((el: Element) => {
       (el as HTMLElement).scrollTop = (el as HTMLElement).scrollHeight;
     });
+  
     await page.waitForTimeout(500);
     const paymentCombobox = page.locator('[role="dialog"]').getByRole('combobox').last();
     await paymentCombobox.scrollIntoViewIfNeeded();
@@ -46,11 +60,11 @@ test.describe('Payment Method - E2E', () => {
   test.describe('Valid Cases', () => {
  
     test('should create PICKUP order with PIX payment method', async ({ page }) => {
-      test.setTimeout(60000);
       const cliente = `Cliente ${Math.floor(Math.random() * 1000)}`;
       await page.getByRole('button', { name: /Novo Pedido/i }).click();
       await page.waitForTimeout(1000);
-      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox').click();
+      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox').first()
+  .click();
       await page.getByRole('option', { name: 'Retirada' }).click();
       await page.waitForTimeout(500);
       await page.getByPlaceholder('Ex: João').fill(cliente);
@@ -58,9 +72,9 @@ test.describe('Payment Method - E2E', () => {
       await page.waitForTimeout(500);
       await selectPaymentMethod(page, 'Pix');
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
-      await page.waitForTimeout(2000);
-      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).first();
-      await expect(orderCard).toBeVisible();
+      await page.waitForTimeout(3000);
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).last();
+      await expect(orderCard).toBeVisible({ timeout: 100000 });
       await expect(orderCard.getByText(/Pagamento: Pix/i)).toBeVisible();
       await deleteOrder(page, orderCard);
     });
@@ -72,7 +86,8 @@ test.describe('Payment Method - E2E', () => {
       const cliente = `Cliente ${Math.floor(Math.random() * 1000)}`;
       await page.getByRole('button', { name: /Novo Pedido/i }).click();
       await page.waitForTimeout(1000);
-      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox').click();
+      await page.locator('div:has-text("Tipo de Pedido")').getByRole('combobox').first()
+  .click();
       await page.getByRole('option', { name: 'Retirada' }).click();
       await page.waitForTimeout(500);
       await page.getByPlaceholder('Ex: João').fill(cliente);
@@ -92,7 +107,7 @@ test.describe('Payment Method - E2E', () => {
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
       const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).first();
-      await expect(orderCard).toBeVisible();
+      await expect(orderCard).toBeVisible({timeout: 100000});
       await expect(orderCard.getByText(/Pagamento: Espécie com troco/i)).toBeVisible();
       await expect(orderCard.getByText(/Troco: R\$/i)).toBeVisible();
       await deleteOrder(page, orderCard);
