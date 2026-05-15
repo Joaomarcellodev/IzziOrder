@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"; // Adicionado useEffect
+import { useState, useRef, useCallback, useEffect } from "react"; 
 import { GripVertical, Edit, Trash, Upload, Plus, CameraOff, MoreVertical } from "lucide-react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -112,15 +112,12 @@ const MenuItemCard = ({
       }
     };
 
-    // Adiciona o listener quando o menu abre
     if (isActionsOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
-      // Remove o listener quando o menu fecha
       document.removeEventListener('mousedown', handleClickOutside);
     }
 
-    // Função de limpeza (cleanup) para remover o listener ao desmontar o componente ou quando isActionsOpen muda para false
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -254,9 +251,7 @@ const MenuItemCard = ({
             </div>
           </div>
 
-          {/* Coluna 4: Ações no Desktop / Ícone de Ações no Mobile */}
           <div className="hidden sm:flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            {/* Desktop: Switch e Botões Visíveis */}
             <div className="flex items-center flex-shrink-0">
               <Switch
                 checked={item.available}
