@@ -6,7 +6,7 @@ import path from 'path';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-dotenv.config({ path: path.resolve(__dirname, '.env.test-e2e'), override: true });
+dotenv.config({ path: path.resolve(__dirname, '.env.e2e'), override: true });
 
 /**
  * Read environment variables from file.

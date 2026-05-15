@@ -226,11 +226,10 @@ export function MenuManagement({
     if (success && data) {
       setLocalCategories((prev) => [...prev, data]);
       toast({ title: `Categoria "${data.name}" adicionada!` });
+      setIsCategoryModalOpen(false);
     } else {
       toast({ title: `Erro ao adicionar a categoria "${trimmedName}"!` });
     }
-
-    setIsCategoryModalOpen(false);
   };
 
   const openEditCategoryModal = (category: Category) => {
@@ -257,12 +256,11 @@ export function MenuManagement({
       setLocalCategories((prev) => prev.map((cat) => (cat.id === data.id ? data : cat)));
 
       toast({ title: `Categoria atualizada para "${data.name}"!` });
+      setIsEditCategoryModalOpen(false);
+      setCategoryToEditId("");
     } else {
       toast({ title: `Erro ao atualizar categoria: ${error}` });
     }
-
-    setIsEditCategoryModalOpen(false);
-    setCategoryToEditId("");
   };
 
   const openDeleteCategoryModal = (category: Category) => {
