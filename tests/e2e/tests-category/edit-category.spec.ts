@@ -22,22 +22,22 @@ test.describe('Editar Categoria', () => {
 
   // Helper para excluir a categoria residual se existir
   async function excluirCategoriaSeExistir(page: Page, nome: string) {
-    const categoriaLocator = page.locator('div.flex.items-center.p-2')
-      .filter({ hasText: nome });
+    let categoriaLocator = page.locator('div.flex.items-center.p-2').filter({ hasText: nome });
 
-    if (await categoriaLocator.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await categoriaLocator.locator('button:has(svg.lucide-trash)').click();
+    while (await categoriaLocator.first().isVisible({ timeout: 1500 }).catch(() => false)) {
+      await categoriaLocator.first().locator('button:has(svg.lucide-trash)').click();
       await page.waitForTimeout(1000);
 
       const botaoExcluir = page.getByRole('button', { name: /excluir/i }).last();
       if (await botaoExcluir.isVisible({ timeout: 3000 }).catch(() => false)) {
         await botaoExcluir.click();
-        await page.waitForTimeout(3000); // Espera mais tempo para toast sumir
+        await page.waitForTimeout(3000); // Espera toast sumir
         console.log('Categoria residual excluída: ' + nome);
       }
 
-      // Garante que toasts não bloqueiem a próxima ação
       await fecharToasts(page);
+      // Re-fetch the locator
+      categoriaLocator = page.locator('div.flex.items-center.p-2').filter({ hasText: nome });
     }
   }
 
@@ -99,7 +99,8 @@ test.describe('Editar Categoria', () => {
     test.setTimeout(60000);
     const novoNome = 'Categoria Editada';
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -109,8 +110,8 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
 
-    await expect(page.getByText(novoNome).first()).toBeVisible();
-    await expect(page.locator('span.text-sm.font-medium').getByText(categoriaDeTeste)).not.toBeVisible();
+    await expect(page.getByText(novoNome, { exact: true }).first()).toBeVisible();
+    await expect(page.locator('span.text-sm.font-medium').filter({ hasText: new RegExp(`^${categoriaDeTeste}$`) })).toHaveCount(0);
 
     console.log('Editada: ' + categoriaDeTeste + ' -> ' + novoNome);
   });
@@ -120,7 +121,8 @@ test.describe('Editar Categoria', () => {
     test.setTimeout(60000);
     const nomeLongo = 'Categoria Com Nome Extremamente Longo Para Teste';
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -130,7 +132,7 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
 
-    await expect(page.getByText(nomeLongo).first()).toBeVisible();
+    await expect(page.getByText(nomeLongo, { exact: true }).first()).toBeVisible();
     console.log('Nome longo editado: ' + nomeLongo);
   });
 
@@ -138,7 +140,8 @@ test.describe('Editar Categoria', () => {
   test('deve cancelar edição sem salvar alterações', async ({ page }) => {
     test.setTimeout(60000);
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -148,8 +151,8 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /cancelar/i }).click();
     await page.waitForTimeout(2000);
 
-    await expect(page.getByText(categoriaDeTeste).first()).toBeVisible();
-    await expect(page.getByText('Nome Alterado Cancelado')).not.toBeVisible();
+    await expect(page.getByText(categoriaDeTeste, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Nome Alterado Cancelado', { exact: true })).toHaveCount(0);
 
     console.log('Edição cancelada - nome mantido: ' + categoriaDeTeste);
   });
