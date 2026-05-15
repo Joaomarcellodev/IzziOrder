@@ -25,6 +25,11 @@ const config: Config = {
   coverageReporters: [
     "text"
   ],
+  testMatch: [
+    "**/tests/**/*.test.[jt]s?(x)",
+    "**/?(*.)+(spec|test).[jt]s?(x)",
+    "!**/tests/e2e/**"
+  ],
 
 };
 
