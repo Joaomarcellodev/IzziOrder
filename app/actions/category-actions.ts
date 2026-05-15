@@ -20,7 +20,7 @@ export interface Category {
 }
 
 export async function getCategories(establishment_id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error, data } = await (await supabase)
     .from("categories")
@@ -43,18 +43,34 @@ export async function getCategories(establishment_id: string) {
 export async function createCategory(
   name: string
 ): Promise<ActionResponse<Category>> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const trimmedName = name?.trim();
+  const establishmentId = await getEstablishmentId();
 
   // Validação do nome
   if (!trimmedName) {
     return { success: false, error: "O nome da categoria não pode ser vazio." };
   }
 
-  // Tenta inserir a categoria
-  const { data, error } = await (await supabase)
+  // Verificação manual de duplicidade (além da restrição do banco)
+  const { data: existing } = await supabase
     .from("categories")
-    .insert({ name: trimmedName, establishment_id: await getEstablishmentId() })
+    .select("id")
+    .eq("name", trimmedName)
+    .eq("establishment_id", establishmentId)
+    .maybeSingle();
+
+  if (existing) {
+    return {
+      success: false,
+      error: `A categoria "${trimmedName}" já existe.`,
+    };
+  }
+
+  // Tenta inserir a categoria
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({ name: trimmedName, establishment_id: establishmentId })
     .select()
     .single();
 
@@ -87,8 +103,9 @@ export async function updateCategory(
   id: string,
   newName: string
 ): Promise<ActionResponse<Category>> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const trimmedName = newName?.trim();
+  const establishmentId = await getEstablishmentId();
 
   // Validação do nome
   if (!id) {
@@ -98,12 +115,28 @@ export async function updateCategory(
     return { success: false, error: "O nome da categoria não pode ser vazio." };
   }
 
+  // Verificação manual de duplicidade para outro ID
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("name", trimmedName)
+    .eq("establishment_id", establishmentId)
+    .neq("id", id)
+    .maybeSingle();
+
+  if (existing) {
+    return {
+      success: false,
+      error: `Já existe outra categoria com o nome "${trimmedName}".`,
+    };
+  }
+
   // Tenta atualizar a categoria
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("categories")
     .update({ name: trimmedName })
     .eq("id", id)
-    .eq("establishment_id", await getEstablishmentId())
+    .eq("establishment_id", establishmentId)
     .select()
     .single();
 

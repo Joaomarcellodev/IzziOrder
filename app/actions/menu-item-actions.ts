@@ -38,9 +38,9 @@ export interface MenuItemRequestDTO {
 
 
 export async function getMenuItems(establishment_id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("menu_items")
     .select()
     .eq("establishment_id", establishment_id)
@@ -102,7 +102,7 @@ export async function createMenuItem(
     return { success: false, error: errors.join("\n") };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   menuItem.imageUrl = PLACEHOLDER_IMAGE_URL;
   const establishmentId = await getEstablishmentId()
 
@@ -118,7 +118,7 @@ export async function createMenuItem(
   const nextPosition = await calculateNextPosition(await supabase);
 
   // Verifica se a categoria pertence ao estabelecimento
-  const { data: category } = await (await supabase)
+  const { data: category } = await supabase
     .from("categories")
     .select("establishment_id")
     .eq("id", menuItem.categoryId)
@@ -128,9 +128,7 @@ export async function createMenuItem(
     return { success: false, error: "Categoria inválida." };
   }
 
-  const { data, error } = await (
-    await supabase
-  )
+  const { data, error } = await supabase
     .from("menu_items")
     .insert({
       name: menuItem.name,
@@ -155,7 +153,7 @@ export async function createMenuItem(
 }
 
 export async function calculateNextPosition(supabase: SupabaseClient<any, "public", "public", any, any>) {
-  const { data: maxPositionData } = await (await supabase)
+  const { data: maxPositionData } = await supabase
     .from("menu_items")
     .select("position")
     .order("position", { ascending: false })
@@ -177,7 +175,7 @@ export async function updateMenuItem(
   id: string,
   menuItem: MenuItemRequestDTO
 ): Promise<ActionResponse> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (!id) {
     return { success: false, error: "ID do item de menu inválido." };
@@ -213,7 +211,7 @@ export async function updateMenuItem(
   }
 
   // Valida categoria
-  const { data: category } = await (await supabase)
+  const { data: category } = await supabase
     .from("categories")
     .select("establishment_id")
     .eq("id", menuItem.categoryId)
@@ -223,7 +221,7 @@ export async function updateMenuItem(
     return { success: false, error: "Categoria inválida para este estabelecimento." };
   }
 
-  const { data, error } = await (await supabase)
+  const { data, error } = await supabase
     .from("menu_items")
     .update({
       name: menuItem.name,
@@ -251,14 +249,14 @@ export async function updateMenuItem(
  * @param id O ID do item a ser excluído.
  */
 export async function deleteMenuItem(id: string): Promise<ActionResponse> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (!id) {
     return { success: false, error: "ID do item de menu inválido." };
   }
 
   // 1. Busca o item para obter a URL da imagem
-  const { data: item, error: fetchError } = await (await supabase)
+  const { data: item, error: fetchError } = await supabase
     .from("menu_items")
     .select("id, image, category:categories(establishment_id)")
     .eq("id", id)
@@ -279,7 +277,7 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
   }
 
   // 3. "Deleta" o item no Supabase, fazendo um soft delete nele
-  const { error: deleteError } = await (await supabase)
+  const { error: deleteError } = await supabase
     .from("menu_items")
     .update({ "is_active": false })
     .eq("id", id);
@@ -341,13 +339,13 @@ export async function updateMenuItemAvailability(
   id: string,
   available: boolean
 ): Promise<ActionResponse> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (!id) {
     return { success: false, error: "ID do item de menu inválido." };
   }
 
-  const { error } = await (await supabase)
+  const { error } = await supabase
     .from("menu_items")
     .update({ available })
     .eq("id", id);

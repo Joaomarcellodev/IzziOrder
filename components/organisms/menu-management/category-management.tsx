@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Edit, Trash } from "lucide-react";
+import { Plus, SquarePen, Trash } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 
 interface Category {
@@ -45,7 +45,7 @@ export const CategoryManagement = ({
               onClick={() => onEditCategory(category)}
               className="h-8 w-8"
             >
-              <Edit className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              <SquarePen className="w-4 h-4 text-gray-500 hover:text-gray-700" />
             </Button>
             <Button
               size="icon"
