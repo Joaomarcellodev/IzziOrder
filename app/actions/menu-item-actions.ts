@@ -34,7 +34,7 @@ export interface MenuItemRequestDTO {
   imageUrl?: string;
 }
 
-const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
+export const PLACEHOLDER_IMAGE_URL = "/camera-off.svg";
 
 export async function getMenuItems(establishment_id: string) {
   const supabase = createClient();
