@@ -3,8 +3,46 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
 
+  // Helper para fechar toasts que bloqueiam a UI
+  async function fecharToasts(page: Page) {
+    // Aguarda os toasts desaparecerem ou tenta fechá-los
+    const toasts = page.locator('[role="status"][data-state="open"]');
+    const count = await toasts.count();
+    for (let i = 0; i < count; i++) {
+      try {
+        const closeBtn = toasts.nth(i).locator('button[data-dismiss]');
+        if (await closeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+          await closeBtn.click();
+        }
+      } catch { /* toast já desapareceu */ }
+    }
+    // Espera os toasts sumirem completamente
+    await page.waitForTimeout(2000);
+  }
+
+  // Helper para excluir a categoria residual se existir
+  async function excluirCategoriaSeExistir(page: Page, nome: string) {
+    let categoriaLocator = page.locator('div.flex.items-center.p-2').filter({ hasText: nome });
+
+    while (await categoriaLocator.first().isVisible({ timeout: 1500 }).catch(() => false)) {
+      await categoriaLocator.first().locator('button:has(svg.lucide-trash)').click();
+      await page.waitForTimeout(1000);
+
+      const botaoExcluir = page.getByRole('button', { name: /excluir/i }).last();
+      if (await botaoExcluir.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await botaoExcluir.click();
+        await page.waitForTimeout(3000); // Espera toast sumir
+        console.log('Categoria residual excluída: ' + nome);
+      }
+
+      await fecharToasts(page);
+      // Re-fetch the locator
+      categoriaLocator = page.locator('div.flex.items-center.p-2').filter({ hasText: nome });
+    }
+  }
 
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(120000);
     console.log('Preparando ambiente de teste para categorias...');
 
     await page.goto('http://localhost:3000/login');
@@ -15,11 +53,19 @@ test.describe('Editar Categoria', () => {
     await page.waitForURL('**/auth/**', { timeout: 20000 });
     await page.waitForTimeout(3000);
 
-
     await page.goto('http://localhost:3000/auth/menu');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     categoriaDeTeste = 'Categoria Para Editar';
+
+    // Limpa categorias residuais de rodadas anteriores
+    await excluirCategoriaSeExistir(page, categoriaDeTeste);
+    await excluirCategoriaSeExistir(page, 'Categoria Editada');
+    await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
+
+    // Recarrega a página para garantir estado limpo (sem overlays, sem toasts)
+    await page.goto('http://localhost:3000/auth/menu');
+    await page.waitForTimeout(3000);
 
     await page.getByRole('button', { name: /Adicionar Categoria/i }).click();
     await page.waitForTimeout(2000);
@@ -35,28 +81,17 @@ test.describe('Editar Categoria', () => {
 
 
   test.afterEach(async ({ page }) => {
-    console.log('Limpando categoria: ' + categoriaDeTeste);
+    console.log('Limpando categorias...');
 
-    if (!page.url().includes('/auth/menu')) {
-      await page.goto('http://localhost:3000/auth/menu');
-      await page.waitForTimeout(2000);
-    }
+    // Recarrega a página para estado limpo
+    await page.goto('http://localhost:3000/auth/menu');
+    await page.waitForTimeout(3000);
 
-    if (categoriaDeTeste) {
-      try {
-        await page.locator('button:has(svg.lucide-trash)').last().click();
-        await page.waitForTimeout(1000);
+    await excluirCategoriaSeExistir(page, categoriaDeTeste);
+    await excluirCategoriaSeExistir(page, 'Categoria Editada');
+    await excluirCategoriaSeExistir(page, 'Categoria Com Nome Extremamente Longo Para Teste');
 
-        const botaoConfirmar = page.getByRole('button', { name: /excluir|confirmar|sim/i });
-        if (await botaoConfirmar.isVisible({ timeout: 2000 })) {
-          await botaoConfirmar.click();
-          await page.waitForTimeout(1000);
-          console.log('Ultima categoria excluída: ' + categoriaDeTeste);
-        }
-      } catch (error) {
-        console.log('Categoria não encontrada para exclusão: ' + categoriaDeTeste);
-      }
-    }
+    console.log('Limpeza concluída');
   });
 
   // 1. EDITAR NOME DA CATEGORIA
@@ -64,7 +99,8 @@ test.describe('Editar Categoria', () => {
     test.setTimeout(60000);
     const novoNome = 'Categoria Editada';
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -74,8 +110,8 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
 
-    await expect(page.getByText(novoNome).first()).toBeVisible();
-    await expect(page.locator('span.text-sm.font-medium').getByText(categoriaDeTeste)).not.toBeVisible();
+    await expect(page.getByText(novoNome, { exact: true }).first()).toBeVisible();
+    await expect(page.locator('span.text-sm.font-medium').filter({ hasText: new RegExp(`^${categoriaDeTeste}$`) })).toHaveCount(0);
 
     console.log('Editada: ' + categoriaDeTeste + ' -> ' + novoNome);
   });
@@ -85,7 +121,8 @@ test.describe('Editar Categoria', () => {
     test.setTimeout(60000);
     const nomeLongo = 'Categoria Com Nome Extremamente Longo Para Teste';
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -95,7 +132,7 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /salvar|atualizar/i }).click();
     await page.waitForTimeout(3000);
 
-    await expect(page.getByText(nomeLongo).first()).toBeVisible();
+    await expect(page.getByText(nomeLongo, { exact: true }).first()).toBeVisible();
     console.log('Nome longo editado: ' + nomeLongo);
   });
 
@@ -103,7 +140,8 @@ test.describe('Editar Categoria', () => {
   test('deve cancelar edição sem salvar alterações', async ({ page }) => {
     test.setTimeout(60000);
 
-    await page.locator('button:has(svg.lucide-square-pen)').last().click();
+    const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
+    await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
     await page.waitForTimeout(2000);
 
     await page.getByRole('textbox', { name: /nome da categoria/i }).clear();
@@ -113,8 +151,8 @@ test.describe('Editar Categoria', () => {
     await page.getByRole('button', { name: /cancelar/i }).click();
     await page.waitForTimeout(2000);
 
-    await expect(page.getByText(categoriaDeTeste).first()).toBeVisible();
-    await expect(page.getByText('Nome Alterado Cancelado')).not.toBeVisible();
+    await expect(page.getByText(categoriaDeTeste, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Nome Alterado Cancelado', { exact: true })).toHaveCount(0);
 
     console.log('Edição cancelada - nome mantido: ' + categoriaDeTeste);
   });
