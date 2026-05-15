@@ -3,14 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('Payment Method - E2E', () => {
  
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3001/login');
+    await page.goto('http://localhost:3000/login');
     await page.waitForTimeout(2000);
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
     await page.getByRole('textbox', { name: /senha/i }).fill('senhatesteA1');
     await page.locator('button.bg-blue-600').click();
     await page.waitForURL('**/auth/**', { timeout: 30000 });
     await page.waitForTimeout(3000);
-    await page.goto('http://localhost:3001/auth/orders');
+    await page.goto('http://localhost:3000/auth/orders');
     await page.waitForTimeout(2000);
   });
  
@@ -103,10 +103,10 @@ async function deleteOrder(page: any, orderCard: any) {
       await page.waitForTimeout(500);
       await page.getByPlaceholder('R$').fill('50');
       await page.waitForTimeout(500);
-      await expect(page.getByText(/Troco: R\$/i)).toBeVisible();
+      await expect(page.getByText(/Troco: R\$/i).last()).toBeVisible();
       await page.getByRole('button', { name: 'Criar Pedido' }).click();
       await page.waitForTimeout(2000);
-      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).first();
+      const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Cliente: ${cliente}` }).last();;
       await expect(orderCard).toBeVisible({timeout: 100000});
       await expect(orderCard.getByText(/Pagamento: Espécie com troco/i)).toBeVisible();
       await expect(orderCard.getByText(/Troco: R\$/i)).toBeVisible();
