@@ -12,8 +12,14 @@ interface PrintableMenuProps {
   categories: Category[];
 }
 
-export function printMenu({ menuItems, categories }: PrintableMenuProps) {
-  // Agrupa os itens por categoria
+/**
+ * Agrupa itens do menu por categoria, filtrando apenas os disponíveis.
+ * Itens sem categoria válida são agrupados em "Outros".
+ */
+export function groupItemsByCategory(
+  menuItems: MenuItem[],
+  categories: Category[]
+): Map<string, MenuItem[]> {
   const itemsByCategory = new Map<string, MenuItem[]>();
 
   for (const category of categories) {
@@ -34,6 +40,12 @@ export function printMenu({ menuItems, categories }: PrintableMenuProps) {
   if (uncategorized.length > 0) {
     itemsByCategory.set("Outros", uncategorized);
   }
+
+  return itemsByCategory;
+}
+
+export function printMenu({ menuItems, categories }: PrintableMenuProps) {
+  const itemsByCategory = groupItemsByCategory(menuItems, categories);
 
   const printWindow = window.open("", "_blank");
   if (!printWindow) return;
