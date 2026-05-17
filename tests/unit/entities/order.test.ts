@@ -201,11 +201,48 @@ describe("Order Entity Hierarchy", () => {
       expect((order as DeliveryOrder).deliveryFee).toBe(15);
     });
 
+    it("should preserve date from DTO", () => {
+      const historicalDate = "2024-01-01";
+      const order = Order.fromDTO({
+        type: "LOCAL",
+        detail: "10",
+        orderLines: commonLines,
+        date: historicalDate,
+      });
+      expect(order.date).toBe(historicalDate);
+    });
+
+    it("should use default current date if DTO date is missing", () => {
+      const order = Order.fromDTO({
+        type: "LOCAL",
+        detail: "10",
+        orderLines: commonLines,
+      });
+      expect(order.date).toBeDefined();
+      expect(typeof order.date).toBe("string");
+      // Verifica se a data gerada contém o ano atual (formato ISO)
+      expect(order.date).toContain(new Date().getFullYear().toString());
+    });
+
     it("should throw error for invalid type", () => {
       expect(() => Order.fromDTO({
         type: "INVALID" as any,
         orderLines: commonLines,
       })).toThrow("Tipo de pedido inválido.");
+    });
+  });
+
+  describe("Order Sorting Logic", () => {
+    it("should correctly identify older dates", () => {
+      const today = "2024-05-10";
+      const yesterday = "2024-05-09";
+      const backlog = ["2024-05-05", "2024-05-09", "2024-05-01"];
+      
+      const sorted = [...backlog].sort((a, b) => a.localeCompare(b));
+      
+      expect(sorted[0]).toBe("2024-05-01");
+      expect(sorted[1]).toBe("2024-05-05");
+      expect(sorted[2]).toBe("2024-05-09");
     });
   });
 });

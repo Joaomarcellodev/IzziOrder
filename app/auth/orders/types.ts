@@ -18,6 +18,8 @@ export type OrderDTO = {
   tableNumber?: string;
   customerName?: string;
   orderLines: OrderLineDTO[];
+  date?: string;
+  dailySeq?: number;
 };
 
 export interface OrderCardProps {
