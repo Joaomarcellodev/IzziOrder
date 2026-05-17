@@ -4,7 +4,7 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -24,6 +24,11 @@ const config: Config = {
   ],
   coverageReporters: [
     "text"
+  ],
+  testMatch: [
+    "**/tests/**/*.test.[jt]s?(x)",
+    "**/?(*.)+(spec|test).[jt]s?(x)",
+    "!**/tests/e2e/**"
   ],
 
 };
