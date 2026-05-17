@@ -41,9 +41,10 @@ export async function getCategories(establishment_id: string) {
  * @returns Um objeto ActionResponse com sucesso ou erro.
  */
 export async function createCategory(
-  name: string
+  name: string,
+  supabaseClient?: any
 ): Promise<ActionResponse<Category>> {
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? await createClient();
   const trimmedName = name?.trim();
   const establishmentId = await getEstablishmentId();
 
@@ -70,7 +71,7 @@ export async function createCategory(
   // Tenta inserir a categoria
   const { data, error } = await supabase
     .from("categories")
-    .insert({ name: trimmedName, establishment_id: establishmentId })
+    .insert({ name: trimmedName, establishment_id: await getEstablishmentId(supabase) })
     .select()
     .single();
 
@@ -205,7 +206,7 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
     if (unlinkError) {
       // Se não foi possível setar NULL (provavelmente por restrição NOT NULL no banco),
       // tentamos a exclusão física dos itens inativos.
-      
+
       // Tenta deletar as imagens dos itens inativos do Blob antes da exclusão física
       for (const item of inactiveItems) {
         if (item.image && item.image !== PLACEHOLDER_IMAGE_URL) {
