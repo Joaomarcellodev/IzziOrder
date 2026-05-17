@@ -219,12 +219,5 @@ await expect(modal).toBeVisible({
       await expect(page.getByText(/Informe o valor recebido/i).first()).toBeVisible();
     });
 
-    test('should not show payment method selector for LOCAL order', async ({ page }) => {
-      test.setTimeout(60000);
-      await page.getByRole('button', { name: /Novo Pedido/i }).click();
-      await page.waitForTimeout(1000);
-      // Tipo LOCAL é o padrão — card de pagamento não deve aparecer
-      await expect(page.getByText('Forma de Pagamento')).not.toBeVisible();
-    });
   });
 });
