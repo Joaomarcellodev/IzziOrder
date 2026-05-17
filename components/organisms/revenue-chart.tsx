@@ -2,6 +2,7 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/molecules/card";
+import { COLORS } from "@/app/auth/reports/constants";
 
 export function RevenueChart({ data }: { data: any[] }) {
   return (
@@ -20,7 +21,7 @@ export function RevenueChart({ data }: { data: any[] }) {
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 formatter={(value: number) => [`R$ ${value.toLocaleString()}`, "Receita"]} 
               />
-              <Line type="monotone" dataKey="revenue" stroke="#007BFF" strokeWidth={4} dot={{ r: 4, fill: '#007BFF' }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="revenue" stroke={COLORS.primary} strokeWidth={4} dot={{ r: 4, fill: COLORS.primary }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

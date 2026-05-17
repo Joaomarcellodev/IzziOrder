@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient as createClientJs } from '@supabase/supabase-js'
 
 export async function createClient() {
-    if (process.env.TEST_CONTEXT === "integration") {
+    if (process.env.TEST_CONTEXT === "integration" || process.env.TEST_CONTEXT === "e2e") {
         return createClientJs(
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
