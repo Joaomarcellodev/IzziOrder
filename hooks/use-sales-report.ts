@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SalesReport, SalesReportFilters, getSalesReport } from "@/app/actions/report-actions";
+import { getSalesReport } from "@/app/actions/report-actions";
+import { SalesReport, SalesReportFilters } from "@/lib/entities/report";
 import { getEstablishmentId } from "@/app/actions/establisment_actions";
 import { getCategories } from "@/app/actions/category-actions";
 import { getMenuItems } from "@/app/actions/menu-item-actions";

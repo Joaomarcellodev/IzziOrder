@@ -1,7 +1,7 @@
 "use client";
 
 import { PaymentMethod, OrderType } from "@/lib/entities/order";
-import { SalesReportFilters } from "@/app/actions/report-actions";
+import { SalesReportFilters } from "@/lib/entities/report";
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/atoms/label";
