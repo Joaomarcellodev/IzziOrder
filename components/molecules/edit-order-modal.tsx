@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { OrderRequestDTO } from "@/app/actions/order-actions";
 import { MenuItem } from "@/app/actions/menu-item-actions";
 import { Category } from "@/app/actions/category-actions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../molecules/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../molecules/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../molecules/card";
 import { Input } from "../atoms/input";
 import { Label } from "../atoms/label";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Button } from "../atoms/button";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2 } from 'lucide-react';
-import { Order, LocalOrder, PickupOrder, DeliveryOrder } from "@/lib/entities/order";
+import { Order, LocalOrder, PickupOrder, DeliveryOrder, PaymentMethod } from "@/lib/entities/order";
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -31,9 +31,6 @@ export function EditOrderModal({
   menuItems,
   categories
 }: EditOrderModalProps) {
-
-
-  // --- Estados do Formulário de Edição ---
   const [editedOrderType, setEditedOrderType] = useState<Order['type']>("LOCAL");
   const [editedDetail, setEditedDetail] = useState<string>("");
   const [editedAddress, setEditedAddress] = useState<string>("");
@@ -43,10 +40,11 @@ export function EditOrderModal({
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [observationOpen, setObservationOpen] = useState<Record<string, boolean>>({});
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [receivedValue, setReceivedValue] = useState("");
 
   const { toast } = useToast();
 
-  // --- 💡 SINCRONIZAÇÃO: Carrega dados do 'order' para o estado interno ---
   useEffect(() => {
     if (order) {
       setEditedStatus(order.status);
@@ -65,8 +63,7 @@ export function EditOrderModal({
       }
 
       setEditedEstimatedTime(String(order.estimatedTime || ""));
-      setEditedItems(order.orderLines || []);
-
+      setEditedItems(order.orderLines || []);   
       const initialObservations: Record<string, boolean> = {};
       (order.orderLines || []).forEach((item: any) => {
         if (item.observation != null) {
@@ -74,14 +71,21 @@ export function EditOrderModal({
         }
       })
       setObservationOpen(initialObservations)
+      setPaymentMethod((order as any).paymentMethod ?? (order as any).payment_method ?? "");
+      
+      const savedChangeValue = (order as any).changeValue ?? 0;
+      const savedTotal = order.total ?? 0;
+      if ((order as any).paymentMethod === "ESPECIE_COM_TROCO" && savedChangeValue > 0) {
+        setReceivedValue(String(savedTotal + savedChangeValue));
+      } else {
+        setPaymentMethod((order as any).payment_method ?? (order as any).paymentMethod ??  "");
+        setReceivedValue("");
+      }
     }
   }, [order]);
 
-  // --- Funções de Manipulação de Itens (Adaptadas do NewOrderForm) ---
-
   const handleAddItem = (menuItem: MenuItem) => {
     const id = menuItem.id!;
-
     const existingItem = editedItems.find((item) => item.menuItemId === id);
 
     if (existingItem) {
@@ -125,54 +129,40 @@ export function EditOrderModal({
     }
   };
 
-
-  // --- Cálculo do Total ---
   const totalPrice = editedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  // --- Submissão do Formulário ---
+  const changeValue = paymentMethod === "ESPECIE_COM_TROCO" && receivedValue
+  ? Math.max(0, parseFloat(receivedValue) - totalPrice)
+  : 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     if (!order) {
-      toast({
-        title: "Erro",
-        description: "Pedido não encontrado para edição.",
-      });
+      toast({ title: "Erro", description: "Pedido não encontrado para edição." });
       setIsSubmitting(false);
       return;
     }
 
-
-    // Validações
     if (editedOrderType === "PICKUP" && (!editedDetail || !editedDetail.trim())) {
-      toast({
-        title: "Por favor, insira o nome do cliente",
-
-      });
+      toast({ title: "Por favor, insira o nome do cliente" });
       setIsSubmitting(false);
       return;
     }
     if (editedOrderType === "LOCAL" && (!editedDetail || !editedDetail.trim())) {
-      toast({
-        title: "Por favor, insira o número da mesa",
-
-      });
+      toast({ title: "Por favor, insira o número da mesa" });
       setIsSubmitting(false);
       return;
     }
     if (editedItems.length === 0) {
-      toast({
-        title: "O pedido deve conter pelo menos um item.",
-
-      });
+      toast({ title: "O pedido deve conter pelo menos um item." });
       setIsSubmitting(false);
       return;
     }
-
 
     try {
       const updatedOrder: OrderRequestDTO = {
@@ -184,25 +174,19 @@ export function EditOrderModal({
         estimatedTime: parseInt(editedEstimatedTime) || 0,
         orderLines: editedItems,
         total: totalPrice + (editedOrderType === "DELIVERY" ? parseFloat(editedDeliveryFee) || 0 : 0),
+        paymentMethod: paymentMethod as PaymentMethod,
+        changeValue: changeValue,
       };
 
       onUpdateOrder(updatedOrder);
-      // O toast de sucesso é emitido pelo componente pai (OrdersDashboard)
     } catch (error) {
-      toast({
-        title: "Erro ao salvar edição",
-        description: "Tente novamente mais tarde.",
-
-      });
+      toast({ title: "Erro ao salvar edição", description: "Tente novamente mais tarde." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
-  if (!order) {
-    return null;
-  }
+  if (!order) return null;
 
   const handleUpdateObservation = (id: string, value: string) => {
     setEditedItems(prev =>
@@ -216,170 +200,147 @@ export function EditOrderModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Pedido {order.code}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-
-          {/* Customer Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informações do Pedido</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Tipo de Pedido</Label>
-                  <Select value={editedOrderType} onValueChange={(value: any) => setEditedOrderType(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LOCAL">Local</SelectItem>
-                      <SelectItem value="PICKUP">Retirada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {editedOrderType === "LOCAL" && (
-                  <div className="space-y-2">
-                    <Label>Número da Mesa</Label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Ex: 5"
-                      value={editedDetail}
-                      onChange={(e) => setEditedDetail(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {editedOrderType === "PICKUP" && (
-                  <div className="space-y-2">
-                    <Label>Nome do Cliente</Label>
-                    <Input
-                      type="text"
-                      placeholder="Ex: João"
-                      value={editedDetail}
-                      onChange={(e) => setEditedDetail(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="estimatedTime">Tempo Estimado (minutos)</Label>
-                  <Input
-                    id="estimatedTime"
-                    type="number"
-                    placeholder="(opcional)"
-                    value={editedEstimatedTime}
-                    onChange={(e) => setEditedEstimatedTime(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Menu Items (Adicionar) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Adicionar/Remover Itens</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {categories.map((category) => {
-                const categoryItems = menuItems.filter(
-                  (item) => item.categoryId === category.id
-                );
-
-                if (categoryItems.length === 0) return null;
-
-                return (
-                  <div key={category.id} className="space-y-3">
-                    <h4 className="font-semibold text-sm text-gray-700">{category.name}</h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {categoryItems.map((item) => (
-                        <Button
-                          key={item.id}
-                          type="button"
-                          variant="outline"
-                          className="justify-start h-auto flex-col items-start p-3 hover:bg-blue-200 hover:border-blue-500 transition-colors text-left"
-                          onClick={() => handleAddItem(item)}
-                        >
-                          <div className="font-medium text-sm break-words whitespace-normal leading-tight w-full">
-                            {item.name}
-                          </div>
-
-                          <div className="text-xs text-gray-500 whitespace-nowrap">
-                            R$ {item.price.toFixed(2)}
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-
-          {/* Selected Items */}
-          {editedItems.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
+        <div className="mt-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Customer Info */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-orange-900 text-lg">Itens Selecionados</CardTitle>
+                <CardTitle>Informações do Cliente</CardTitle>
               </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tipo de Pedido</Label>
+                    <Select value={editedOrderType} onValueChange={(value: any) => setEditedOrderType(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LOCAL">Local</SelectItem>
+                        <SelectItem value="PICKUP">Retirada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <CardContent className="space-y-5">
-                {editedItems.map((item) => {
+                  {editedOrderType === "LOCAL" && (
+                    <div className="space-y-2">
+                      <Label>Número da Mesa</Label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Ex: 5"
+                        value={editedDetail}
+                        onChange={(e) => setEditedDetail(e.target.value.replace(/\D/g, ""))}
+                      />
+                    </div>
+                  )}
 
+                  {editedOrderType === "PICKUP" && (
+                    <div className="space-y-2">
+                      <Label>Nome do Cliente</Label>
+                      <Input
+                        type="text"
+                        placeholder="Ex: João"
+                        value={editedDetail}
+                        onChange={(e) => setEditedDetail(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="estimatedTime">Tempo Estimado (minutos)</Label>
+                    <Input
+                      id="estimatedTime"
+                      type="number"
+                      placeholder="(opcional)"
+                      value={editedEstimatedTime}
+                      onChange={(e) => setEditedEstimatedTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Menu Items (Adicionar) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Adicionar Itens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {categories.map((category) => {
+                  const categoryItems = menuItems.filter(
+                    (item) => item.categoryId === category.id
+                  );
+                  if (categoryItems.length === 0) return null;
                   return (
-                    <div
-                      key={item.menuItemId + order.id}
-                      className="flex-col"
-                    >
-                      <div
-                        className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200"
-                      >
+                    <div key={category.id} className="space-y-3 pt-4 first:pt-0">
+                      <h4 className="font-black text-[11px] text-blue-600 uppercase tracking-widest ml-1">
+                        {category.name}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">                        {categoryItems.map((item) => (
+                          <Button
+                            key={item.id}
+                            type="button"
+                            variant="outline"
+                            className="justify-start h-auto flex-col items-start p-3 hover:bg-blue-200 hover:border-blue-500 transition-colors text-left"
+                            onClick={() => handleAddItem(item)}
+                          >
+                            <div className="font-medium text-sm break-words whitespace-normal leading-tight w-full">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">
+                              R$ {item.price.toFixed(2)}
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Selected Items */}
+            {editedItems.length > 0 && (
+              <Card className="border-orange-200 bg-orange-50">
+                <CardHeader>
+                  <CardTitle className="text-orange-900">Itens Selecionados</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {editedItems.map((item) => (
+                    <div key={item.menuItemId + order.id} className="flex-col">
+                      <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{item.name}</p>
                           <p className="text-xs text-gray-500">R$ {item.price.toFixed(2)} cada</p>
                         </div>
-
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            setObservationOpen((prev) => ({
-                              ...prev,
-                              [item.menuItemId]: true
-                            }))}
+                          onClick={() => setObservationOpen((prev) => ({ ...prev, [item.menuItemId]: true }))}
                           className="text-yellow-600 hover:bg-yellow-100 h-8 w-8 p-0"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
-
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
                             min="1"
                             value={item.quantity}
-                            onChange={(e) =>
-                              handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)
-                            }
+                            onChange={(e) => handleUpdateQuantity(item.menuItemId, parseInt(e.target.value) || 0)}
                             className="w-12 px-2 py-1 text-sm border rounded text-center"
                           />
-
                           <span className="text-sm font-semibold min-w-20 text-right">
                             R$ {(item.price * item.quantity).toFixed(2)}
                           </span>
-
                           <Button
                             type="button"
                             variant="ghost"
@@ -391,38 +352,95 @@ export function EditOrderModal({
                           </Button>
                         </div>
                       </div>
-                      {observationOpen[item.menuItemId] && (<div className="space-y-2">
-                        <Input
-                          type="text"
-                          placeholder="Observação"
-                          value={item.observation ?? ""}
-                          onChange={(e) => handleUpdateObservation(item.menuItemId, e.target.value)}
-                        />
-                      </div>)}
+                      {observationOpen[item.menuItemId] && (
+                        <div className="space-y-2">
+                          <Input
+                            type="text"
+                            placeholder="Observação"
+                            value={item.observation ?? ""}
+                            onChange={(e) => handleUpdateObservation(item.menuItemId, e.target.value)}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )
-                }
-                )}
-
-                <div className="border-t border-orange-200 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-lg text-orange-900">Total Itens:</span>
-                    <span className="font-bold text-lg text-orange-600">
-                      R$ {totalPrice.toFixed(2)}
-                    </span>
+                  ))}
+                  <div className="border-t border-orange-200 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-lg text-orange-900">Total:</span>
+                      <span className="font-bold text-2xl text-orange-600">
+                        R$ {totalPrice.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Forma de Pagamento</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Selecione a forma de pagamento</Label>
+                  <Select value={paymentMethod} onValueChange={(value: any) => {
+                    setPaymentMethod(value);
+                    setReceivedValue("");
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PIX">Pix</SelectItem>
+                      <SelectItem value="CREDITO">Crédito</SelectItem>
+                      <SelectItem value="DEBITO">Débito</SelectItem>
+                      <SelectItem value="ESPECIE_SEM_TROCO">Espécie sem troco</SelectItem>
+                      <SelectItem value="ESPECIE_COM_TROCO">Espécie com troco</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                {paymentMethod === "ESPECIE_COM_TROCO" && (
+                  <div className="space-y-2">
+                    <Label>Troco para quanto?</Label>
+                    <Input
+                      type="number"
+                      placeholder="R$"
+                      min={totalPrice}
+                      step="0.01"
+                      value={receivedValue}
+                      onChange={(e) => setReceivedValue(e.target.value)}
+                      className="w-40[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      style={{ width: '170px' }}
+                    />
+                    {receivedValue && parseFloat(receivedValue) >= totalPrice && (
+                      <p className="text-sm font-semibold text-green-600">
+                        Troco: R$ {changeValue.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">Cancelar</Button>
-            <Button className=" bg-blue-600 hover:bg-blue-700" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : "Salvar Edição"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <div className="flex gap-3 mt-6">
+              <Button 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12" 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Salvando..." : "Salvar Edição"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 h-12" 
+                onClick={onClose} 
+                type="button"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -11,7 +11,7 @@ describe("Orders CREATE Integration", () => {
     it("should create a valid LOCAL order", async () => {
       const orderDTO: OrderRequestDTO = {
         total: 99.99,
-        type: "LOCAL",
+        type: "LOCAL",  
         detail: "5",
         orderLines: [
           {

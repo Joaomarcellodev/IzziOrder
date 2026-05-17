@@ -1,5 +1,26 @@
-// constants.ts
 import { DollarSign, ShoppingBag, Users, Clock } from "lucide-react";
+
+export const COLORS = {
+  primary: "#007BFF",
+  secondary: "#FD7E14",
+  success: "#28A745",
+  danger: "#DC3545",
+  info: "#17A2B8",
+};
+
+export const CHART_COLORS = [
+  COLORS.primary,
+  COLORS.secondary,
+  COLORS.success,
+  COLORS.danger,
+  COLORS.info,
+];
+
+export const ORDER_TYPE_LABELS: Record<string, string> = {
+  LOCAL: "Local",
+  PICKUP: "Retirada",
+  DELIVERY: "Delivery",
+};
 
 export const revenueData = [
   { name: "Seg", revenue: 2400 },
@@ -20,14 +41,14 @@ export const topItemsData = [
 ];
 
 export const kpiData = [
-  { title: "Receita Diária", value: "R$ 2.847,50", trend: 12.5, icon: DollarSign, borderColor: "#007BFF" },
-  { title: "Pedidos hoje", value: "47", trend: 8.2, icon: ShoppingBag, borderColor: "#FD7E14" },
-  { title: "Tabelas Ativas", value: "12/16", trend: -5.1, icon: Users, borderColor: "#28A745" },
-  { title: "Tempo médio", value: "18 min", trend: -3.2, icon: Clock, borderColor: "#DC3545" },
+  { title: "Receita Diária", value: "R$ 2.847,50", trend: 12.5, icon: DollarSign, borderColor: COLORS.primary },
+  { title: "Pedidos hoje", value: "47", trend: 8.2, icon: ShoppingBag, borderColor: COLORS.secondary },
+  { title: "Tabelas Ativas", value: "12/16", trend: -5.1, icon: Users, borderColor: COLORS.success },
+  { title: "Tempo médio", value: "18 min", trend: -3.2, icon: Clock, borderColor: COLORS.danger },
 ];
 
 export const orderDistributionData = [
-  { name: "Local", value: 45, color: "#007BFF" }, 
-//   { name: "Delivery", value: 35, color: "#FD7E14" }, 
-  { name: "Retirada", value: 20, color: "#28A745" }, 
+  { name: "Local", value: 45, color: "#007BFF" },
+  //   { name: "Delivery", value: 35, color: "#FD7E14" }, 
+  { name: "Retirada", value: 20, color: "#28A745" },
 ];
