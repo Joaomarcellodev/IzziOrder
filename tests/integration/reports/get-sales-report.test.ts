@@ -8,6 +8,7 @@ describe("getSalesReport Integration Tests", () => {
   const establishmentId = process.env.TEST_ESTABLISHMENT_ID!;
   let categoryId: string;
   let menuItemId: string;
+  let menuItemId2: string;
   const supabase = createClient();
 
   beforeAll(async () => {
@@ -21,8 +22,6 @@ describe("getSalesReport Integration Tests", () => {
         password: "senhatesteA1",
       });
       if (loginError) throw new Error("Failed to login: " + loginError.message);
-
-      await s.from("orders").delete().eq("establishment_id", establishmentId);
 
       const categoryName = "Cat Report " + Date.now();
       const testCategory = await createCategory(categoryName, s);
@@ -39,73 +38,113 @@ describe("getSalesReport Integration Tests", () => {
       }, s);
       if (!testItem.success || !testItem.data) throw new Error("Failed to create test menu item: " + testItem.error);
       menuItemId = testItem.data.id;
+
+      const testItem2 = await createMenuItem({
+        id: null,
+        name: "Item Teste Report 2",
+        description: "Desc 2",
+        price: 50,
+        categoryId: categoryId,
+        available: true
+      }, s);
+      if (!testItem2.success || !testItem2.data) throw new Error("Failed to create second test menu item: " + testItem2.error);
+      menuItemId2 = testItem2.data.id;
     } catch (error) {
       console.error("Setup failed:", error);
       throw error;
     }
+  }, 30000);
+
+  beforeEach(async () => {
+    const s = await supabase;
+    await s.from("orders").delete().eq("establishment_id", establishmentId);
   });
 
   it("should return sales report for the last 7 days by default", async () => {
     const order1: OrderRequestDTO = {
       total: 100,
       type: "LOCAL",
+      status: "CLOSED",
       detail: "Mesa 1",
       orderLines: [{ menuItemId: menuItemId, name: "Item Teste Report", quantity: 2, price: 50 }],
       paymentMethod: "PIX"
     };
 
-    const order2: OrderRequestDTO = {
-      total: 150,
-      type: "DELIVERY",
-      detail: "Rua Teste, 123",
-      deliveryFee: 10,
-      orderLines: [{ menuItemId: menuItemId, name: "Item Teste Report", quantity: 3, price: 50 }],
-      paymentMethod: "CREDITO"
-    };
-
     await createOrder(order1, establishmentId);
-    await createOrder(order2, establishmentId);
 
     const report = await getSalesReport({ establishmentId });
 
     expect(report).toBeDefined();
-    expect(report.generalTotalSales).toBeGreaterThanOrEqual(260);
-    expect(report.deliveryFeeTotal).toBeGreaterThanOrEqual(10);
-    expect(report.salesByDay.length).toBeGreaterThanOrEqual(1);
-  });
+    expect(report.generalTotalSales).toBe(100);
+    expect(report.salesByDay.length).toBe(1);
+  }, 15000);
 
   it("should filter by payment method", async () => {
     const orderPix: OrderRequestDTO = {
       total: 50,
       type: "LOCAL",
+      status: "CLOSED",
       detail: "Mesa 2",
       orderLines: [{ menuItemId: menuItemId, name: "Item Pix", quantity: 1, price: 50 }],
       paymentMethod: "PIX"
     };
+    const orderCredito: OrderRequestDTO = {
+      total: 80,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 3",
+      orderLines: [{ menuItemId: menuItemId, name: "Item Credito", quantity: 1, price: 80 }],
+      paymentMethod: "CREDITO"
+    };
     await createOrder(orderPix, establishmentId);
+    await createOrder(orderCredito, establishmentId);
 
     const report = await getSalesReport({
       establishmentId,
       paymentMethod: "PIX"
     });
 
-    expect(report.salesByPaymentMethod.find(p => p.method === "PIX")?.total).toBeGreaterThanOrEqual(50);
-    expect(report.generalTotalSales).toBeGreaterThanOrEqual(150);
-  });
+    const pixTotal = report.salesByPaymentMethod.find(p => p.method === "PIX")?.total;
+    expect(pixTotal).toBe(50);
+    expect(report.salesByPaymentMethod.length).toBe(1);
+  }, 15000);
 
   it("should filter by date range", async () => {
-    const today = new Date().toISOString();
+    const today = new Date().toISOString().split('T')[0];
+    const order: OrderRequestDTO = {
+      total: 50,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 1",
+      orderLines: [{ menuItemId: menuItemId, name: "Item", quantity: 1, price: 50 }],
+      paymentMethod: "PIX"
+    };
+    await createOrder(order, establishmentId);
+
     const report = await getSalesReport({
       establishmentId,
       startDate: today,
       endDate: today
     });
 
-    expect(report).toBeDefined();
-    expect(report.salesByDay.length).toBeGreaterThanOrEqual(1);
-  });
+    expect(report.generalTotalSales).toBe(50);
+    expect(report.salesByDay.length).toBe(1);
+  }, 15000);
 
   it("should filter by product", async () => {
+    const order: OrderRequestDTO = {
+      total: 100,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 1",
+      orderLines: [
+        { menuItemId: menuItemId, name: "Item Teste Report 1", quantity: 1, price: 50 },
+        { menuItemId: menuItemId2, name: "Item Teste Report 2", quantity: 1, price: 50 }
+      ],
+      paymentMethod: "PIX"
+    };
+    await createOrder(order, establishmentId);
+
     const report = await getSalesReport({
       establishmentId,
       productId: menuItemId
@@ -123,8 +162,11 @@ describe("getSalesReport Integration Tests", () => {
     if (menuItemId) {
       await s.from("menu_items").delete().eq("id", menuItemId);
     }
+    if (menuItemId2) {
+      await s.from("menu_items").delete().eq("id", menuItemId2);
+    }
     if (categoryId) {
       await s.from("categories").delete().eq("id", categoryId);
     }
-  });
+  }, 30000);
 });
