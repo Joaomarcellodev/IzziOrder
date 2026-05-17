@@ -78,7 +78,7 @@ export function ReportsAnalytics() {
     revenue: d.total
   })) || [];
 
-  const dynamicDistribution = report?.salesByType.map((t, idx) => ({
+  const dynamicDistribution = report?.ordersByType.map((t, idx) => ({
     name: ORDER_TYPE_LABELS[t.type] || t.type,
     value: t.total,
     color: CHART_COLORS[idx % CHART_COLORS.length]

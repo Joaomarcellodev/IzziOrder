@@ -32,18 +32,18 @@ export function DistributionChart({ data }: DistributionProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 formatter={(value: number) => [
-                  `R$ ${value.toFixed(2)} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
-                  "Valor"
+                  `${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
+
                 ]}
               />
-              <Legend verticalAlign="bottom" height={36}/>
+              <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        
+
         <div className="mt-4 space-y-2">
           {data.map((item) => {
             const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
