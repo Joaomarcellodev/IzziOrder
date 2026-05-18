@@ -2,11 +2,10 @@
 
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
-import { SalesReport, SalesReportFilters } from '@/app/actions/report-actions';
+import { SalesReport, SalesReportFilters } from '@/lib/entities/report';
 import { format, parseISO } from 'date-fns';
 import { COLORS, ORDER_TYPE_LABELS } from '@/app/auth/reports/constants';
 
-// Cores Oficiais da Logo
 const BRAND_COLORS = {
   blue: '#007BFF',
   orange: '#FD7E14',
@@ -40,9 +39,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 6,
-  },
-  brandTextContainer: {
-    flexDirection: 'row',
   },
   brandIzzi: {
     fontSize: 24,
@@ -180,11 +176,10 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
   return (
     <Document title={`Relatório izziOrder - ${endDate}`}>
       <Page size="A4" style={styles.page}>
-        {/* CABEÇALHO COM LOGO ESTILIZADA */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Image src={logoUrl} style={styles.logoImage} />
-            <View style={styles.brandTextContainer}>
+            <View style={{ flexDirection: 'row' }}>
               <Text style={styles.brandIzzi}>izzi</Text>
               <Text style={styles.brandOrder}>Order</Text>
             </View>
@@ -195,7 +190,7 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
-        {/* KPIs */}
+        {/* KPIs V3 (Design Original Aprovado) */}
         <View style={styles.kpiGrid}>
           <View style={[styles.kpiCard, { borderTopColor: BRAND_COLORS.blue }]}>
             <Text style={styles.kpiLabel}>Total Vendido</Text>
@@ -211,12 +206,11 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
-        {/* FINANCEIRO */}
         <View style={{ flexDirection: 'row', gap: 25, marginBottom: 20 }}>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Canais de Venda</Text>
             <View style={styles.table}>
-              {report.salesByType.map((t, idx) => (
+              {report.ordersByType.map((t, idx) => (
                 <View key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
                   <Text style={[styles.cell, styles.colMain]}>{ORDER_TYPE_LABELS[t.type] || t.type}</Text>
                   <Text style={[styles.cell, styles.colRight, { fontWeight: 'bold' }]}>R$ {t.total.toFixed(2)}</Text>
@@ -237,7 +231,6 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
-        {/* PRODUTOS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vendas por Item</Text>
           <View style={styles.table}>
@@ -256,7 +249,6 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
-        {/* HISTÓRICO DIÁRIO */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Movimento Diário</Text>
           <View style={styles.table}>
