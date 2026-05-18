@@ -95,14 +95,15 @@ async function uploadImage(file: File): Promise<ActionResponse> {
  * @param formData FormData contendo os dados do item e a imagem.
  */
 export async function createMenuItem(
-  menuItem: MenuItemRequestDTO
+  menuItem: MenuItemRequestDTO,
+  supabaseClient?: any
 ): Promise<ActionResponse> {
   const errors = validateMenuItem(menuItem);
   if (errors.length > 0) {
     return { success: false, error: errors.join("\n") };
   }
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? await createClient();
   menuItem.imageUrl = PLACEHOLDER_IMAGE_URL;
   const establishmentId = await getEstablishmentId()
 
