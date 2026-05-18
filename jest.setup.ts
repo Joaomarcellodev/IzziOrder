@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import dotenv from 'dotenv'
 
+// Tenta carregar variáveis de integração primeiro
+dotenv.config({ path: '.env.test-integration' })
 dotenv.config({ path: '.env.test' })
 
 // Mock Next.js cache/navigation
