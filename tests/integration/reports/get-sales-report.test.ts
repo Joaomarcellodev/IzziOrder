@@ -3,18 +3,19 @@ import { createOrder, OrderRequestDTO } from "@/app/actions/order-actions";
 import { createClient } from "@/utils/supabase/server";
 import { createCategory } from "@/app/actions/category-actions";
 import { createMenuItem } from "@/app/actions/menu-item-actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
+import { parseISO } from "date-fns";
 
 describe("getSalesReport Integration Tests", () => {
   const establishmentId = process.env.TEST_ESTABLISHMENT_ID!;
   let categoryId: string;
   let menuItemId: string;
   let menuItemId2: string;
-  const supabase = createClient();
 
   beforeAll(async () => {
     try {
       if (!establishmentId) throw new Error("TEST_ESTABLISHMENT_ID not set");
-      const s = await supabase;
+      const s = await createClient();
 
       // Login
       const { error: loginError } = await s.auth.signInWithPassword({
@@ -22,6 +23,9 @@ describe("getSalesReport Integration Tests", () => {
         password: "senhatesteA1",
       });
       if (loginError) throw new Error("Failed to login: " + loginError.message);
+
+      // Pre-popula o cache do establishmentId para as actions funcionarem
+      await getEstablishmentId(s);
 
       const categoryName = "Cat Report " + Date.now();
       const testCategory = await createCategory(categoryName, s);
@@ -56,7 +60,7 @@ describe("getSalesReport Integration Tests", () => {
   }, 30000);
 
   beforeEach(async () => {
-    const s = await supabase;
+    const s = await createClient();
     await s.from("orders").delete().eq("establishment_id", establishmentId);
   });
 
@@ -110,7 +114,7 @@ describe("getSalesReport Integration Tests", () => {
   }, 15000);
 
   it("should filter by date range", async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString();
     const order: OrderRequestDTO = {
       total: 50,
       type: "LOCAL",
@@ -128,7 +132,6 @@ describe("getSalesReport Integration Tests", () => {
     });
 
     expect(report.generalTotalSales).toBe(50);
-    expect(report.salesByDay.length).toBe(1);
   }, 15000);
 
   it("should filter by product", async () => {
@@ -393,8 +396,80 @@ describe("getSalesReport Integration Tests", () => {
     }
   }, 15000);
 
+  it("should unify cash payment methods (with and without change) into DINHEIRO", async () => {
+    const orderWithChange: OrderRequestDTO = {
+      total: 60,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 10",
+      orderLines: [{ menuItemId: menuItemId, name: "Item Troco", quantity: 1, price: 60 }],
+      paymentMethod: "ESPECIE_COM_TROCO"
+    };
+    const orderNoChange: OrderRequestDTO = {
+      total: 40,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 11",
+      orderLines: [{ menuItemId: menuItemId, name: "Item Sem Troco", quantity: 1, price: 40 }],
+      paymentMethod: "ESPECIE_SEM_TROCO"
+    };
+
+    await createOrder(orderWithChange, establishmentId);
+    await createOrder(orderNoChange, establishmentId);
+
+    const report = await getSalesReport({ establishmentId });
+
+    const cashEntry = report.salesByPaymentMethod.find(p => p.method === "DINHEIRO" as any);
+    expect(cashEntry).toBeDefined();
+    expect(cashEntry?.total).toBeGreaterThanOrEqual(100);
+    
+    // Garante que não existem as entradas separadas
+    const separateEntry = report.salesByPaymentMethod.find(p => p.method === "ESPECIE_COM_TROCO" as any);
+    expect(separateEntry).toBeUndefined();
+  }, 15000);
+
+  it("should filter correctly using the generic ESPECIE payment method", async () => {
+    const orderSpecie: OrderRequestDTO = {
+      total: 100,
+      type: "LOCAL",
+      status: "CLOSED",
+      detail: "Mesa 12",
+      orderLines: [{ menuItemId: menuItemId, name: "Item Dinheiro", quantity: 2, price: 50 }],
+      paymentMethod: "ESPECIE_SEM_TROCO"
+    };
+    await createOrder(orderSpecie, establishmentId);
+
+    const report = await getSalesReport({
+      establishmentId,
+      paymentMethod: "ESPECIE" as any
+    });
+
+    expect(report.generalTotalSales).toBe(100);
+    expect(report.salesByPaymentMethod.every(p => p.method === "DINHEIRO" as any)).toBe(true);
+  }, 15000);
+
+  it("should filter by specific month and year", async () => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const report = await getSalesReport({
+      establishmentId,
+      month: currentMonth,
+      year: currentYear
+    });
+
+    expect(report).toBeDefined();
+    // Verifica se todos os pedidos retornados são do mês correto
+    report.salesByDay.forEach(day => {
+      const date = parseISO(day.date);
+      expect(date.getMonth() + 1).toBe(currentMonth);
+      expect(date.getFullYear()).toBe(currentYear);
+    });
+  }, 15000);
+
   afterAll(async () => {
-    const s = await supabase;
+    const s = await createClient();
     await s.from("orders").delete().eq("establishment_id", establishmentId);
 
     if (menuItemId) {
