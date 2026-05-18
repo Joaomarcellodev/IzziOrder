@@ -12,6 +12,8 @@ import { OrderHistoryTable } from "./order-history-table";
 import { DistributionChart } from "./distribution-chart";
 import { TopItemsTable } from "./top-items-table";
 import { ReportFilters } from "@/components/molecules/report-filters";
+import { SalesReportPDF } from "@/components/molecules/sales-report-pdf";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 
 import {
   COLORS,
@@ -20,13 +22,19 @@ import {
 } from "@/app/auth/reports/constants";
 import { useSalesReport } from "@/hooks/use-sales-report";
 import { format, parseISO } from "date-fns";
+import { useEffect, useState as useReactState } from "react";
 
 export function ReportsAnalytics() {
   const { report, loading, filters, setFilters, menuItems } = useSalesReport();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isClient, setIsClient] = useReactState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleExportPDF = () => {
-    window.print();
+    // Fallback if needed
   };
 
   const dynamicKpis = report ? [
