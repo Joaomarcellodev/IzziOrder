@@ -13,7 +13,7 @@ test.describe('Adicionar Categoria ', () => {
     await page.waitForURL('**/auth/**', { timeout: 120000 });
     await page.waitForTimeout(4000);
 
-    await page.goto('http://localhost:3000/auth/menu');
+    await page.goto('http://localhost:3000/auth/orders');
 
     categoriaCriada = '';
   });
@@ -22,7 +22,7 @@ test.describe('Adicionar Categoria ', () => {
     console.log('Limpando categoria criada nos testes...');
 
     if (!page.url().includes('/auth/menu')) {
-      await page.goto('http://localhost:3000/auth/menu');
+      await page.goto('http://localhost:3000/auth/orders');
       await page.waitForTimeout(3000);
 
     }
