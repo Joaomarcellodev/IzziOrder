@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DollarSign, ShoppingBag, Users, Clock, FileDown, LayoutDashboard, Utensils, ClipboardList, Filter, ChevronDown, Coins } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/molecules/tabs";
 import { Button } from "@/components/atoms/button";
@@ -22,39 +22,38 @@ import {
 } from "@/app/auth/reports/constants";
 import { useSalesReport } from "@/hooks/use-sales-report";
 import { format, parseISO } from "date-fns";
-import { useEffect, useState as useReactState } from "react";
 
 export function ReportsAnalytics() {
   const { report, loading, filters, setFilters, menuItems } = useSalesReport();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [isClient, setIsClient] = useReactState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const handleExportPDF = () => {
-    // Fallback if needed
-  };
+  if (!isClient) {
+    return <div className="p-4 sm:p-8 space-y-8 bg-gray-50/30 min-h-screen" />;
+  }
 
   const dynamicKpis = report ? [
     {
       title: "Total de Vendas",
-      value: `R$ ${report.generalTotalSales.toFixed(2)}`,
+      value: `R$ ${(report.generalTotalSales || 0).toFixed(2)}`,
       trend: 0,
       icon: DollarSign,
       borderColor: COLORS.primary
     },
     {
       title: "Total de Troco",
-      value: `R$ ${report.totalChange.toFixed(2)}`,
+      value: `R$ ${(report.totalChange || 0).toFixed(2)}`,
       trend: 0,
       icon: Coins,
       borderColor: "#f59e0b"
     },
     {
       title: "Total de Pedidos",
-      value: `${report.salesByDay.length > 0 ? report.salesByDay.reduce((acc, d) => acc + (d as any).count || 0, 0) : '0'}`,
+      value: `${(report.salesByDay || []).reduce((acc, d) => acc + (d.count || 0), 0)}`,
       trend: 0,
       icon: ShoppingBag,
       borderColor: COLORS.success
@@ -62,37 +61,29 @@ export function ReportsAnalytics() {
     {
       title: "Ticket Médio",
       value: `R$ ${(() => {
-        const totalOrders = report.salesByDay.reduce((acc, day) => acc + day.count, 0);
+        const totalOrders = (report.salesByDay || []).reduce((acc, day) => acc + (day.count || 0), 0);
         return totalOrders > 0
-          ? (report.generalTotalSales / totalOrders).toFixed(2)
+          ? ((report.generalTotalSales || 0) / totalOrders).toFixed(2)
           : '0.00';
       })()}`,
       trend: 0,
       icon: Users,
       borderColor: COLORS.danger
     },
-    // TODO: Readicionar quando DELIVERY for implementado:
-    // {
-    //   title: "Taxa de Entrega",
-    //   value: `R$ ${report.deliveryFeeTotal.toFixed(2)}`,
-    //   trend: 0,
-    //   icon: ShoppingBag,
-    //   borderColor: COLORS.secondary
-    // },
   ] : [];
 
-  const dynamicRevenue = report?.salesByDay.map(d => ({
+  const dynamicRevenue = report?.salesByDay?.map(d => ({
     name: format(parseISO(d.date), "dd/MM"),
     revenue: d.total
   })) || [];
 
-  const dynamicDistribution = report?.ordersByType.map((t, idx) => ({
+  const dynamicDistribution = report?.ordersByType?.map((t, idx) => ({
     name: ORDER_TYPE_LABELS[t.type] || t.type,
     value: t.total,
     color: CHART_COLORS[idx % CHART_COLORS.length]
   })) || [];
 
-  const dynamicTopItems = report?.salesByProduct.map(p => ({
+  const dynamicTopItems = report?.salesByProduct?.map(p => ({
     name: p.name,
     category: p.category,
     paymentMethods: p.paymentMethods,
@@ -140,14 +131,32 @@ export function ReportsAnalytics() {
                   className={`w-4 h-4 transition-transform duration-200 ${isFiltersOpen ? "rotate-180" : ""}`}
                 />
               </Button>
-              <Button
-                onClick={handleExportPDF}
-                variant="outline"
-                className="flex items-center gap-2 h-12 px-4 shadow-sm border-gray-100 rounded-xl bg-white hover:bg-gray-50"
-              >
-                <FileDown className="w-4 h-4" />
-                <span className="hidden md:block">Exportar PDF</span>
-              </Button>
+              
+              {isClient && report ? (
+                <PDFDownloadLink
+                  document={<SalesReportPDF report={report} filters={filters} />}
+                  fileName={`relatorio-vendas-${format(new Date(), "dd-MM-yyyy")}.pdf`}
+                  className="no-underline"
+                >
+                  {({ loading: pdfLoading }) => (
+                    <span
+                      className={`flex items-center gap-2 h-12 px-4 shadow-sm border border-gray-100 rounded-xl bg-white hover:bg-gray-50 text-sm font-medium transition-all duration-200 ${
+                        pdfLoading ? "opacity-50 cursor-wait" : "cursor-pointer"
+                      }`}
+                    >
+                      <FileDown className="w-4 h-4 text-gray-600" />
+                      <span className="hidden md:block text-gray-700">
+                        {pdfLoading ? "Gerando..." : "Exportar PDF"}
+                      </span>
+                    </span>
+                  )}
+                </PDFDownloadLink>
+              ) : (
+                <span className="flex items-center gap-2 h-12 px-4 shadow-sm border border-gray-100 rounded-xl bg-gray-50 text-gray-400 text-sm font-medium opacity-50 cursor-not-allowed">
+                  <FileDown className="w-4 h-4" />
+                  <span className="hidden md:block">Exportar PDF</span>
+                </span>
+              )}
             </div>
           </div>
 
