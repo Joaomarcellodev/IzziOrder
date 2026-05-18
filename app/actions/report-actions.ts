@@ -14,7 +14,7 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
     .eq("establishment_id", filters.establishmentId)
     .eq("status", "CLOSED")
 
-  // Default to last 7 days if no dates are provided
+  // Mantendo a lógica de data original do time
   if (!filters.startDate && !filters.endDate && !filters.month && !filters.year) {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 7)).toISOString();
     query = query.gte("date", sevenDaysAgo);
@@ -26,9 +26,16 @@ export async function getSalesReport(filters: SalesReportFilters): Promise<Sales
   if (filters.endDate) {
     query = query.lte("date", endOfDay(parseISO(filters.endDate)).toISOString());
   }
+
+  // Filtro inteligente de Espécie (nossa melhoria necessária)
   if (filters.paymentMethod) {
-    query = query.eq("payment_method", filters.paymentMethod);
+    if (filters.paymentMethod === "ESPECIE" as any) {
+      query = query.in("payment_method", ["ESPECIE_SEM_TROCO", "ESPECIE_COM_TROCO"]);
+    } else {
+      query = query.eq("payment_method", filters.paymentMethod);
+    }
   }
+
   if (filters.type) {
     query = query.eq("type", filters.type);
   }
