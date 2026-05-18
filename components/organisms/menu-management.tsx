@@ -173,15 +173,57 @@ export function MenuManagement({
     }
 
     if (editingItem.id) {
-      const { success, error, data } = await updateMenuItem(editingItem.id, editingItem);
-      if (success && data) {
-        setLocalMenuItems((prevItems) =>
-          prevItems.map((item) => (item.id === data.id ? data : item))
-        );
-      } else {
-        toast({ title: `Erro: ${error}` });
-      }
+
+  // pega o item antes da edição
+  const oldItem = localMenuItems.find(
+    (item) => item.id === editingItem.id
+  );
+
+  const categoryChanged =
+    oldItem?.categoryId !== editingItem.categoryId;
+
+  const oldCategoryName = localCategories.find(
+    (c) => c.id === oldItem?.categoryId
+  )?.name;
+
+  const newCategoryName = localCategories.find(
+    (c) => c.id === editingItem.categoryId
+  )?.name;
+
+  const { success, error, data } =
+    await updateMenuItem(
+      editingItem.id,
+      editingItem
+    );
+
+  if (success && data) {
+    setLocalMenuItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === data.id
+          ? data
+          : item
+      )
+    );
+
+    // toast específico quando a categoria mudou
+    if (categoryChanged) {
+      toast({
+        title: "Categoria atualizada",
+        description: ` Categoria "${oldCategoryName}" atualizada para "${newCategoryName}".`
+      });
     } else {
+      toast({
+        title: "Item atualizado com sucesso"
+      });
+    }
+
+  } else {
+    toast({
+      title: "Erro ao atualizar item",
+      description: error
+    });
+  }
+} else {
       const { success, error, data } = await createMenuItem(editingItem);
       if (success && data) {
         setLocalMenuItems((prevItems) => [...prevItems, data]);
