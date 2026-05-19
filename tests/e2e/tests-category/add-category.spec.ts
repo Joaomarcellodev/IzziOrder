@@ -1,10 +1,15 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { deleteTestCategories } from '../db-utils';
 
 test.describe('Adicionar Categoria ', () => {
   let categoriaCriada: string = '';
+  const categoriasDeTeste = ['Sobremesas', 'Lanches 2024', 'Café & Chá', 'Categoria Duplicada'];
 
   test.beforeEach(async ({ page }) => {
     test.setTimeout(150000);
+    // Limpa o banco de testes antes de começar para evitar conflito com dados de testes anteriores quebrados
+    await deleteTestCategories(categoriasDeTeste);
+
     await page.goto('http://localhost:3000/login');
     await page.waitForTimeout(3000);
     await page.getByRole('textbox', { name: /e-mail/i }).fill('usuario@teste.com');
@@ -18,38 +23,9 @@ test.describe('Adicionar Categoria ', () => {
     categoriaCriada = '';
   });
 
-  test.afterEach(async ({ page }) => {
-    console.log('Limpando categoria criada nos testes...');
-
-    if (!page.url().includes('/auth/menu')) {
-      await page.goto('http://localhost:3000/auth/orders');
-      await page.waitForTimeout(3000);
-
-    }
-
-    if (categoriaCriada) {
-      console.log('Excluindo categoria: ' + categoriaCriada);
-
-
-      const categoriaParaExcluir = page.locator('div, li, article, section')
-        .filter({ hasText: categoriaCriada })
-        .filter({ has: page.locator('button:has(svg.lucide-trash)') })
-        .last();
-
-      if (await categoriaParaExcluir.isVisible()) {
-        await categoriaParaExcluir.locator('button:has(svg.lucide-trash)').click();
-        await page.waitForTimeout(1000);
-
-        const botaoConfirmar = page.getByRole('button', { name: /excluir/i });
-        if (await botaoConfirmar.isVisible({ timeout: 3000 })) {
-          await botaoConfirmar.click();
-          await page.waitForTimeout(1000);
-          console.log('Categoria excluída: ' + categoriaCriada);
-        }
-      }
-    } else {
-      console.log('Nenhuma categoria criada para excluir');
-    }
+  test.afterEach(async () => {
+    console.log('Limpando categorias criadas nos testes via DB...');
+    await deleteTestCategories(categoriasDeTeste);
   });
 
 
