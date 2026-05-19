@@ -18,7 +18,7 @@ test.describe('Adicionar Categoria ', () => {
     await page.waitForURL('**/auth/**', { timeout: 120000 });
     await page.waitForTimeout(4000);
 
-    await page.goto('http://localhost:3000/auth/orders');
+    await page.goto('http://localhost:3000/auth/menu');
 
     categoriaCriada = '';
   });

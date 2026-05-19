@@ -3,12 +3,7 @@ import { deleteTestCategories } from '../db-utils';
 
 test.describe('Editar Categoria', () => {
   let categoriaDeTeste: string = '';
-  const categoriasDeTeste = [
-    'Categoria Para Editar', 
-    'Categoria Editada', 
-    'Categoria Com Nome Extremamente Longo Para Teste', 
-    'Nome Alterado Cancelado'
-  ];
+  let categoriasParaLimpar: string[] = [];
 
   test.beforeEach(async ({ page }) => {
     test.setTimeout(120000);
@@ -25,10 +20,8 @@ test.describe('Editar Categoria', () => {
     await page.goto('http://localhost:3000/auth/menu');
     await page.waitForTimeout(3000);
 
-    categoriaDeTeste = 'Categoria Para Editar';
-
-    // Limpa categorias do DB diretamente, sem UI
-    await deleteTestCategories(categoriasDeTeste);
+    categoriaDeTeste = `Cat Edit Start ${Date.now()}`;
+    categoriasParaLimpar = [categoriaDeTeste];
 
     // Recarrega a página para garantir estado limpo (sem overlays, sem toasts)
     await page.goto('http://localhost:3000/auth/menu');
@@ -49,14 +42,15 @@ test.describe('Editar Categoria', () => {
 
   test.afterEach(async () => {
     console.log('Limpando categorias via banco de dados...');
-    await deleteTestCategories(categoriasDeTeste);
+    await deleteTestCategories(categoriasParaLimpar);
     console.log('Limpeza concluída');
   });
 
   // 1. EDITAR NOME DA CATEGORIA
   test('deve editar nome da categoria existente', async ({ page }) => {
     test.setTimeout(60000);
-    const novoNome = 'Categoria Editada';
+    const novoNome = `Categoria Editada ${Date.now()}`;
+    categoriasParaLimpar.push(novoNome);
 
     const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
     await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
@@ -78,7 +72,8 @@ test.describe('Editar Categoria', () => {
   // 2. EDITAR CATEGORIA COM NOME LONGO
   test('deve editar categoria com nome longo', async ({ page }) => {
     test.setTimeout(60000);
-    const nomeLongo = 'Categoria Com Nome Extremamente Longo Para Teste';
+    const nomeLongo = `Categoria Com Nome Extremamente Longo ${Date.now()}`;
+    categoriasParaLimpar.push(nomeLongo);
 
     const categoriaRow = page.locator('div.flex.items-center.p-2').filter({ hasText: categoriaDeTeste });
     await categoriaRow.locator('button:has(svg.lucide-square-pen)').click();
