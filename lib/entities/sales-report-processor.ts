@@ -145,7 +145,7 @@ export class SalesReportProcessor {
 
         // Sales by Payment Method
         if (order.raw.payment_method) {
-            const method = order.raw.payment_method.includes("ESPECIE") ? "DINHEIRO" : order.raw.payment_method;
+            const method = order.raw.payment_method.includes("ESPECIE") ? "ESPECIE" : order.raw.payment_method;
             const current = acc.salesByPaymentMethod.get(method as PaymentMethod) || 0;
             acc.salesByPaymentMethod.set(method as PaymentMethod, current + order.effectiveRevenue);
         }
