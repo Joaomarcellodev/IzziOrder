@@ -118,7 +118,7 @@ export function ReportFilters({ filters, setFilters, menuItems }: ReportFiltersP
             <SelectItem value="PIX">PIX</SelectItem>
             <SelectItem value="CREDITO">Crédito</SelectItem>
             <SelectItem value="DEBITO">Débito</SelectItem>
-            <SelectItem value="ESPECIE_SEM_TROCO">Espécie</SelectItem>
+            <SelectItem value="ESPECIE">Espécie</SelectItem>
           </SelectContent>
         </Select>
       </div>

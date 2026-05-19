@@ -145,13 +145,14 @@ export class SalesReportProcessor {
 
         // Sales by Payment Method
         if (order.raw.payment_method) {
-            const current = acc.salesByPaymentMethod.get(order.raw.payment_method) || 0;
-            acc.salesByPaymentMethod.set(order.raw.payment_method, current + order.effectiveRevenue);
+            const method = order.raw.payment_method.includes("ESPECIE") ? "ESPECIE" : order.raw.payment_method;
+            const current = acc.salesByPaymentMethod.get(method as PaymentMethod) || 0;
+            acc.salesByPaymentMethod.set(method as PaymentMethod, current + order.effectiveRevenue);
         }
 
-        // Orders by Type
-        const currentTypeCount = acc.ordersByType.get(order.raw.type) || 0;
-        acc.ordersByType.set(order.raw.type, currentTypeCount + 1);
+        // Orders by Type (Revenue)
+        const currentTypeRevenue = acc.ordersByType.get(order.raw.type) || 0;
+        acc.ordersByType.set(order.raw.type, currentTypeRevenue + order.effectiveRevenue);
 
         this.processOrderLines(order, acc.salesByProduct);
     }
