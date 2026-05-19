@@ -169,7 +169,7 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
 
   const formatPaymentMethod = (method: string) => {
     if (!method) return "Outros";
-    if (method.includes("ESPECIE") || method === "DINHEIRO") return "Dinheiro";
+    if (method.includes("ESPECIE") || method === "DINHEIRO") return "Espécie";
     return method.charAt(0) + method.slice(1).toLowerCase().replace("_", " ");
   };
 
@@ -193,11 +193,11 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
         {/* KPIs V3 (Design Original Aprovado) */}
         <View style={styles.kpiGrid}>
           <View style={[styles.kpiCard, { borderTopColor: BRAND_COLORS.blue }]}>
-            <Text style={styles.kpiLabel}>Total Vendido</Text>
+            <Text style={styles.kpiLabel}>Total de Vendas</Text>
             <Text style={styles.kpiValue}>R$ {report.generalTotalSales.toFixed(2)}</Text>
           </View>
           <View style={[styles.kpiCard, { borderTopColor: COLORS.success }]}>
-            <Text style={styles.kpiLabel}>Pedidos</Text>
+            <Text style={styles.kpiLabel}>Total de Pedidos</Text>
             <Text style={styles.kpiValue}>{totalOrders}</Text>
           </View>
           <View style={[styles.kpiCard, { borderTopColor: COLORS.danger }]}>
