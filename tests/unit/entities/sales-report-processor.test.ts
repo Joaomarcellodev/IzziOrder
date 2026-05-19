@@ -128,4 +128,28 @@ describe("SalesReportProcessor", () => {
     expect(pixSales?.total).toBe(100.0);
     expect(creditSales?.total).toBe(50.0);
   });
+
+  it("should unify ESPECIE_SEM_TROCO and ESPECIE_COM_TROCO into ESPECIE", () => {
+    const cashOrders = [
+      {
+        total: "60.00",
+        date: "2024-01-15T10:00:00Z",
+        payment_method: "ESPECIE_COM_TROCO",
+        order_lines: [{ price: 60, quantity: 1, menu_item_id: "p1" }]
+      },
+      {
+        total: "40.00",
+        date: "2024-01-15T11:00:00Z",
+        payment_method: "ESPECIE_SEM_TROCO",
+        order_lines: [{ price: 40, quantity: 1, menu_item_id: "p1" }]
+      }
+    ];
+
+    const processor = new SalesReportProcessor(cashOrders as any, defaultFilters);
+    const report = processor.generateReport();
+
+    const cashEntry = report.salesByPaymentMethod.find(p => p.method === "ESPECIE" as any);
+    expect(cashEntry?.total).toBe(100.0);
+    expect(report.salesByPaymentMethod.length).toBe(1);
+  });
 });
