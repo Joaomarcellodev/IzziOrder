@@ -116,6 +116,7 @@ export abstract class Order {
     dailySeq?: number;
     paymentMethod?: PaymentMethod;
     changeValue?: number;
+    date?: string;
   }): Order {
     switch (dto.type) {
       case "LOCAL":
@@ -127,7 +128,8 @@ export abstract class Order {
           estimatedTime: dto.estimatedTime,
           dailySeq: dto.dailySeq,
           paymentMethod: dto.paymentMethod,
-          changeValue: dto.changeValue
+          changeValue: dto.changeValue,
+          date: dto.date
         });
       case "PICKUP":
         return new PickupOrder({
@@ -139,6 +141,7 @@ export abstract class Order {
           dailySeq: dto.dailySeq,
           paymentMethod: dto.paymentMethod,
           changeValue: dto.changeValue,
+          date: dto.date
         });
       case "DELIVERY":
         return new DeliveryOrder({
@@ -151,6 +154,7 @@ export abstract class Order {
           dailySeq: dto.dailySeq,
           paymentMethod: dto.paymentMethod,
           changeValue: dto.changeValue,
+          date: dto.date
         });
       default:
         throw new Error("Tipo de pedido inválido.");

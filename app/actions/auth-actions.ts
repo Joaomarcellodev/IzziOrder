@@ -14,11 +14,27 @@ export async function login(formData: FormData) {
     password: formData.get("password") as string,
   };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+const { error } = await supabase.auth.signInWithPassword(data);
 
-  if (error) {
-    return { success: false, error: "Credenciais inválidas." };
+if (error) {
+  console.log(error);
+
+  // erro de internet/conexão
+  if (
+    error.message?.toLowerCase().includes("fetch") ||
+    error.name?.toLowerCase().includes("fetch")
+  ) {
+    return {
+      success: false,
+      error: "Verifique sua conexão com a internet.",
+    };
   }
+
+  return {
+    success: false,
+    error: "Credenciais inválidas.",
+  };
+}
 
   revalidatePath("/", "layout");
   redirect("/auth/orders");

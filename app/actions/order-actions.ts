@@ -25,6 +25,8 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
   const supabase = await createClient();
   const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
 
+  const currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
   const { data, error } = await supabase
     .from("orders")
     .insert({
@@ -37,8 +39,9 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
       estimated_time: orderEntity.estimatedTime ?? 0,
       payment_method: orderDTO.paymentMethod,
       change_value: orderDTO.changeValue ?? 0,
+      date: currentDate
     })
-    .select("id, daily_seq")
+    .select("id, daily_seq, date")
     .single();
 
   if (error) {
@@ -68,6 +71,7 @@ export async function createOrder(orderDTO: OrderRequestDTO, testEstablishmentId
 
   orderEntity.id = data.id;
   orderEntity.dailySeq = data.daily_seq;
+  orderEntity.date = data.date;
   orderEntity.paymentMethod = orderDTO.paymentMethod;
   orderEntity.changeValue = orderDTO.changeValue ?? 0;
 
@@ -110,8 +114,33 @@ export async function getTodayOrders(establishment_id: string): Promise<any> {
     .lte("date", end)
 
   if (error) {
-    console.error("Erro Supabase (getOrders):", error);
+    console.error("Erro Supabase (getTodayOrders):", error);
     throw new Error("Erro ao buscar pedidos.");
+  }
+
+  return data.map((o: any) => adjustOrderLines(o));
+}
+
+export async function getOldPendingOrders(establishment_id?: string): Promise<any> {
+  const supabase = await createClient();
+
+  const actualId = establishment_id && establishment_id !== "" 
+    ? establishment_id 
+    : await getEstablishmentId();
+
+  const today = new Date();
+  const startOfToday = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, order_lines(*)")
+    .eq("establishment_id", actualId)
+    .eq("status", "OPEN")
+    .lt("date", startOfToday);
+
+  if (error) {
+    console.error("Erro Supabase (getOldPendingOrders):", error);
+    throw new Error("Erro ao buscar pedidos pendentes antigos.");
   }
 
   return data.map((o: any) => adjustOrderLines(o));
@@ -287,6 +316,7 @@ function adjustOrderLines(orderData: any) {
     deliveryFee: orderData.delivery_fee,
     estimatedTime: orderData.estimated_time,
     paymentMethod: orderData.payment_method,
-    changeValue: orderData.change_value
+    changeValue: orderData.change_value,
+    date: orderData.date
   }).toJSON();
 }

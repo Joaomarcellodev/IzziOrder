@@ -18,6 +18,7 @@ import {
   updateOrder,
   updateToClosedOrder,
   updateToOpenOrder,
+  getOldPendingOrders,
   OrderRequestDTO,
 } from "@/app/actions/order-actions";
 import { MenuItem } from "@/app/actions/menu-item-actions";
@@ -28,12 +29,14 @@ interface OrdersDashboardProps {
   menuItems: MenuItem[];
   categories: Category[];
   orders: OrderDTO[];
+  serverDate: string;
 }
 
 export default function OrdersDashboard({
   menuItems,
   categories,
   orders: initialOrders,
+  serverDate,
 }: OrdersDashboardProps) {
   const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -42,6 +45,24 @@ export default function OrdersDashboard({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    const fetchOldOrders = async () => {
+      try {
+        const oldOrders = await getOldPendingOrders("");
+        if (oldOrders.length > 0) {
+          setOrders((prev) => {
+            const existingIds = prev.map(o => o.id);
+            const newOldOrders = oldOrders.filter((o: any) => !existingIds.includes(o.id));
+            return [...newOldOrders, ...prev];
+          });
+        }
+      } catch (error) {
+        console.error("Dashboard: Erro ao buscar pedidos antigos:", error);
+      }
+    };
+    fetchOldOrders();
+  }, []);
 
   const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
     try {
@@ -169,7 +190,7 @@ export default function OrdersDashboard({
             </TabsTrigger>
             <TabsTrigger 
               value="CLOSED" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600"
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
             >
               Finalizados
             </TabsTrigger>
@@ -183,6 +204,7 @@ export default function OrdersDashboard({
               onEdit={handleEditClick}
               onDelete={handleDeleteClick}
               onFinish={handleFinishOrder}
+              serverDate={serverDate}
             />
           </TabsContent>
           <TabsContent value="CLOSED" className="mt-0 outline-none px-2">
@@ -191,12 +213,12 @@ export default function OrdersDashboard({
               orders={orders}
               status="CLOSED"
               onReopen={handleReopenOrder}
+              serverDate={serverDate}
             />
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Layout Desktop com Colunas Lado a Lado */}
       <div className="hidden lg:grid grid-cols-2 gap-8 h-[calc(100vh-200px)] px-4">
         <OrderColumn
           title="PEDIDOS ABERTOS"
@@ -205,12 +227,14 @@ export default function OrdersDashboard({
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
           onFinish={handleFinishOrder}
+          serverDate={serverDate}
         />
         <OrderColumn
           title="FINALIZADOS"
           orders={orders}
           status="CLOSED"
           onReopen={handleReopenOrder}
+          serverDate={serverDate}
         />
       </div>
 
