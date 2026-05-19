@@ -396,7 +396,7 @@ describe("getSalesReport Integration Tests", () => {
     }
   }, 15000);
 
-  it("should unify cash payment methods (with and without change) into DINHEIRO", async () => {
+  it("should unify cash payment methods (with and without change) into ESPECIE", async () => {
     const orderWithChange: OrderRequestDTO = {
       total: 60,
       type: "LOCAL",
@@ -419,7 +419,7 @@ describe("getSalesReport Integration Tests", () => {
 
     const report = await getSalesReport({ establishmentId });
 
-    const cashEntry = report.salesByPaymentMethod.find(p => p.method === "DINHEIRO" as any);
+    const cashEntry = report.salesByPaymentMethod.find(p => p.method === "ESPECIE" as any);
     expect(cashEntry).toBeDefined();
     expect(cashEntry?.total).toBeGreaterThanOrEqual(100);
     
@@ -445,7 +445,7 @@ describe("getSalesReport Integration Tests", () => {
     });
 
     expect(report.generalTotalSales).toBe(100);
-    expect(report.salesByPaymentMethod.every(p => p.method === "DINHEIRO" as any)).toBe(true);
+    expect(report.salesByPaymentMethod.every(p => p.method === "ESPECIE" as any)).toBe(true);
   }, 15000);
 
   it("should filter by specific month and year", async () => {
