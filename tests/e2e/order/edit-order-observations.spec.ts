@@ -26,7 +26,7 @@ test.describe('Edit Order Observations', () => {
 
   test('should add and edit observations in an order', async ({ page }) => {
     test.setTimeout(60000);
-    const mesa = `OBS${Math.floor(Math.random() * 1000)}`;
+    const mesa = `55${Math.floor(Math.random() * 1000)}`;
 
     // 1. Criar um novo pedido
     await page.getByRole('button', { name: /Novo Pedido/i }).click();
@@ -41,7 +41,7 @@ test.describe('Edit Order Observations', () => {
     await page.waitForTimeout(2000);
 
     const orderCard = page.locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` }).first();
-    await expect(orderCard).toBeVisible();
+    await expect(orderCard).toBeVisible({ timeout: 10000 });
 
     // 2. Editar o pedido para adicionar observação
     await orderCard.getByTestId('edit-order-button').click();

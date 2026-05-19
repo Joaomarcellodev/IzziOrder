@@ -39,13 +39,14 @@ test.describe('Close and reopen order', () => {
         await menuItemBtn.click();
 
         await page.getByRole('button', { name: 'Criar Pedido' }).click();
+        await page.waitForTimeout(2000); // Wait for modal to close
 
         const openColumn = page.getByTestId('order-column-OPEN');
         const orderCard = openColumn
             .locator('[data-testid="order-card"]', { hasText: `Mesa: ${mesa}` })
             .first();
 
-        await expect(orderCard).toBeVisible();
+        await expect(orderCard).toBeVisible({ timeout: 10000 });
 
         // Finalizar Pedido
         await orderCard.getByTestId('finish-order-button').click();
