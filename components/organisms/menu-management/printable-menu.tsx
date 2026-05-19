@@ -1,6 +1,16 @@
 "use client";
 
 import { MenuItem } from "@/app/actions/menu-item-actions";
+import { Document, Page, Text, View, StyleSheet, pdf, Image } from '@react-pdf/renderer';
+
+const BRAND_COLORS = {
+  blue: '#007BFF',
+  orange: '#FD7E14',
+  dark: '#0f172a',
+  gray: '#64748b',
+  border: '#e2e8f0',
+  zebra: '#f8fafc'
+};
 
 interface Category {
   id: string | null;
@@ -44,326 +54,247 @@ export function groupItemsByCategory(
   return itemsByCategory;
 }
 
-export function printMenu({ menuItems, categories }: PrintableMenuProps) {
-  const itemsByCategory = groupItemsByCategory(menuItems, categories);
+// Define styles for the PDF
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    backgroundColor: '#FFFFFF',
+    fontFamily: 'Helvetica',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 35,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 20,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
+  brandIzzi: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.blue,
+  },
+  brandOrder: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.orange,
+  },
+  headerInfo: {
+    textAlign: 'right',
+  },
+  reportTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.dark,
+    textTransform: 'uppercase',
+  },
+  reportSubtitle: {
+    fontSize: 9,
+    color: BRAND_COLORS.gray,
+    marginTop: 2,
+  },
+  menuContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 25,
+  },
+  column: {
+    flex: 1,
+  },
+  categorySection: {
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.gray,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 4,
+  },
+  menuItem: {
+    marginBottom: 8,
+  },
+  itemHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 2,
+  },
+  itemName: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.dark,
+  },
+  itemLeader: {
+    flexGrow: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    marginHorizontal: 4,
+    position: 'relative',
+    top: -3,
+  },
+  itemPrice: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.dark,
+  },
+  itemDescription: {
+    fontSize: 8,
+    color: BRAND_COLORS.gray,
+    lineHeight: 1.3,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 40,
+    right: 40,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    color: BRAND_COLORS.gray,
+    fontSize: 7,
+  }
+});
 
+const MenuDocument = ({ itemsByCategory }: { itemsByCategory: Map<string, MenuItem[]> }) => {
+  const isClient = typeof window !== 'undefined';
+  const logoUrl = isClient ? `${window.location.origin}/apple-touch-icon.png` : '/apple-touch-icon.png';
+
+  const categoriesArray = Array.from(itemsByCategory.entries());
+  const half = Math.ceil(categoriesArray.length / 2);
+  const leftColumn = categoriesArray.slice(0, half);
+  const rightColumn = categoriesArray.slice(half);
+
+  const renderCategory = ([categoryName, items]: [string, MenuItem[]]) => (
+    <View key={categoryName} style={styles.categorySection} wrap={false}>
+      <Text style={styles.sectionTitle}>{categoryName}</Text>
+      {items.map((item) => (
+        <View key={item.id} style={styles.menuItem} wrap={false}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <View style={styles.itemLeader} />
+            <Text style={styles.itemPrice}>R$ {item.price.toFixed(2)}</Text>
+          </View>
+          {item.description ? (
+            <Text style={styles.itemDescription}>{item.description}</Text>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+
+  return (
+    <Document title={`Cardápio izziOrder - ${new Date().toLocaleDateString("pt-BR")}`}>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image src={logoUrl} style={styles.logoImage} />
+            <View style={{ flexDirection: 'row' }}>
+              <Text style={styles.brandIzzi}>izzi</Text>
+              <Text style={styles.brandOrder}>Order</Text>
+            </View>
+          </View>
+          <View style={styles.headerInfo}>
+            <Text style={styles.reportTitle}>Cardápio</Text>
+            <Text style={styles.reportSubtitle}>
+              Atualizado em {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.menuContent}>
+          <View style={styles.column}>
+            {leftColumn.map(renderCategory)}
+          </View>
+          <View style={styles.column}>
+            {rightColumn.map(renderCategory)}
+          </View>
+        </View>
+
+        <View style={styles.footer} fixed>
+          <Text>izziOrder - Cardápio Gerencial</Text>
+          <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export async function printMenu({ menuItems, categories }: PrintableMenuProps) {
+  const itemsByCategory = groupItemsByCategory(menuItems, categories);
+  
+  // Abre a janela imediatamente para evitar bloqueadores de popup
   const printWindow = window.open("", "_blank");
   if (!printWindow) return;
-
-  const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cardápio</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
-
-    :root {
-      --primary-color: #1a1a1a;
-      --accent-color: #FD7E14;
-      --text-color: #333;
-      --bg-color: #FDFBF7;
-      --border-color: #E5E0D8;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Lato', -apple-system, sans-serif;
-      color: var(--text-color);
-      background-color: var(--bg-color);
-      line-height: 1.5;
-      padding: 40px 20px;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    .menu-container {
-      max-width: 850px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 60px 50px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      border: 1px solid var(--border-color);
-      position: relative;
-    }
-
-    .menu-container::before {
-      content: '';
-      position: absolute;
-      top: 15px; left: 15px; right: 15px; bottom: 15px;
-      border: 1px solid var(--border-color);
-      pointer-events: none;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 50px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .header-icon {
-      margin-bottom: 15px;
-    }
-    
-    .header-icon svg {
-      width: 48px;
-      height: 48px;
-      color: var(--accent-color);
-    }
-
-    .header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 42px;
-      font-weight: 700;
-      color: var(--primary-color);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-bottom: 10px;
-    }
-
-    .header p {
-      font-family: 'Lato', sans-serif;
-      color: #888;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    .header::after {
-      content: '♦';
-      display: block;
-      text-align: center;
-      color: var(--accent-color);
-      font-size: 14px;
-      margin-top: 25px;
-      letter-spacing: 15px;
-    }
-
-    .menu-content {
-      column-count: 2;
-      column-gap: 60px;
-      position: relative;
-      z-index: 1;
-    }
-
-    @media (max-width: 768px) {
-      .menu-content {
-        column-count: 1;
-      }
-    }
-
-    .category-section {
-      break-inside: avoid;
-      margin-bottom: 40px;
-    }
-
-    .category-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--primary-color);
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 25px;
-      position: relative;
-    }
-
-    .category-title::after {
-      content: '';
-      display: block;
-      width: 40px;
-      height: 2px;
-      background-color: var(--accent-color);
-      margin: 12px auto 0;
-    }
-
-    .menu-item {
-      margin-bottom: 24px;
-      break-inside: avoid;
-    }
-
-    .item-header {
-      display: flex;
-      align-items: baseline;
-      margin-bottom: 6px;
-    }
-
-    .item-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--primary-color);
-      background: #fff;
-      padding-right: 8px;
-      z-index: 2;
-      position: relative;
-    }
-
-    .item-leader {
-      flex-grow: 1;
-      border-bottom: 1px dotted #ccc;
-      margin: 0 5px;
-      position: relative;
-      top: -4px;
-    }
-
-    .item-price {
-      font-family: 'Lato', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--primary-color);
-      background: #fff;
-      padding-left: 8px;
-      z-index: 2;
-      position: relative;
-      white-space: nowrap;
-    }
-
-    .item-description {
-      font-family: 'Lato', sans-serif;
-      font-size: 13px;
-      color: #666;
-      font-style: italic;
-      line-height: 1.5;
-      padding-right: 20px;
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 60px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
-      font-size: 11px;
-      color: #aaa;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .no-print {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .print-btn {
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 12px 32px;
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: 'Lato', sans-serif;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .print-btn:hover {
-      background: var(--accent-color);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(253, 126, 20, 0.2);
-    }
-
-    .print-btn svg {
-      width: 18px;
-      height: 18px;
-      margin-right: 8px;
-    }
-
-    @media print {
-      @page {
-        size: A4;
-        margin: 15mm;
-      }
-      
-      body {
-        background-color: transparent;
-        padding: 0;
-      }
-      
-      .menu-container {
-        box-shadow: none;
-        border: none;
-        padding: 0;
-        max-width: 100%;
-      }
-
-      .menu-container::before {
-        display: none;
-      }
-
-      .no-print {
-        display: none !important;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="no-print">
-    <button class="print-btn" onclick="window.print()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-      Imprimir Cardápio
-    </button>
-  </div>
-
-  <div class="menu-container">
-    <div class="header">
-      <div class="header-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
-      </div>
-      <h1>Cardápio</h1>
-      <p>Atualizado em ${new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
-    </div>
-
-    <div class="menu-content">
-      ${Array.from(itemsByCategory.entries())
-        .map(
-          ([categoryName, items]) => `
-        <div class="category-section">
-          <h2 class="category-title">${categoryName}</h2>
-          ${items
-            .map(
-              (item) => `
-            <div class="menu-item">
-              <div class="item-header">
-                <span class="item-name">${item.name}</span>
-                <span class="item-leader"></span>
-                <span class="item-price">R$ ${item.price.toFixed(2)}</span>
-              </div>
-              ${item.description ? `<div class="item-description">${item.description}</div>` : ""}
-            </div>
-          `
-            )
-            .join("")}
+  
+  // Mostra uma mensagem de carregamento elegante
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Gerando Cardápio...</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #FDFBF7;
+            color: #1a1a1a;
+          }
+          .loader-container {
+            text-align: center;
+          }
+          .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #FD7E14;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          h2 { font-weight: 600; margin-bottom: 8px; }
+          p { color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="loader-container">
+          <div class="spinner"></div>
+          <h2>Gerando seu cardápio...</h2>
+          <p>Preparando o PDF para impressão.</p>
         </div>
-      `
-        )
-        .join("")}
-    </div>
-
-    <div class="footer">
-      Cardápio gerado por IzziOrder
-    </div>
-  </div>
-</body>
-</html>`;
-
-  printWindow.document.write(html);
-  printWindow.document.close();
+      </body>
+    </html>
+  `);
+  
+  try {
+    const blob = await pdf(<MenuDocument itemsByCategory={itemsByCategory} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    printWindow.location.href = url;
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    printWindow.document.body.innerHTML = "<h2>Erro ao gerar o PDF do cardápio. Tente novamente.</h2>";
+  }
 }
