@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import {
   Dialog,
@@ -35,6 +35,7 @@ interface MenuItemModalProps {
   onSave: () => Promise<void>;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isSaving?: boolean;
 }
 
 export const MenuItemModal = ({
@@ -46,6 +47,7 @@ export const MenuItemModal = ({
   onSave,
   onImageChange,
   fileInputRef,
+  isSaving = false,
 }: MenuItemModalProps) => {
   if (!editingItem) return null;
 
@@ -152,6 +154,7 @@ export const MenuItemModal = ({
                 size="sm"
                 className="mt-2 bg-transparent"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isSaving}
               >
                 Escolha arquivo
               </Button>
@@ -159,15 +162,23 @@ export const MenuItemModal = ({
           </div>
         </div>
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancelar
           </Button>
           <Button
             onClick={onSave}
-            className="text-white font-semibold"
+            className="text-white font-semibold min-w-[100px]"
             style={{ backgroundColor: "#FD7E14" }}
+            disabled={isSaving}
           >
-            Salvar
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

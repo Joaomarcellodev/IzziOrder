@@ -67,6 +67,7 @@ export function MenuManagement({
 
   const [localMenuItems, setLocalMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [localCategories, setLocalCategories] = useState<Category[]>(initialCategories || []);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -175,72 +176,64 @@ export function MenuManagement({
       return;
     }
 
-    if (imageFile) {
-      editingItem.imageFile = imageFile;
-    }
-
-    if (editingItem.id) {
-
-  // pega o item antes da edição
-  const oldItem = localMenuItems.find(
-    (item) => item.id === editingItem.id
-  );
-
-  const categoryChanged =
-    oldItem?.categoryId !== editingItem.categoryId;
-
-  const oldCategoryName = localCategories.find(
-    (c) => c.id === oldItem?.categoryId
-  )?.name;
-
-  const newCategoryName = localCategories.find(
-    (c) => c.id === editingItem.categoryId
-  )?.name;
-
-  const { success, error, data } =
-    await updateMenuItem(
-      editingItem.id,
-      editingItem
-    );
-
-  if (success && data) {
-    setLocalMenuItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === data.id
-          ? data
-          : item
-      )
-    );
-
-    // toast específico quando a categoria mudou
-    if (categoryChanged) {
-      toast({
-        title: "Categoria atualizada",
-        description: ` Categoria "${oldCategoryName}" atualizada para "${newCategoryName}".`
-      });
-    } else {
-      toast({
-        title: "Item atualizado com sucesso"
-      });
-    }
-
-  } else {
-    toast({
-      title: "Erro ao atualizar item",
-      description: error
-    });
-  }
-} else {
-      const { success, error, data } = await createMenuItem(editingItem);
-      if (success && data) {
-        setLocalMenuItems((prevItems) => [...prevItems, data]);
-        toast({ title: "Item adicionado com sucesso" });
-      } else {
-        toast({ title: `Erro: ${error}` });
+    setIsSaving(true);
+    try {
+      if (imageFile) {
+        editingItem.imageFile = imageFile;
       }
-    }
 
-    closeItemModal();
+      if (editingItem.id) {
+        // pega o item antes da edição
+        const oldItem = localMenuItems.find((item) => item.id === editingItem.id);
+
+        const categoryChanged = oldItem?.categoryId !== editingItem.categoryId;
+
+        const oldCategoryName = localCategories.find((c) => c.id === oldItem?.categoryId)?.name;
+
+        const newCategoryName = localCategories.find((c) => c.id === editingItem.categoryId)?.name;
+
+        const { success, error, data } = await updateMenuItem(editingItem.id, editingItem);
+
+        if (success && data) {
+          setLocalMenuItems((prevItems) =>
+            prevItems.map((item) => (item.id === data.id ? data : item))
+          );
+
+          // toast específico quando a categoria mudou
+          if (categoryChanged) {
+            toast({
+              title: "Categoria atualizada",
+              description: ` Categoria "${oldCategoryName}" atualizada para "${newCategoryName}".`,
+            });
+          } else {
+            toast({
+              title: "Item atualizado com sucesso",
+            });
+          }
+        } else {
+          toast({
+            title: "Erro ao atualizar item",
+            description: error,
+          });
+        }
+      } else {
+        const { success, error, data } = await createMenuItem(editingItem);
+        if (success && data) {
+          setLocalMenuItems((prevItems) => [...prevItems, data]);
+          toast({ title: "Item adicionado com sucesso" });
+        } else {
+          toast({ title: `Erro: ${error}` });
+        }
+      }
+      closeItemModal();
+    } catch (err) {
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao tentar salvar o item.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const addNewItem = () => {
@@ -447,18 +440,19 @@ export function MenuManagement({
         />
 
         {/* --- Modais --- */}
-<MenuItemModal
-  isOpen={isItemModalOpen}
-  onClose={closeItemModal}
-  editingItem={editingItem}
-  setEditingItem={setEditingItem}
-  categories={localCategories}
-  onSave={saveItem}
-  onImageChange={handleImageChange}
-  onImageDrop={handleImageDrop}
-  fileInputRef={fileInputRef}
-  isSaving={isSaving}
-/>
+
+        <MenuItemModal
+          isOpen={isItemModalOpen}
+          onClose={closeItemModal}
+          editingItem={editingItem}
+          setEditingItem={setEditingItem}
+          categories={localCategories}
+          onSave={saveItem}
+          onImageChange={handleImageChange}
+          onImageDrop={handleImageDrop}
+          fileInputRef={fileInputRef}
+          isSaving={isSaving}
+        />
 
         <CategoryModal
           isOpen={isCategoryModalOpen}
