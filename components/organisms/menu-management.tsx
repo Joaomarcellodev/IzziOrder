@@ -151,12 +151,19 @@ export function MenuManagement({
     setImageFile(null);
   };
 
+  const processImageFile = (file: File) => {
+    setImageFile(file);
+    setEditingItem((prev) => (prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null));
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setEditingItem((prev) => (prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null));
+      processImageFile(e.target.files[0]);
     }
+  };
+
+  const handleImageDrop = (file: File) => {
+    processImageFile(file);
   };
 
   const saveItem = async () => {
@@ -440,17 +447,18 @@ export function MenuManagement({
         />
 
         {/* --- Modais --- */}
-
-        <MenuItemModal
-          isOpen={isItemModalOpen}
-          onClose={closeItemModal}
-          editingItem={editingItem}
-          setEditingItem={setEditingItem}
-          categories={localCategories}
-          onSave={saveItem}
-          onImageChange={handleImageChange}
-          fileInputRef={fileInputRef}
-        />
+<MenuItemModal
+  isOpen={isItemModalOpen}
+  onClose={closeItemModal}
+  editingItem={editingItem}
+  setEditingItem={setEditingItem}
+  categories={localCategories}
+  onSave={saveItem}
+  onImageChange={handleImageChange}
+  onImageDrop={handleImageDrop}
+  fileInputRef={fileInputRef}
+  isSaving={isSaving}
+/>
 
         <CategoryModal
           isOpen={isCategoryModalOpen}
