@@ -175,6 +175,32 @@ test.describe('Editar Item do Cardápio - Testes Positivos', () => {
       }
     });
 
+    // 5. ESTADO DE CARREGAMENTO AO EDITAR
+    test('deve mostrar estado de carregamento ao editar item', async ({ page }) => {
+      test.setTimeout(60000);
+      console.log(`Teste 5 - Verificando LOADING na edição do item: ${itemDeTeste}`);
+
+      const itemContainer = await encontrarItemRecemCriado(page, itemDeTeste);
+      await itemContainer.locator('button:has(svg.lucide-square-pen)').first().click();
+      await page.waitForTimeout(2000);
+
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill(`${itemDeTeste} Loading`);
+      
+      // Clica e verifica o estado de loading
+      await page.getByRole('button', { name: 'Salvar' }).click();
+
+      const loadingButton = page.getByRole('button', { name: /Salvando/i });
+      await expect(loadingButton).toBeVisible();
+      await expect(loadingButton).toBeDisabled();
+      
+      // O botão de imagem também deve estar desabilitado
+      await expect(page.getByRole('button', { name: /Escolha arquivo/i })).toBeDisabled();
+
+      // Aguarda a conclusão
+      await expect(page.getByText(`${itemDeTeste} Loading`).first()).toBeVisible({ timeout: 15000 });
+      itemDeTeste = `${itemDeTeste} Loading`;
+    });
+
   });
 
   // INVALID CASES 
