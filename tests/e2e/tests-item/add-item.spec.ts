@@ -118,6 +118,31 @@ test.describe('Adicionar Item', () => {
       await expect(page.getByText('R$ 0.01').first()).toBeVisible();
     });
 
+    // 4. ESTADO DE CARREGAMENTO AO SALVAR
+    test('deve mostrar estado de carregamento ao salvar', async ({ page }) => {
+      test.setTimeout(60000);
+      await page.getByRole('button', { name: /Adicionar Item/i }).click();
+      await page.waitForTimeout(2000);
+
+      await page.getByRole('textbox', { name: 'Nome do Item' }).fill('Item Loading Test');
+      await page.getByPlaceholder('Escreva a descrição do item').fill('Testando o feedback visual de salvamento');
+      await page.getByRole('spinbutton', { name: 'Preço (R$)' }).fill('15.00');
+
+      await page.locator('div:has-text("Categoria")').getByRole('combobox').click();
+      await page.waitForTimeout(500);
+      await page.getByRole('option').first().click();
+
+      // Clica e verifica o estado de loading
+      await page.getByRole('button', { name: 'Salvar' }).click();
+
+      const loadingButton = page.getByRole('button', { name: /Salvando/i });
+      await expect(loadingButton).toBeVisible();
+      await expect(loadingButton).toBeDisabled();
+
+      // Aguarda a conclusão e verifica se o item foi criado
+      await expect(page.getByText('Item Loading Test').first()).toBeVisible({ timeout: 15000 });
+    });
+
   })
 
   // INVALID CASES

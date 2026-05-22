@@ -1,6 +1,7 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/atoms/button";
 import {
   Dialog,
@@ -34,7 +35,9 @@ interface MenuItemModalProps {
   categories: Category[];
   onSave: () => Promise<void>;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageDrop?: (file: File) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isSaving?: boolean;
 }
 
 export const MenuItemModal = ({
@@ -45,9 +48,36 @@ export const MenuItemModal = ({
   categories,
   onSave,
   onImageChange,
+  onImageDrop,
   fileInputRef,
+  isSaving = false,
 }: MenuItemModalProps) => {
+  const [isDragging, setIsDragging] = useState(false);
+
   if (!editingItem) return null;
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isSaving) setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (isSaving) return;
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith("image/") && onImageDrop) {
+        onImageDrop(file);
+      }
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -125,7 +155,14 @@ export const MenuItemModal = ({
           </div>
           <div className="space-y-2">
             <Label>Imagem</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragging ? "border-[#FD7E14] bg-[#FD7E14]/10" : "border-gray-300"
+              } hover:border-gray-400`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               {editingItem.imageUrl && editingItem.imageUrl !== "/placeholder-img.svg" ? (
                 <img
                   src={editingItem.imageUrl}
@@ -152,6 +189,7 @@ export const MenuItemModal = ({
                 size="sm"
                 className="mt-2 bg-transparent"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isSaving}
               >
                 Escolha arquivo
               </Button>
@@ -159,15 +197,23 @@ export const MenuItemModal = ({
           </div>
         </div>
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancelar
           </Button>
           <Button
             onClick={onSave}
-            className="text-white font-semibold"
+            className="text-white font-semibold min-w-[100px]"
             style={{ backgroundColor: "#FD7E14" }}
+            disabled={isSaving}
           >
-            Salvar
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
