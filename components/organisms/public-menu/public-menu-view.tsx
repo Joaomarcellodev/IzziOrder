@@ -2,11 +2,15 @@
 
 import { useState, useMemo } from "react";
 import { PublicMenuData, PublicMenuItem } from "@/app/actions/public-menu-actions";
+import { createPublicOrder } from "@/app/actions/public-order-actions";
 import { CategoryFilter } from "./category-filter";
 import { ProductCard } from "./product-card";
 import { useCart } from "@/hooks/use-cart";
 import { CartDrawer } from "./cart-drawer";
 import { CartSummary } from "./cart-summary";
+import { CheckoutModal } from "./checkout-modal";
+import { OrderConfirmation } from "./order-confirmation";
+import { CheckoutData } from "@/lib/validators/checkout";
 
 export function PublicMenuView({
   establishment,
@@ -17,6 +21,13 @@ export function PublicMenuView({
   
   const cart = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  
+  const [confirmationData, setConfirmationData] = useState<{
+    orderId: string;
+    dailySeq: number;
+    phone: string;
+  } | null>(null);
 
   const filteredItems = useMemo(() => {
     if (!activeCategoryId) return menuItems;
@@ -32,6 +43,57 @@ export function PublicMenuView({
     });
     setIsCartOpen(true);
   };
+
+  const handleProceedToCheckout = () => {
+    try {
+      cart.cartInstance.validateForCheckout();
+      setIsCartOpen(false);
+      setIsCheckoutOpen(true);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleCheckoutSubmit = async (data: CheckoutData) => {
+    try {
+      const orderLines = cart.items.map(item => ({
+        menuItemId: item.menuItemId,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        observation: item.observation,
+      }));
+
+      const result = await createPublicOrder(establishment.id, {
+        ...data,
+        orderLines,
+      });
+
+      // Sucesso
+      setIsCheckoutOpen(false);
+      cart.clear();
+      setConfirmationData({
+        orderId: result.orderId,
+        dailySeq: result.dailySeq,
+        phone: data.phone,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error: any) {
+      throw new Error(error.message || "Erro ao finalizar pedido.");
+    }
+  };
+
+  if (confirmationData) {
+    return (
+      <OrderConfirmation
+        orderId={confirmationData.orderId}
+        dailySeq={confirmationData.dailySeq}
+        phone={confirmationData.phone}
+        establishmentName={establishment.name}
+        onNewOrder={() => setConfirmationData(null)}
+      />
+    );
+  }
 
   return (
     <div className="pb-24">
@@ -83,11 +145,18 @@ export function PublicMenuView({
         isOpen={isCartOpen} 
         onClose={() => setIsCartOpen(false)} 
         cart={cart} 
-        onCheckout={() => {
-          // Por enquanto apenas loga
-          console.log("Indo para checkout");
-          // setIsCartOpen(false); // Mantém aberto por enquanto ou navega
-        }} 
+        onCheckout={handleProceedToCheckout} 
+      />
+
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onBack={() => {
+          setIsCheckoutOpen(false);
+          setIsCartOpen(true);
+        }}
+        cartTotal={cart.total}
+        onSubmit={handleCheckoutSubmit}
       />
     </div>
   );
