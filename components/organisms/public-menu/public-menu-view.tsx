@@ -4,10 +4,9 @@ import { useState, useMemo } from "react";
 import { PublicMenuData, PublicMenuItem } from "@/app/actions/public-menu-actions";
 import { CategoryFilter } from "./category-filter";
 import { ProductCard } from "./product-card";
-
-// Aqui vamos integrar o hook do carrinho na próxima fase
-// import { useCart } from "@/hooks/use-cart";
-// import { CartDrawer } from "./cart-drawer";
+import { useCart } from "@/hooks/use-cart";
+import { CartDrawer } from "./cart-drawer";
+import { CartSummary } from "./cart-summary";
 
 export function PublicMenuView({
   establishment,
@@ -16,8 +15,8 @@ export function PublicMenuView({
 }: PublicMenuData) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   
-  // const cart = useCart();
-  // const [isCartOpen, setIsCartOpen] = useState(false);
+  const cart = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const filteredItems = useMemo(() => {
     if (!activeCategoryId) return menuItems;
@@ -25,9 +24,13 @@ export function PublicMenuView({
   }, [menuItems, activeCategoryId]);
 
   const handleAddToCart = (item: PublicMenuItem) => {
-    // cart.addItem(item);
-    // setIsCartOpen(true);
-    console.log("Adicionado", item.name);
+    cart.addItem({
+      menuItemId: item.id,
+      name: item.name,
+      price: item.price,
+      imageUrl: item.imageUrl,
+    });
+    setIsCartOpen(true);
   };
 
   return (
@@ -70,11 +73,22 @@ export function PublicMenuView({
         </div>
       )}
 
-      {/* 
-        Aqui entrarão os componentes do Carrinho na Fase 3
-        <CartSummary onClick={() => setIsCartOpen(true)} itemsCount={cart.itemsCount} total={cart.total} />
-        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cart={cart} onCheckout={() => ...} />
-      */}
+      <CartSummary 
+        onClick={() => setIsCartOpen(true)} 
+        itemsCount={cart.itemsCount} 
+        total={cart.total} 
+      />
+      
+      <CartDrawer 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+        cart={cart} 
+        onCheckout={() => {
+          // Por enquanto apenas loga
+          console.log("Indo para checkout");
+          // setIsCartOpen(false); // Mantém aberto por enquanto ou navega
+        }} 
+      />
     </div>
   );
 }
