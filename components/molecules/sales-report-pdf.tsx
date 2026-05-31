@@ -392,15 +392,18 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vendas por Item</Text>
-          <View style={styles.table}>
+          {/* Garante que o título e o cabeçalho andem juntos e não fiquem órfãos */}
+          <View wrap={false}>
+            <Text style={styles.sectionTitle}>Vendas por Item</Text>
             <View style={styles.tableHeader}>
               <Text style={[styles.cellHeader, styles.colMain]}>Produto</Text>
               <Text style={[styles.cellHeader, styles.colCenter]}>Qtd</Text>
               <Text style={[styles.cellHeader, styles.colRight]}>Faturamento</Text>
             </View>
+          </View>
+          <View style={styles.table}>
             {soldProducts.map((item, idx) => (
-              <View key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
+              <View wrap={false} key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
                 <Text style={[styles.cell, styles.colMain, { fontWeight: 'bold' }]}>{item.name}</Text>
                 <Text style={[styles.cell, styles.colCenter]}>{item.quantity}</Text>
                 <Text style={[styles.cell, styles.colRight, { fontWeight: 'bold' }]}>R$ {item.total.toFixed(2)}</Text>
@@ -410,15 +413,18 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Movimento Diário</Text>
-          <View style={styles.table}>
+          {/* Garante que o título e o cabeçalho andem juntos */}
+          <View wrap={false}>
+            <Text style={styles.sectionTitle}>Movimento Diário</Text>
             <View style={styles.tableHeader}>
               <Text style={[styles.cellHeader, { flex: 1 }]}>Data</Text>
               <Text style={[styles.cellHeader, styles.colCenter]}>Pedidos</Text>
               <Text style={[styles.cellHeader, styles.colRight]}>Subtotal</Text>
             </View>
+          </View>
+          <View style={styles.table}>
             {report.salesByDay.map((day, idx) => (
-              <View key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
+              <View wrap={false} key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
                 <Text style={[styles.cell, { flex: 1 }]}>{format(parseISO(day.date), "dd/MM/yyyy")}</Text>
                 <Text style={[styles.cell, styles.colCenter]}>{day.count}</Text>
                 <Text style={[styles.cell, styles.colRight, { fontWeight: 'bold' }]}>R$ {day.total.toFixed(2)}</Text>
