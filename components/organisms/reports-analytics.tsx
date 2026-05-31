@@ -79,7 +79,7 @@ export function ReportsAnalytics() {
 
   const dynamicDistribution = report?.ordersByType?.map((t, idx) => ({
     name: ORDER_TYPE_LABELS[t.type] || t.type,
-    value: t.total,
+    value: t.count,
     color: CHART_COLORS[idx % CHART_COLORS.length]
   })) || [];
 
