@@ -15,41 +15,41 @@ export function CategoryFilter({
   onSelectCategory,
 }: CategoryFilterProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Rola para a categoria ativa ao abrir/mudar
+
   useEffect(() => {
     if (scrollRef.current) {
-      const activeElement = scrollRef.current.querySelector('[data-active="true"]');
+      const activeElement = scrollRef.current.querySelector(
+        '[data-active="true"]',
+      );
       if (activeElement) {
         activeElement.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
-          inline: "center"
+          inline: "center",
         });
       }
     }
   }, [activeCategoryId]);
 
   return (
-    <div className="relative mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
-      <div 
+    <div className="relative w-full">
+      <div
         ref={scrollRef}
-        className="flex overflow-x-auto hide-scrollbar gap-2 pb-2 snap-x"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="flex overflow-x-auto gap-2.5 pb-1 snap-x scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-1"
       >
         <button
           data-active={activeCategoryId === null}
           onClick={() => onSelectCategory(null)}
           className={cn(
-            "flex-none snap-start whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm border",
+            "flex-none snap-start whitespace-nowrap rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider border transition-all duration-200 active:scale-95 shadow-sm",
             activeCategoryId === null
-              ? "bg-blue-600 text-white border-blue-600 shadow-blue-200"
-              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              ? "bg-[#FD7E14] text-white border-[#FD7E14] shadow-[#FD7E14]/20 ring-2 ring-[#FD7E14]/10"
+              : "bg-white text-neutral-600 border-neutral-200/80 hover:bg-neutral-50 hover:text-neutral-900",
           )}
         >
           Todos
         </button>
-        
+
         {categories.map((category) => {
           const isActive = activeCategoryId === category.id;
           return (
@@ -58,10 +58,10 @@ export function CategoryFilter({
               data-active={isActive}
               onClick={() => onSelectCategory(category.id)}
               className={cn(
-                "flex-none snap-start whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm border",
+                "flex-none snap-start whitespace-nowrap rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider border transition-all duration-200 active:scale-95 shadow-sm",
                 isActive
-                  ? "bg-blue-600 text-white border-blue-600 shadow-blue-200"
-                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  ? "bg-[#FD7E14] text-white border-[#FD7E14] shadow-[#FD7E14]/20 ring-2 ring-[#FD7E14]/10"
+                  : "bg-white text-neutral-600 border-neutral-200/80 hover:bg-neutral-50 hover:text-neutral-900",
               )}
             >
               {category.name}
@@ -69,10 +69,9 @@ export function CategoryFilter({
           );
         })}
       </div>
-      
-      {/* Sombras laterais para indicar scroll */}
-      <div className="absolute top-0 right-0 bottom-2 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none sm:hidden"></div>
-      <div className="absolute top-0 left-0 bottom-2 w-8 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none sm:hidden"></div>
+
+      <div className="absolute top-0 right-0 bottom-1 w-12 bg-gradient-to-l from-neutral-50/90 to-transparent pointer-events-none md:w-16" />
+      <div className="absolute top-0 left-0 bottom-1 w-12 bg-gradient-to-r from-neutral-50/90 to-transparent pointer-events-none md:w-16" />
     </div>
   );
 }

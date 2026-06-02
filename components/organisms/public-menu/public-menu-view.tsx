@@ -164,7 +164,7 @@ export function PublicMenuView({
       </div>
 
       {categories.length > 0 && (
-        <div className="sticky top-16 z-30 bg-neutral-50/90 backdrop-blur-md py-3 -mx-4 px-4 mb-6 border-b border-neutral-100/50">
+        <div className=" top-16 z-30 bg-neutral-50/90 backdrop-blur-md py-3 -mx-4 px-4 mb-6 border-b border-neutral-100/50">
           <CategoryFilter
             categories={categories}
             activeCategoryId={activeCategoryId}
