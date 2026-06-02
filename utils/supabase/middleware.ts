@@ -44,7 +44,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/reset-password') || 
     pathname.startsWith('/auth/update-password') || 
     pathname.startsWith('/auth/callback') ||       
-    pathname.startsWith('/error')
+    pathname.startsWith('/error') ||
+    pathname.startsWith('/cardapio')
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()

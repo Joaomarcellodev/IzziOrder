@@ -1,10 +1,10 @@
 "use client";
 
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Image, Svg, Path, Polyline, Circle, Line } from '@react-pdf/renderer';
 import { SalesReport, SalesReportFilters } from '@/lib/entities/report';
 import { format, parseISO } from 'date-fns';
-import { COLORS, ORDER_TYPE_LABELS } from '@/app/auth/reports/constants';
+import { COLORS, CHART_COLORS, ORDER_TYPE_LABELS } from '@/app/auth/reports/constants';
 
 const BRAND_COLORS = {
   blue: '#007BFF',
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 35,
+    marginBottom: 25,
   },
   kpiCard: {
     flex: 1,
@@ -89,6 +89,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: BRAND_COLORS.dark,
+  },
+  chartSection: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 25,
+  },
+  chartCard: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BRAND_COLORS.border,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  chartTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: BRAND_COLORS.dark,
+    marginBottom: 10,
   },
   section: {
     marginBottom: 25,
@@ -136,7 +154,6 @@ const styles = StyleSheet.create({
   colMain: { flex: 1 },
   colRight: { width: 100, textAlign: 'right' },
   colCenter: { width: 60, textAlign: 'center' },
-
   footer: {
     position: 'absolute',
     bottom: 30,
@@ -151,6 +168,120 @@ const styles = StyleSheet.create({
     fontSize: 7,
   }
 });
+
+// NATIVE SVG CHARTS
+const PDFDonutChart = ({ data, colors, labels, size = 100 }: { data: number[], colors: string[], labels: string[], size?: number }) => {
+  const total = data.reduce((a, b) => a + b, 0);
+  if (total === 0) return <Text style={{fontSize: 8, color: BRAND_COLORS.gray}}>Nenhum dado disponível</Text>;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const R = size * 0.45;
+  const r = size * 0.25;
+  let currentAngle = -Math.PI / 2;
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+      <Svg width={size} height={size}>
+        {data.map((value, idx) => {
+          if (value === 0) return null;
+          const sliceAngle = (value / total) * 2 * Math.PI;
+          
+          if (sliceAngle >= 2 * Math.PI - 0.001) {
+            return <Circle key={idx} cx={cx} cy={cy} r={(R+r)/2} strokeWidth={R-r} stroke={colors[idx]} fill="none" />;
+          }
+
+          const endAngle = currentAngle + sliceAngle;
+          const x1 = cx + R * Math.cos(currentAngle);
+          const y1 = cy + R * Math.sin(currentAngle);
+          const x2 = cx + R * Math.cos(endAngle);
+          const y2 = cy + R * Math.sin(endAngle);
+          const innerX1 = cx + r * Math.cos(currentAngle);
+          const innerY1 = cy + r * Math.sin(currentAngle);
+          const innerX2 = cx + r * Math.cos(endAngle);
+          const innerY2 = cy + r * Math.sin(endAngle);
+
+          const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
+          const pathData = [
+            `M ${innerX1} ${innerY1}`,
+            `L ${x1} ${y1}`,
+            `A ${R} ${R} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+            `L ${innerX2} ${innerY2}`,
+            `A ${r} ${r} 0 ${largeArcFlag} 0 ${innerX1} ${innerY1}`,
+            'Z'
+          ].join(' ');
+
+          currentAngle = endAngle;
+          return <Path key={idx} d={pathData} fill={colors[idx]} />;
+        })}
+      </Svg>
+
+      {/* LEGENDA DO GRÁFICO DE PIZZA */}
+      <View style={{ gap: 4 }}>
+        {data.map((value, idx) => {
+           if (value === 0) return null;
+           const percent = ((value / total) * 100).toFixed(1);
+           return (
+             <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+               <View style={{ width: 6, height: 6, backgroundColor: colors[idx], borderRadius: 3 }} />
+               <Text style={{ fontSize: 7, color: BRAND_COLORS.dark }}>
+                 {labels[idx]}: <Text style={{ fontWeight: 'bold' }}>{percent}%</Text>
+               </Text>
+             </View>
+           );
+        })}
+      </View>
+    </View>
+  );
+};
+
+const PDFLineChart = ({ data, dates, width, height, color }: { data: number[], dates: string[], width: number, height: number, color: string }) => {
+  const max = Math.max(...data, 1);
+  const usableHeight = height - 10;
+  
+  const points = data.map((val, idx) => {
+    const x = data.length > 1 ? (idx / (data.length - 1)) * width : width / 2;
+    const y = usableHeight - (val / max) * usableHeight + 5;
+    return `${x},${y}`;
+  }).join(' ');
+
+  const firstDate = dates.length > 0 ? dates[0] : '';
+  const lastDate = dates.length > 1 ? dates[dates.length - 1] : '';
+
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {/* EIXO Y (VALORES) */}
+      <View style={{ justifyContent: 'space-between', height: height, marginRight: 5, paddingVertical: 2 }}>
+        <Text style={{ fontSize: 6, color: BRAND_COLORS.gray }}>R$ {max.toFixed(0)}</Text>
+        <Text style={{ fontSize: 6, color: BRAND_COLORS.gray }}>R$ {(max/2).toFixed(0)}</Text>
+        <Text style={{ fontSize: 6, color: BRAND_COLORS.gray }}>R$ 0</Text>
+      </View>
+      
+      <View>
+        <Svg width={width} height={height}>
+          {/* Grid lines */}
+          <Line x1={0} y1={height - 5} x2={width} y2={height - 5} stroke="#f1f5f9" strokeWidth={1} />
+          <Line x1={0} y1={height/2} x2={width} y2={height/2} stroke="#f1f5f9" strokeWidth={1} />
+          <Line x1={0} y1={5} x2={width} y2={5} stroke="#f1f5f9" strokeWidth={1} />
+          
+          {data.length > 1 && <Polyline points={points} stroke={color} strokeWidth={2} fill="none" />}
+          {data.map((val, idx) => {
+            const x = data.length > 1 ? (idx / (data.length - 1)) * width : width / 2;
+            const y = usableHeight - (val / max) * usableHeight + 5;
+            return <Circle key={idx} cx={x} cy={y} r={2} fill={color} stroke="#ffffff" strokeWidth={1} />;
+          })}
+        </Svg>
+        
+        {/* EIXO X (DATAS) */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width, marginTop: 4 }}>
+           <Text style={{ fontSize: 6, color: BRAND_COLORS.gray }}>{firstDate}</Text>
+           {lastDate && <Text style={{ fontSize: 6, color: BRAND_COLORS.gray }}>{lastDate}</Text>}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 
 interface SalesReportPDFProps {
   report: SalesReport;
@@ -173,6 +304,17 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
     return method.charAt(0) + method.slice(1).toLowerCase().replace("_", " ");
   };
 
+  // Prepara dados dos gráficos
+  const revenueData = report.salesByDay.map(d => d.total);
+  const revenueDates = report.salesByDay.map(d => format(parseISO(d.date), "dd/MM"));
+  
+  const distributionData = report.ordersByType.map(t => t.count);
+  const distributionLabels = report.ordersByType.map(t => ORDER_TYPE_LABELS[t.type] || t.type);
+  const distributionColors = report.ordersByType.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
+
+  // Filtra itens zerados
+  const soldProducts = report.salesByProduct.filter(item => item.quantity > 0);
+
   return (
     <Document title={`Relatório izziOrder - ${endDate}`}>
       <Page size="A4" style={styles.page}>
@@ -190,7 +332,7 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
-        {/* KPIs V3 (Design Original Aprovado) */}
+        {/* KPIs */}
         <View style={styles.kpiGrid}>
           <View style={[styles.kpiCard, { borderTopColor: BRAND_COLORS.blue }]}>
             <Text style={styles.kpiLabel}>Total de Vendas</Text>
@@ -206,6 +348,24 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
           </View>
         </View>
 
+        {/* NATIVE CHARTS SECTION */}
+        <View style={styles.chartSection}>
+           <View style={[styles.chartCard, { flex: 2 }]}>
+              <Text style={styles.chartTitle}>Fluxo de Receita (Diário)</Text>
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
+                 <PDFLineChart data={revenueData} dates={revenueDates} width={220} height={80} color={COLORS.primary} />
+              </View>
+           </View>
+
+           <View style={[styles.chartCard, { flex: 1.5 }]}>
+              <Text style={styles.chartTitle}>Origem dos Pedidos</Text>
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
+                 <PDFDonutChart data={distributionData} colors={distributionColors} labels={distributionLabels} size={80} />
+              </View>
+           </View>
+        </View>
+
+        {/* TABLES */}
         <View style={{ flexDirection: 'row', gap: 25, marginBottom: 20 }}>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Canais de Venda</Text>
@@ -232,15 +392,18 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vendas por Item</Text>
-          <View style={styles.table}>
+          {/* Garante que o título e o cabeçalho andem juntos e não fiquem órfãos */}
+          <View wrap={false}>
+            <Text style={styles.sectionTitle}>Vendas por Item</Text>
             <View style={styles.tableHeader}>
               <Text style={[styles.cellHeader, styles.colMain]}>Produto</Text>
               <Text style={[styles.cellHeader, styles.colCenter]}>Qtd</Text>
               <Text style={[styles.cellHeader, styles.colRight]}>Faturamento</Text>
             </View>
-            {report.salesByProduct.map((item, idx) => (
-              <View key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
+          </View>
+          <View style={styles.table}>
+            {soldProducts.map((item, idx) => (
+              <View wrap={false} key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
                 <Text style={[styles.cell, styles.colMain, { fontWeight: 'bold' }]}>{item.name}</Text>
                 <Text style={[styles.cell, styles.colCenter]}>{item.quantity}</Text>
                 <Text style={[styles.cell, styles.colRight, { fontWeight: 'bold' }]}>R$ {item.total.toFixed(2)}</Text>
@@ -250,15 +413,18 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Movimento Diário</Text>
-          <View style={styles.table}>
+          {/* Garante que o título e o cabeçalho andem juntos */}
+          <View wrap={false}>
+            <Text style={styles.sectionTitle}>Movimento Diário</Text>
             <View style={styles.tableHeader}>
               <Text style={[styles.cellHeader, { flex: 1 }]}>Data</Text>
               <Text style={[styles.cellHeader, styles.colCenter]}>Pedidos</Text>
               <Text style={[styles.cellHeader, styles.colRight]}>Subtotal</Text>
             </View>
+          </View>
+          <View style={styles.table}>
             {report.salesByDay.map((day, idx) => (
-              <View key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
+              <View wrap={false} key={idx} style={[styles.tableRow, { backgroundColor: idx % 2 === 1 ? BRAND_COLORS.zebra : '#FFFFFF' }]}>
                 <Text style={[styles.cell, { flex: 1 }]}>{format(parseISO(day.date), "dd/MM/yyyy")}</Text>
                 <Text style={[styles.cell, styles.colCenter]}>{day.count}</Text>
                 <Text style={[styles.cell, styles.colRight, { fontWeight: 'bold' }]}>R$ {day.total.toFixed(2)}</Text>
@@ -275,3 +441,4 @@ export const SalesReportPDF = ({ report, filters }: SalesReportPDFProps) => {
     </Document>
   );
 };
+

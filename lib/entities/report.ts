@@ -26,7 +26,7 @@ export interface SalesReport {
     paymentMethods: string[];
   }[];
   salesByPaymentMethod: { method: PaymentMethod; total: number }[];
-  ordersByType: { type: OrderType; total: number }[];
+  ordersByType: { type: OrderType; total: number; count: number }[];
   ordersByDay: {
     date: string;
     orders: any[];

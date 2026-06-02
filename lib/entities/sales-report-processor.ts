@@ -56,7 +56,7 @@ interface Accumulators {
     ordersByDay: Map<string, OrderDTO[]>;
     salesByProduct: Map<string, ProductSummary>;
     salesByPaymentMethod: Map<PaymentMethod, number>;
-    ordersByType: Map<OrderType, number>;
+    ordersByType: Map<OrderType, { total: number; count: number }>;
 }
 
 export class SalesReportProcessor {
@@ -150,9 +150,11 @@ export class SalesReportProcessor {
             acc.salesByPaymentMethod.set(method as PaymentMethod, current + order.effectiveRevenue);
         }
 
-        // Orders by Type (Revenue)
-        const currentTypeRevenue = acc.ordersByType.get(order.raw.type) || 0;
-        acc.ordersByType.set(order.raw.type, currentTypeRevenue + order.effectiveRevenue);
+        // Orders by Type (Revenue and Count)
+        const currentTypeData = acc.ordersByType.get(order.raw.type) || { total: 0, count: 0 };
+        currentTypeData.total += order.effectiveRevenue;
+        currentTypeData.count += 1;
+        acc.ordersByType.set(order.raw.type, currentTypeData);
 
         this.processOrderLines(order, acc.salesByProduct);
     }
@@ -210,7 +212,7 @@ export class SalesReportProcessor {
             .map(([method, total]) => ({ method, total }));
 
         report.ordersByType = Array.from(acc.ordersByType.entries())
-            .map(([type, total]) => ({ type, total }));
+            .map(([type, data]) => ({ type, total: data.total, count: data.count }));
 
     }
 }

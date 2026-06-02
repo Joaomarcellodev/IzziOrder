@@ -1,5 +1,5 @@
 "use client";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/molecules/tabs";
 import { useState, useRef, useCallback } from "react";
 import { Plus, Printer } from "lucide-react";
 import { DndProvider } from "react-dnd";
@@ -67,6 +67,7 @@ export function MenuManagement({
 
   const [localMenuItems, setLocalMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [localCategories, setLocalCategories] = useState<Category[]>(initialCategories || []);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -151,12 +152,19 @@ export function MenuManagement({
     setImageFile(null);
   };
 
+  const processImageFile = (file: File) => {
+    setImageFile(file);
+    setEditingItem((prev) => (prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null));
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setEditingItem((prev) => (prev ? { ...prev, imageUrl: URL.createObjectURL(file) } : null));
+      processImageFile(e.target.files[0]);
     }
+  };
+
+  const handleImageDrop = (file: File) => {
+    processImageFile(file);
   };
 
   const saveItem = async () => {
@@ -168,72 +176,64 @@ export function MenuManagement({
       return;
     }
 
-    if (imageFile) {
-      editingItem.imageFile = imageFile;
-    }
-
-    if (editingItem.id) {
-
-  // pega o item antes da edição
-  const oldItem = localMenuItems.find(
-    (item) => item.id === editingItem.id
-  );
-
-  const categoryChanged =
-    oldItem?.categoryId !== editingItem.categoryId;
-
-  const oldCategoryName = localCategories.find(
-    (c) => c.id === oldItem?.categoryId
-  )?.name;
-
-  const newCategoryName = localCategories.find(
-    (c) => c.id === editingItem.categoryId
-  )?.name;
-
-  const { success, error, data } =
-    await updateMenuItem(
-      editingItem.id,
-      editingItem
-    );
-
-  if (success && data) {
-    setLocalMenuItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === data.id
-          ? data
-          : item
-      )
-    );
-
-    // toast específico quando a categoria mudou
-    if (categoryChanged) {
-      toast({
-        title: "Categoria atualizada",
-        description: ` Categoria "${oldCategoryName}" atualizada para "${newCategoryName}".`
-      });
-    } else {
-      toast({
-        title: "Item atualizado com sucesso"
-      });
-    }
-
-  } else {
-    toast({
-      title: "Erro ao atualizar item",
-      description: error
-    });
-  }
-} else {
-      const { success, error, data } = await createMenuItem(editingItem);
-      if (success && data) {
-        setLocalMenuItems((prevItems) => [...prevItems, data]);
-        toast({ title: "Item adicionado com sucesso" });
-      } else {
-        toast({ title: `Erro: ${error}` });
+    setIsSaving(true);
+    try {
+      if (imageFile) {
+        editingItem.imageFile = imageFile;
       }
-    }
 
-    closeItemModal();
+      if (editingItem.id) {
+        // pega o item antes da edição
+        const oldItem = localMenuItems.find((item) => item.id === editingItem.id);
+
+        const categoryChanged = oldItem?.categoryId !== editingItem.categoryId;
+
+        const oldCategoryName = localCategories.find((c) => c.id === oldItem?.categoryId)?.name;
+
+        const newCategoryName = localCategories.find((c) => c.id === editingItem.categoryId)?.name;
+
+        const { success, error, data } = await updateMenuItem(editingItem.id, editingItem);
+
+        if (success && data) {
+          setLocalMenuItems((prevItems) =>
+            prevItems.map((item) => (item.id === data.id ? data : item))
+          );
+
+          // toast específico quando a categoria mudou
+          if (categoryChanged) {
+            toast({
+              title: "Categoria atualizada",
+              description: ` Categoria "${oldCategoryName}" atualizada para "${newCategoryName}".`,
+            });
+          } else {
+            toast({
+              title: "Item atualizado com sucesso",
+            });
+          }
+        } else {
+          toast({
+            title: "Erro ao atualizar item",
+            description: error,
+          });
+        }
+      } else {
+        const { success, error, data } = await createMenuItem(editingItem);
+        if (success && data) {
+          setLocalMenuItems((prevItems) => [...prevItems, data]);
+          toast({ title: "Item adicionado com sucesso" });
+        } else {
+          toast({ title: `Erro: ${error}` });
+        }
+      }
+      closeItemModal();
+    } catch (err) {
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao tentar salvar o item.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const addNewItem = () => {
@@ -360,128 +360,135 @@ export function MenuManagement({
     }
   }, [localMenuItems, toast]);
 
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="p-4 sm:p-6">
-        {/* Top Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div className="flex-1 min-w-0">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Todas as Categorias" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">Todas as Categorias</SelectItem>
-                {localCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id!}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+return (
+  <DndProvider backend={HTML5Backend}>
+    <div className="p-4 sm:p-6">
+      <Tabs defaultValue="itens">
+        <TabsList className="mb-6">
+          <TabsTrigger value="itens">Itens</TabsTrigger>
+          <TabsTrigger value="categorias">Categorias</TabsTrigger>
+        </TabsList>
+
+        {/* ABA ITENS */}
+        <TabsContent value="itens">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div className="flex-1 min-w-0">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Todas as Categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">Todas as Categorias</SelectItem>
+                  {localCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id!}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => printMenu({ menuItems: localMenuItems, categories: localCategories })}
+                className="w-full sm:w-auto font-semibold"
+              >
+                <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
+              </Button>
+              <Button
+                onClick={addNewItem}
+                className="w-full sm:w-auto text-white font-semibold"
+                style={{ backgroundColor: "#FD7E14" }}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Adicionar Item
+              </Button>
+            </div>
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              onClick={() => printMenu({ menuItems: localMenuItems, categories: localCategories })}
-              className="w-full sm:w-auto font-semibold"
-            >
-              <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
-            </Button>
-            <Button
-              onClick={addNewItem}
-              className="w-full sm:w-auto text-white font-semibold"
-              style={{ backgroundColor: "#FD7E14" }}
-            >
-              <Plus className="w-4 h-4 mr-2" /> Adicionar Item
-            </Button>
+          <div className="space-y-4">
+            {filteredItems.length === 0 ? (
+              <Card className="p-12 text-center">
+                <div className="space-y-4">
+                  <div className="text-6xl">👨‍🍳</div>
+                  <div className="text-lg text-gray-600">Categoria Vazia.</div>
+                  <Button
+                    onClick={addNewItem}
+                    className="text-white font-semibold"
+                    style={{ backgroundColor: "#FD7E14" }}
+                  >
+                    + Adicionar o primeiro item
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              filteredItems.map((item, index) => (
+                <MenuItemCard
+                  key={item.id!}
+                  item={item}
+                  index={index}
+                  moveItem={moveItem}
+                  toggleAvailability={toggleAvailability}
+                  openEditModal={openEditModal}
+                  openDeleteModal={openDeleteModal}
+                  onDrop={handleDrop}
+                />
+              ))
+            )}
           </div>
-        </div>
+        </TabsContent>
 
-        {/* Lista de Itens do Menu */}
-        <div className="space-y-4">
-          {filteredItems.length === 0 ? (
-            <Card className="p-12 text-center">
-              <div className="space-y-4">
-                <div className="text-6xl">👨‍🍳</div>
-                <div className="text-lg text-gray-600">Categoria Vazia.</div>
-                <Button
-                  onClick={addNewItem}
-                  className="text-white font-semibold"
-                  style={{ backgroundColor: "#FD7E14" }}
-                >
-                  + Adicionar o primeiro item
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            filteredItems.map((item, index) => (
-              <MenuItemCard
-                key={item.id!}
-                item={item}
-                index={index}
-                moveItem={moveItem}
-                toggleAvailability={toggleAvailability}
-                openEditModal={openEditModal}
-                openDeleteModal={openDeleteModal}
-                onDrop={handleDrop}
-              />
-            ))
-          )}
-        </div>
+        {/* ABA CATEGORIAS */}
+        <TabsContent value="categorias">
+          <CategoryManagement
+            categories={localCategories}
+            onAddCategory={addNewCategory}
+            onEditCategory={openEditCategoryModal}
+            onDeleteCategory={openDeleteCategoryModal}
+          />
+        </TabsContent>
+      </Tabs>
 
-        {/* Gerenciar Categorias */}
-        <CategoryManagement
-          categories={localCategories}
-          onAddCategory={addNewCategory}
-          onEditCategory={openEditCategoryModal}
-          onDeleteCategory={openDeleteCategoryModal}
-        />
-
-        {/* --- Modais --- */}
-
-        <MenuItemModal
-          isOpen={isItemModalOpen}
-          onClose={closeItemModal}
-          editingItem={editingItem}
-          setEditingItem={setEditingItem}
-          categories={localCategories}
-          onSave={saveItem}
-          onImageChange={handleImageChange}
-          fileInputRef={fileInputRef}
-        />
-
-        <CategoryModal
-          isOpen={isCategoryModalOpen}
-          onClose={() => setIsCategoryModalOpen(false)}
-          categoryName={newCategoryName}
-          setCategoryName={setNewCategoryName}
-          onSave={saveCategory}
-        />
-
-        <CategoryEditModal
-          isOpen={isEditCategoryModalOpen}
-          onClose={() => setIsEditCategoryModalOpen(false)}
-          categoryName={newCategoryName}
-          setCategoryName={setNewCategoryName}
-          onSave={saveEditedCategory}
-        />
-
-        <ItemDeleteConfirmationModal
-          isOpen={isDeleteItemModalOpen}
-          onClose={() => setIsDeleteItemModalOpen(false)}
-          itemName={itemToDelete?.name}
-          onConfirm={handleConfirmDeleteItem}
-        />
-
-        <CategoryDeleteConfirmationModal
-          isOpen={isDeleteCategoryModalOpen}
-          onClose={() => setIsDeleteCategoryModalOpen(false)}
-          categoryName={categoryToDeleteName}
-          onConfirm={handleConfirmDeleteCategory}
-        />
-      </div>
-    </DndProvider>
-  );
+      {/* --- Modais --- */}
+      <MenuItemModal
+        isOpen={isItemModalOpen}
+        onClose={closeItemModal}
+        editingItem={editingItem}
+        setEditingItem={setEditingItem}
+        categories={localCategories}
+        onSave={saveItem}
+        onImageChange={handleImageChange}
+        onImageDrop={handleImageDrop}
+        fileInputRef={fileInputRef}
+        isSaving={isSaving}
+      />
+      <CategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        categoryName={newCategoryName}
+        setCategoryName={setNewCategoryName}
+        onSave={saveCategory}
+      />
+      <CategoryEditModal
+        isOpen={isEditCategoryModalOpen}
+        onClose={() => setIsEditCategoryModalOpen(false)}
+        categoryName={newCategoryName}
+        setCategoryName={setNewCategoryName}
+        onSave={saveEditedCategory}
+      />
+      <ItemDeleteConfirmationModal
+        isOpen={isDeleteItemModalOpen}
+        onClose={() => setIsDeleteItemModalOpen(false)}
+        itemName={itemToDelete?.name}
+        onConfirm={handleConfirmDeleteItem}
+      />
+      <CategoryDeleteConfirmationModal
+        isOpen={isDeleteCategoryModalOpen}
+        onClose={() => setIsDeleteCategoryModalOpen(false)}
+        categoryName={categoryToDeleteName}
+        onConfirm={handleConfirmDeleteCategory}
+      />
+    </div>
+  </DndProvider>
+);
 }
