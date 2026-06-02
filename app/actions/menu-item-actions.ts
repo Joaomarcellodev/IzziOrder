@@ -278,10 +278,10 @@ export async function deleteMenuItem(id: string): Promise<ActionResponse> {
   }
 
   // 3. "Deleta" o item no Supabase, fazendo um soft delete nele
-const { error: deleteError } = await supabase
-  .from("menu_items")
-  .update({ "is_active": false, "category_id": null })
-  .eq("id", id);
+  const { error: deleteError } = await supabase
+    .from("menu_items")
+    .update({ "is_active": false })
+    .eq("id", id);
 
   if (deleteError) {
     console.error("Erro ao excluir item de menu:", deleteError);
