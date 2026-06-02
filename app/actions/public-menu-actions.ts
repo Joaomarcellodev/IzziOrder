@@ -49,11 +49,15 @@ export async function getEstablishmentBySlug(
 ): Promise<PublicEstablishment | null> {
   const supabase = getPublicSupabase();
 
+  console.log("Fetching establishment with slug:", slug);
+
   const { data, error } = await supabase
     .from("establishments")
     .select("id, name, slug")
     .eq("slug", slug)
     .single();
+
+  console.log("DB Result - data:", data, "error:", error);
 
   if (error || !data) {
     return null;
