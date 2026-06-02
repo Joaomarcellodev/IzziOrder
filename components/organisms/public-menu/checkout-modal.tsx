@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { X, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  ArrowLeft,
+  CheckCircle2,
+  Store,
+  Truck,
+  MapPin,
+  Wallet,
+  QrCode,
+  CreditCard,
+  Banknote,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -25,7 +37,7 @@ export function CheckoutModal({
   onSubmit,
 }: CheckoutModalProps) {
   const [formData, setFormData] = useState<Partial<CheckoutData>>({
-    orderType: "PICKUP", // Padrão retirado conforme o admin anterior (mas suporta os dois agora)
+    orderType: "PICKUP",
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,18 +46,19 @@ export function CheckoutModal({
 
   const handleChange = (field: keyof CheckoutData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors([]); // Limpa erros ao digitar
+    setErrors([]);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.length > 11) value = value.slice(0, 11);
-    
-    // Formatação (XX) XXXXX-XXXX
+
     let formatted = value;
-    if (value.length > 2) formatted = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-    if (value.length > 7) formatted = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
-    
+    if (value.length > 2)
+      formatted = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    if (value.length > 7)
+      formatted = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+
     handleChange("phone", formatted);
   };
 
@@ -56,12 +69,14 @@ export function CheckoutModal({
       orderType: formData.orderType as "PICKUP" | "DELIVERY",
       address: formData.address,
       paymentMethod: formData.paymentMethod as PaymentMethod,
-      changeValue: formData.changeValue ? Number(formData.changeValue) : undefined,
+      changeValue: formData.changeValue
+        ? Number(formData.changeValue)
+        : undefined,
       cartTotal,
     };
 
     const validationErrors = validateCheckout(dataToValidate);
-    
+
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       return;
@@ -78,34 +93,58 @@ export function CheckoutModal({
   };
 
   const paymentMethods = [
-    { id: "PIX", label: "PIX" },
-    { id: "CREDITO", label: "Cartão de Crédito" },
-    { id: "DEBITO", label: "Cartão de Débito" },
-    { id: "ESPECIE_SEM_TROCO", label: "Dinheiro (sem troco)" },
-    { id: "ESPECIE_COM_TROCO", label: "Dinheiro (preciso de troco)" },
+    { id: "PIX", label: "PIX", icon: QrCode },
+    { id: "CREDITO", label: "Cartão de Crédito", icon: CreditCard },
+    { id: "DEBITO", label: "Cartão de Débito", icon: Wallet },
+    { id: "ESPECIE_SEM_TROCO", label: "Dinheiro (sem troco)", icon: Banknote },
+    {
+      id: "ESPECIE_COM_TROCO",
+      label: "Dinheiro (preciso de troco)",
+      icon: Banknote,
+    },
   ];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-0">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      
-      <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <button onClick={onBack} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-50">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* BACKDROP COM BLUR REFINADO */}
+      <div
+        className="absolute inset-0 bg-neutral-950/40 backdrop-blur-md animate-in fade-in duration-300"
+        onClick={onClose}
+      />
+
+      <div className="relative bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-10 duration-300">
+        {/* HEADER ESTILO APP */}
+        <div className="flex items-center justify-between p-5 border-b border-neutral-100 shrink-0">
+          <button
+            onClick={onBack}
+            className="p-2 -ml-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-50 transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h2 className="text-lg font-bold text-gray-900">Finalizar Pedido</h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-base font-black text-neutral-900 tracking-tight">
+              Finalização
+            </h2>
+            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+              Confirmação de Dados
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-50 transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 hide-scrollbar">
           {errors.length > 0 && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium">
-              <ul className="list-disc pl-5 space-y-1">
+            <div className="bg-red-50 border border-red-100 text-red-800 p-4 rounded-2xl animate-in zoom-in-95 duration-200">
+              <p className="font-black text-xs uppercase tracking-wider mb-2">
+                Ops! Verifique:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-xs font-medium">
                 {errors.map((err, i) => (
                   <li key={i}>{err}</li>
                 ))}
@@ -115,117 +154,197 @@ export function CheckoutModal({
 
           {/* Dados Pessoais */}
           <section className="space-y-4">
-            <h3 className="font-bold text-gray-900">Seus Dados</h3>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="name">Nome completo</Label>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FD7E14]" />
+              <h3 className="text-xs font-black text-neutral-400 uppercase tracking-widest">
+                Identificação
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="name"
+                  className="text-xs font-bold text-neutral-700 ml-1"
+                >
+                  Nome Completo
+                </Label>
                 <Input
                   id="name"
-                  placeholder="Ex: João Silva"
+                  placeholder="Como devemos te chamar?"
                   value={formData.customerName || ""}
                   onChange={(e) => handleChange("customerName", e.target.value)}
+                  className="rounded-xl border-neutral-200 focus:border-[#FD7E14] focus:ring-[#FD7E14]/10 h-11"
                 />
               </div>
-              <div>
-                <Label htmlFor="phone">Telefone (WhatsApp)</Label>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="phone"
+                  className="text-xs font-bold text-neutral-700 ml-1"
+                >
+                  WhatsApp
+                </Label>
                 <Input
                   id="phone"
-                  placeholder="(11) 99999-9999"
+                  placeholder="(00) 00000-0000"
                   value={formData.phone || ""}
                   onChange={handlePhoneChange}
                   maxLength={15}
+                  className="rounded-xl border-neutral-200 focus:border-[#FD7E14] focus:ring-[#FD7E14]/10 h-11"
                 />
               </div>
             </div>
           </section>
 
           {/* Tipo de Pedido */}
-          <section className="space-y-4 pt-4 border-t border-gray-100">
-            <h3 className="font-bold text-gray-900">Como deseja receber?</h3>
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FD7E14]" />
+              <h3 className="text-xs font-black text-neutral-400 uppercase tracking-widest">
+                Entrega ou Retirada
+              </h3>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleChange("orderType", "PICKUP")}
                 className={cn(
-                  "p-3 rounded-xl border-2 text-center font-semibold transition-all",
-                  formData.orderType === "PICKUP" 
-                    ? "border-blue-600 bg-blue-50 text-blue-700" 
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300",
+                  formData.orderType === "PICKUP"
+                    ? "border-[#FD7E14] bg-[#FD7E14]/5 text-[#FD7E14]"
+                    : "border-neutral-100 text-neutral-400 hover:border-neutral-200",
                 )}
               >
-                Vou Retirar
+                <Store
+                  className={cn(
+                    "h-6 w-6",
+                    formData.orderType === "PICKUP"
+                      ? "text-[#FD7E14]"
+                      : "text-neutral-300",
+                  )}
+                />
+                <span className="text-xs font-black uppercase tracking-tighter">
+                  Vou Retirar
+                </span>
               </button>
               <button
                 onClick={() => handleChange("orderType", "DELIVERY")}
                 className={cn(
-                  "p-3 rounded-xl border-2 text-center font-semibold transition-all",
-                  formData.orderType === "DELIVERY" 
-                    ? "border-blue-600 bg-blue-50 text-blue-700" 
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300",
+                  formData.orderType === "DELIVERY"
+                    ? "border-[#FD7E14] bg-[#FD7E14]/5 text-[#FD7E14]"
+                    : "border-neutral-100 text-neutral-400 hover:border-neutral-200",
                 )}
               >
-                Delivery
+                <Truck
+                  className={cn(
+                    "h-6 w-6",
+                    formData.orderType === "DELIVERY"
+                      ? "text-[#FD7E14]"
+                      : "text-neutral-300",
+                  )}
+                />
+                <span className="text-xs font-black uppercase tracking-tighter">
+                  Delivery
+                </span>
               </button>
             </div>
 
             {formData.orderType === "DELIVERY" && (
-              <div className="pt-2 animate-in fade-in slide-in-from-top-2">
-                <Label htmlFor="address">Endereço completo de entrega</Label>
-                <Input
-                  id="address"
-                  placeholder="Rua, Número, Bairro, Referência"
-                  value={formData.address || ""}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                />
+              <div className="pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="relative group">
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#FD7E14] transition-colors" />
+                  <Input
+                    id="address"
+                    placeholder="Rua, número, bairro e complemento"
+                    value={formData.address || ""}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    className="pl-10 rounded-xl border-neutral-200 focus:border-[#FD7E14] focus:ring-[#FD7E14]/10 h-12"
+                  />
+                </div>
               </div>
             )}
           </section>
 
           {/* Pagamento */}
-          <section className="space-y-4 pt-4 border-t border-gray-100">
-            <h3 className="font-bold text-gray-900">Forma de Pagamento</h3>
-            <div className="space-y-2">
-              {paymentMethods.map((method) => (
-                <label
-                  key={method.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all",
-                    formData.paymentMethod === method.id
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:bg-gray-50"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={method.id}
-                    checked={formData.paymentMethod === method.id}
-                    onChange={() => handleChange("paymentMethod", method.id)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-600"
-                  />
-                  <span className={cn(
-                    "font-medium",
-                    formData.paymentMethod === method.id ? "text-blue-900" : "text-gray-700"
-                  )}>
-                    {method.label}
-                  </span>
-                </label>
-              ))}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FD7E14]" />
+              <h3 className="text-xs font-black text-neutral-400 uppercase tracking-widest">
+                Pagamento no Recebimento
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                const isSelected = formData.paymentMethod === method.id;
+                return (
+                  <label
+                    key={method.id}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-200",
+                      isSelected
+                        ? "border-[#FD7E14] bg-[#FD7E14]/5 shadow-sm"
+                        : "border-neutral-100 hover:bg-neutral-50",
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "p-2 rounded-lg transition-colors",
+                          isSelected
+                            ? "bg-[#FD7E14] text-white"
+                            : "bg-neutral-100 text-neutral-400",
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span
+                        className={cn(
+                          "text-sm font-bold",
+                          isSelected ? "text-neutral-900" : "text-neutral-600",
+                        )}
+                      >
+                        {method.label}
+                      </span>
+                    </div>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method.id}
+                      checked={isSelected}
+                      onChange={() => handleChange("paymentMethod", method.id)}
+                      className="w-4 h-4 text-[#FD7E14] border-neutral-300 focus:ring-[#FD7E14]"
+                    />
+                  </label>
+                );
+              })}
             </div>
 
             {formData.paymentMethod === "ESPECIE_COM_TROCO" && (
-              <div className="pt-2 animate-in fade-in slide-in-from-top-2">
-                <Label htmlFor="changeValue">Troco para quanto?</Label>
-                <Input
-                  id="changeValue"
-                  type="number"
-                  placeholder={`Ex: 100`}
-                  value={formData.changeValue || ""}
-                  onChange={(e) => handleChange("changeValue", e.target.value)}
-                  min={cartTotal + 1}
-                  step="0.01"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  O valor deve ser maior que R$ {cartTotal.toFixed(2).replace(".", ",")}
+              <div className="pt-2 animate-in fade-in slide-in-from-top-4 duration-300 bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                <Label
+                  htmlFor="changeValue"
+                  className="text-xs font-bold text-neutral-600"
+                >
+                  Troco para quanto?
+                </Label>
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-neutral-400">
+                    R$
+                  </span>
+                  <Input
+                    id="changeValue"
+                    type="number"
+                    placeholder="Ex: 50.00"
+                    value={formData.changeValue || ""}
+                    onChange={(e) =>
+                      handleChange("changeValue", e.target.value)
+                    }
+                    className="pl-10 rounded-xl border-neutral-200 focus:border-[#FD7E14] h-11"
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-[#FD7E14] mt-2 uppercase tracking-wide">
+                  O valor deve ser superior a R${" "}
+                  {cartTotal.toFixed(2).replace(".", ",")}
                 </p>
               </div>
             )}
@@ -233,18 +352,21 @@ export function CheckoutModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-white">
+        <div className="p-5 border-t border-neutral-100 bg-white shrink-0">
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full rounded-2xl h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+            className="w-full rounded-2xl h-14 bg-neutral-900 hover:bg-[#FD7E14] text-white font-black text-base shadow-xl shadow-neutral-900/10 hover:shadow-[#FD7E14]/20 flex items-center justify-center gap-3 transition-all duration-300 active:scale-[0.98]"
           >
             {isSubmitting ? (
-              <span className="animate-pulse">Processando...</span>
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Processando...
+              </>
             ) : (
               <>
                 <CheckCircle2 className="h-5 w-5" />
-                Confirmar Pedido (R$ {cartTotal.toFixed(2).replace(".", ",")})
+                Finalizar Pedido • R$ {cartTotal.toFixed(2).replace(".", ",")}
               </>
             )}
           </Button>
