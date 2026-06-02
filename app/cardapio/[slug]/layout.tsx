@@ -75,7 +75,7 @@ export default async function PublicMenuLayout({
                 <span className="hidden sm:inline text-neutral-300">•</span>
                 <span className="flex items-center gap-1">
                   <Info className="w-3.5 h-3.5 text-neutral-400" />
-                  Gelatos & Sobremesas
+                  Café & Almoço
                 </span>
               </div>
             </div>
