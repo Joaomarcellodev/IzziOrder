@@ -85,6 +85,23 @@ export async function importMenuAction(formData: FormData) {
     // 4. Salvar os Produtos
     let baseNextPosition = await calculateNextPosition(supabase);
 
+    // Buscar todos os itens existentes para evitar duplicatas por nome+categoria
+    const { data: allExistingItems, error: allItemsError } = await supabase
+      .from("menu_items")
+      .select("id, name, category_id")
+      .eq("establishment_id", establishmentId);
+
+    if (allItemsError) {
+      throw new Error("Erro ao consultar catálogo de produtos para validação.");
+    }
+
+    const existingItemsMap = new Map<string, string>();
+    allExistingItems?.forEach(item => {
+      // Chave: "nomeemminusculo_idCategoria"
+      const key = `${item.name.toLowerCase().trim()}_${item.category_id}`;
+      existingItemsMap.set(key, item.id);
+    });
+
     const itemsToCreate = [];
     const itemsToUpdatePromises = [];
 
@@ -92,7 +109,17 @@ export async function importMenuAction(formData: FormData) {
       const categoryId = categoryMap.get(item.categoryName);
       if (!categoryId) continue;
 
-      if (item.id) {
+      let itemId = item.id;
+
+      // Se não veio com ID da planilha, tentamos achar um item idêntico no banco
+      if (!itemId) {
+        const key = `${item.name.toLowerCase().trim()}_${categoryId}`;
+        if (existingItemsMap.has(key)) {
+          itemId = existingItemsMap.get(key);
+        }
+      }
+
+      if (itemId) {
         // Atualizar existente
         itemsToUpdatePromises.push(
           supabase
@@ -103,7 +130,7 @@ export async function importMenuAction(formData: FormData) {
               price: item.price,
               category_id: categoryId,
             })
-            .eq("id", item.id)
+            .eq("id", itemId)
             .eq("establishment_id", establishmentId)
         );
       } else {
@@ -175,10 +202,13 @@ export async function exportMenuAction(establishmentId: string) {
     // Converter Buffer para Base64
     const base64 = buffer.toString("base64");
 
+    const hasItems = menuItems && menuItems.length > 0;
+    const filename = hasItems ? "cardapio.xlsx" : "modelo_importacao_cardapio.xlsx";
+
     return { 
       success: true, 
       base64,
-      filename: "modelo_importacao_cardapio.xlsx" 
+      filename 
     };
   } catch (error: any) {
     console.error("Erro na exportação do cardápio:", error);
