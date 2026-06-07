@@ -119,15 +119,17 @@ export async function generateMenuExcel(menuItems: any[], categories: any[]): Pr
   const worksheet = workbook.addWorksheet('Cardapio');
 
   worksheet.columns = [
-    { header: 'ID (Não alterar)', key: 'id', width: 32 },
+    { header: 'ID (Não alterar)', key: 'id', width: 0, hidden: true },
     { header: 'Categoria', key: 'category', width: 25 },
     { header: 'Nome', key: 'name', width: 35 },
     { header: 'Descrição', key: 'description', width: 50 },
-    { header: 'Preço', key: 'price', width: 15, style: { numFmt: '"R$ "#,##0.00' } }
+    { header: 'Preço', key: 'price', width: 15, style: { numFmt: 'R$ #,##0.00' } }
   ];
 
-  // Ocultar a coluna de ID
-  worksheet.getColumn('id').hidden = true;
+  // Ocultar a coluna de ID com métodos alternativos
+  const idColumn = worksheet.getColumn(1);
+  idColumn.hidden = true;
+  idColumn.width = 0;
 
   // Estilizar cabeçalho
   worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
