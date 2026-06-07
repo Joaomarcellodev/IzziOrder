@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/molecules/tabs";
-import { useState, useRef, useCallback } from "react";
-import { Plus, Printer } from "lucide-react";
+import { useState, useRef, useCallback, useTransition, useEffect } from "react";
+import { Plus, Printer, Download, Upload, Loader2, ChevronDown } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -29,6 +29,14 @@ import {
   updateCategory,
 } from "@/app/actions/category-actions";
 import { validateMenuItem } from "@/lib/validators/menuItem";
+import { importMenuAction, exportMenuAction } from "@/app/actions/menu-excel-actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/molecules/dropdown-menu";
 
 // Subcomponents
 import { MenuItemCard } from "./menu-management/menu-item-card";
@@ -68,7 +76,24 @@ export function MenuManagement({
   const [localMenuItems, setLocalMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [localCategories, setLocalCategories] = useState<Category[]>(initialCategories || []);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [isMounted, setIsMounted] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) {
+        setIsActionsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +104,61 @@ export function MenuManagement({
   const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
   const [categoryToDeleteName, setCategoryToDeleteName] = useState("");
+
+  const handleImportClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const result = await importMenuAction(formData);
+      
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        window.location.reload(); 
+      } else {
+        toast({ title: "Erro na Importação", description: result.error });
+      }
+      
+      if (importInputRef.current) importInputRef.current.value = "";
+    });
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const estId = await getEstablishmentId();
+      const res = await exportMenuAction(estId as string);
+      
+      if (res.success && res.base64) {
+        const response = await fetch(`data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`);
+        const blob = await response.blob();
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename || "cardapio.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        
+        toast({ title: "Cardápio exportado com sucesso!" });
+      } else {
+        toast({ title: "Erro na exportação", description: res.error });
+      }
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao gerar arquivo." });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const filteredItems =
     selectedCategory === "All"
@@ -360,7 +440,7 @@ export function MenuManagement({
     }
   }, [localMenuItems, toast]);
 
-return (
+  return (
   <DndProvider backend={HTML5Backend}>
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="itens">
@@ -389,13 +469,56 @@ return (
             </div>
 
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => printMenu({ menuItems: localMenuItems, categories: localCategories })}
-                className="w-full sm:w-auto font-semibold"
-              >
-                <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
-              </Button>
+              <input 
+                type="file" 
+                accept=".xlsx" 
+                className="hidden" 
+                ref={importInputRef} 
+                onChange={handleFileChange} 
+              />
+              
+              <div className="relative w-full sm:w-auto" ref={actionsRef}>
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto font-semibold justify-between" 
+                  onClick={() => setIsActionsOpen(!isActionsOpen)}
+                  disabled={isPending || isExporting}
+                >
+                  {isExporting ? (
+                    <span className="flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Exportando...</span>
+                  ) : isPending ? (
+                    <span className="flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando...</span>
+                  ) : (
+                    <span className="flex items-center">Opções <ChevronDown className="w-4 h-4 ml-2 opacity-50" /></span>
+                  )}
+                </Button>
+
+                {isActionsOpen && (
+                  <div className="absolute right-0 mt-1 w-full sm:w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
+                    <div className="p-1 flex flex-col gap-1">
+                      <button 
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); handleExport(); }}
+                      >
+                        <Download className="w-4 h-4 mr-2" /> Exportar Cardápio
+                      </button>
+                      <button 
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); handleImportClick(); }}
+                      >
+                        <Upload className="w-4 h-4 mr-2" /> Importar Cardápio
+                      </button>
+                      <button 
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); printMenu({ menuItems: localMenuItems, categories: localCategories }); }}
+                      >
+                        <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button
                 onClick={addNewItem}
                 className="w-full sm:w-auto text-white font-semibold"
