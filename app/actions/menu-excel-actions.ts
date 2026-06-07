@@ -2,14 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
-import { getEstablishmentId } from "./establisment_actions";
+import { getEstablishmentId } from "@/app/actions/establisment_actions";
 import { parseMenuExcel, generateMenuExcel } from "@/lib/services/menu-excel-service";
 import { calculateNextPosition, getMenuItems } from "./menu-item-actions";
 import { getCategories } from "./category-actions";
 import { PLACEHOLDER_IMAGE_URL } from "@/lib/constants";
 
-export async function importMenuAction(formData: FormData) {
+export async function importMenuAction(formData: FormData, testEstablishmentId?: string) {
   try {
+    const establishmentId = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
     const file = formData.get("file") as File;
     if (!file) {
       return { success: false, error: "Nenhum arquivo enviado." };
@@ -22,8 +23,6 @@ export async function importMenuAction(formData: FormData) {
     const parsedItems = await parseMenuExcel(buffer);
 
     const supabase = await createClient();
-    const establishmentId = await getEstablishmentId();
-
     if (!establishmentId) {
       return { success: false, error: "Estabelecimento não encontrado." };
     }
@@ -76,7 +75,7 @@ export async function importMenuAction(formData: FormData) {
           .single();
 
         if (catError) {
-          throw new Error(`Erro ao criar a categoria: ${catName}`);
+          throw new Error(`Erro ao criar a categoria: ${catName}. Detalhes: ${JSON.stringify(catError)}`);
         }
         categoryMap.set(catName, newCat.id);
       }
@@ -175,7 +174,9 @@ export async function importMenuAction(formData: FormData) {
     };
 
   } catch (error: any) {
-    console.error("Erro na importação:", error);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error("Erro na importação:", error);
+    }
     return { 
       success: false, 
       error: error?.message || "Erro inesperado ao processar a planilha." 
@@ -213,7 +214,9 @@ export async function exportMenuAction(establishmentId: string) {
       filename 
     };
   } catch (error: any) {
-    console.error("Erro na exportação do cardápio:", error);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error("Erro na exportação do cardápio:", error);
+    }
     return { success: false, error: error.message || "Erro ao gerar o arquivo de exportação." };
   }
 }
