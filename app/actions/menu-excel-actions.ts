@@ -203,7 +203,9 @@ export async function exportMenuAction(establishmentId: string) {
     const base64 = buffer.toString("base64");
 
     const hasItems = menuItems && menuItems.length > 0;
-    const filename = hasItems ? "cardapio.xlsx" : "modelo_importacao_cardapio.xlsx";
+    const now = new Date();
+    const date = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+    const filename = `cardapio_${date}.xlsx`;
 
     return { 
       success: true, 
