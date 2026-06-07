@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/organisms/app-shell";
-import { MenuManagement } from "@/components/organisms/menu-management";
-import { getCategories } from "../../actions/category-actions";
-import { getMenuItems } from "../../actions/menu-item-actions";
+import MenuManagementClient from "@/components/organisms/menu-management-client";
+import { getCategories } from "@/app/actions/category-actions";
+import { getMenuItems } from "@/app/actions/menu-item-actions";
 import { getUser } from "@/app/actions/user-actions";
 import { getEstablishmentId } from "@/app/actions/establisment_actions";
 
@@ -43,7 +43,7 @@ export default async function MenuPage() {
       breadcrumb="Painel > Gerenciamento de Cardápio"
       user={user.toJSON()}
     >
-      <MenuManagement menuItems={menuItems!} categories={categories!} />
+      <MenuManagementClient menuItems={menuItems!} categories={categories!} />
     </AppShell>
   );
 }
