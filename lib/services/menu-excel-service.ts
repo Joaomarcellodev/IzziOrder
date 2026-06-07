@@ -131,9 +131,11 @@ export async function generateMenuExcel(menuItems: any[], categories: any[]): Pr
   idColumn.hidden = true;
   idColumn.width = 0;
 
-  // Estilizar cabeçalho
-  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFD7E14' } };
+  // Estilizar cabeçalho apenas nas colunas preenchidas
+  worksheet.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFD7E14' } };
+  });
 
   menuItems.forEach((item) => {
     const category = categories.find((c: any) => c.id === item.categoryId);
