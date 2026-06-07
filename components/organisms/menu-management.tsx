@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/molecules/tabs";
 import { useState, useRef, useCallback, useTransition, useEffect } from "react";
-import { Plus, Printer, Download, Upload, Loader2, ChevronDown } from "lucide-react";
+import { Plus, Printer, Download, Upload, Loader2, ChevronDown, MoreHorizontal } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/atoms/button";
@@ -444,10 +444,65 @@ export function MenuManagement({
   <DndProvider backend={HTML5Backend}>
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="itens">
-        <TabsList className="mb-6">
-          <TabsTrigger value="itens">Itens</TabsTrigger>
-          <TabsTrigger value="categorias">Categorias</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-6 gap-2">
+          <TabsList className="flex-shrink-0">
+            <TabsTrigger value="itens">Itens</TabsTrigger>
+            <TabsTrigger value="categorias">Categorias</TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <input 
+              type="file" 
+              accept=".xlsx" 
+              className="hidden" 
+              ref={importInputRef} 
+              onChange={handleFileChange} 
+            />
+            
+            <div className="relative" ref={actionsRef}>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="font-semibold h-9" 
+                onClick={() => setIsActionsOpen(!isActionsOpen)}
+                disabled={isPending || isExporting}
+              >
+                {isExporting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Exportando...</span></>
+                ) : isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Importando...</span></>
+                ) : (
+                  <><span className="inline">Ferramentas</span><ChevronDown className="w-4 h-4 ml-2 opacity-50" /></>
+                )}
+              </Button>
+
+              {isActionsOpen && (
+                <div className="absolute right-0 mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
+                  <div className="p-1 flex flex-col gap-1">
+                    <button 
+                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => { setIsActionsOpen(false); handleExport(); }}
+                    >
+                      <Download className="w-4 h-4 mr-2" /> Exportar Cardápio
+                    </button>
+                    <button 
+                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => { setIsActionsOpen(false); handleImportClick(); }}
+                    >
+                      <Upload className="w-4 h-4 mr-2" /> Importar Cardápio
+                    </button>
+                    <button 
+                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => { setIsActionsOpen(false); printMenu({ menuItems: localMenuItems, categories: localCategories }); }}
+                    >
+                      <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* ABA ITENS */}
         <TabsContent value="itens">
@@ -469,55 +524,6 @@ export function MenuManagement({
             </div>
 
             <div className="flex gap-2 w-full sm:w-auto">
-              <input 
-                type="file" 
-                accept=".xlsx" 
-                className="hidden" 
-                ref={importInputRef} 
-                onChange={handleFileChange} 
-              />
-              
-              <div className="relative w-full sm:w-auto" ref={actionsRef}>
-                <Button 
-                  variant="outline" 
-                  className="w-full sm:w-auto font-semibold justify-between" 
-                  onClick={() => setIsActionsOpen(!isActionsOpen)}
-                  disabled={isPending || isExporting}
-                >
-                  {isExporting ? (
-                    <span className="flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Exportando...</span>
-                  ) : isPending ? (
-                    <span className="flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando...</span>
-                  ) : (
-                    <span className="flex items-center">Opções <ChevronDown className="w-4 h-4 ml-2 opacity-50" /></span>
-                  )}
-                </Button>
-
-                {isActionsOpen && (
-                  <div className="absolute right-0 mt-1 w-full sm:w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
-                    <div className="p-1 flex flex-col gap-1">
-                      <button 
-                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => { setIsActionsOpen(false); handleExport(); }}
-                      >
-                        <Download className="w-4 h-4 mr-2" /> Exportar Cardápio
-                      </button>
-                      <button 
-                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => { setIsActionsOpen(false); handleImportClick(); }}
-                      >
-                        <Upload className="w-4 h-4 mr-2" /> Importar Cardápio
-                      </button>
-                      <button 
-                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => { setIsActionsOpen(false); printMenu({ menuItems: localMenuItems, categories: localCategories }); }}
-                      >
-                        <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
 
               <Button
                 onClick={addNewItem}
