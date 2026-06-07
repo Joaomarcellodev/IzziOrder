@@ -26,7 +26,7 @@ const EXPECTED_HEADERS = [
 
 export async function parseMenuExcel(buffer: Buffer | ArrayBuffer): Promise<ParsedMenuItem[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer as Buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const worksheet = workbook.worksheets[0];
   if (!worksheet) {
@@ -147,5 +147,5 @@ export async function generateMenuExcel(menuItems: any[], categories: any[]): Pr
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
-  return buffer as Buffer;
+  return buffer as any;
 }
