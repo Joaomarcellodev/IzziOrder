@@ -44,7 +44,7 @@ export const CategoryManagement = ({
     <p className="text-sm mt-1">Adicione uma categoria para organizar seu cardápio.</p>
   </div>
 ) : (
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
   {categories.map((category) => (
     <div key={category.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
       <span className="text-sm font-semibold text-gray-800">{category.name}</span>
