@@ -44,10 +44,10 @@ export const CategoryManagement = ({
     <p className="text-sm mt-1">Adicione uma categoria para organizar seu cardápio.</p>
   </div>
 ) : (
-      <div className="flex flex-wrap gap-2">
-        {categories.map((category) => (
-          <div key={category.id} className="flex items-center p-2 bg-gray-100 rounded-md">
-            <span className="text-sm font-medium mr-2">{category.name}</span>
+      <div className="space-y-2">
+  {categories.map((category) => (
+    <div key={category.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+      <span className="text-sm font-semibold text-gray-800">{category.name}</span>
             <Button
               size="icon"
               variant="ghost"
@@ -67,6 +67,7 @@ export const CategoryManagement = ({
           </div>
         ))}
       </div>
-    </div>
+      )}
+    </div> 
   );
 };
