@@ -24,7 +24,10 @@ export const CategoryManagement = ({
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Gerenciar Categorias</h2>
+        <div>
+  <h2 className="text-xl font-bold text-gray-900">Gerenciar Categorias</h2>
+  <p className="text-sm text-gray-500 mt-1">{categories.length} categorias cadastradas</p>
+</div>
 
         <Button
           onClick={onAddCategory}
