@@ -445,10 +445,20 @@ export function MenuManagement({
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="itens">
         <div className="flex items-center justify-between mb-6 gap-2">
-          <TabsList className="flex-shrink-0">
-            <TabsTrigger value="itens">Itens</TabsTrigger>
-            <TabsTrigger value="categorias">Categorias</TabsTrigger>
-          </TabsList>
+          <TabsList className="flex-shrink-0 bg-gray-100 p-1 rounded-xl h-auto">
+  <TabsTrigger 
+    value="itens"
+    className="px-6 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-500"
+  >
+    Itens
+  </TabsTrigger>
+  <TabsTrigger 
+    value="categorias"
+    className="px-6 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-500"
+  >
+    Categorias
+  </TabsTrigger>
+</TabsList>
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <input 
