@@ -13,9 +13,6 @@ jest.mock("@/lib/validators/menuItem", () => ({
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
-jest.mock("@/utils/config", () => ({
-  ESTABLISHMENT_ID: "est123"
-}));
 
 describe("UNIT — updateMenuItem", () => {
   let mockSupabase: any;

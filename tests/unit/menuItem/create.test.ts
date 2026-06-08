@@ -8,9 +8,6 @@ jest.mock("@vercel/blob");
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
-jest.mock("@/utils/config", () => ({
-  ESTABLISHMENT_ID: "est123"
-}));
 
 describe("UNIT — createMenuItem", () => {
   let mockSupabase: any;
