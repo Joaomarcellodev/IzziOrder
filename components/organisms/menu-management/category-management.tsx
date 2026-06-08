@@ -38,6 +38,12 @@ export const CategoryManagement = ({
           Adicionar Categoria
         </Button>
       </div>
+      {categories.length === 0 ? (
+  <div className="text-center py-12 text-gray-400">
+    <p className="text-lg">Nenhuma categoria cadastrada.</p>
+    <p className="text-sm mt-1">Adicione uma categoria para organizar seu cardápio.</p>
+  </div>
+) : (
       <div className="flex flex-wrap gap-2">
         {categories.map((category) => (
           <div key={category.id} className="flex items-center p-2 bg-gray-100 rounded-md">
