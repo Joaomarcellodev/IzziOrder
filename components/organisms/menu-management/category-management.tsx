@@ -48,22 +48,24 @@ export const CategoryManagement = ({
   {categories.map((category) => (
     <div key={category.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
       <span className="text-sm font-semibold text-gray-800">{category.name}</span>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onEditCategory(category)}
-              className="h-8 w-8"
-            >
-              <SquarePen className="lucide-square-pen w-4 h-4 text-gray-500 hover:text-gray-700" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onDeleteCategory(category)}
-              className="h-8 w-8"
-            >
-              <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
-            </Button>
+<div className="flex items-center gap-1">
+  <Button
+    size="icon"
+    variant="ghost"
+    onClick={() => onEditCategory(category)}
+    className="h-8 w-8 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+  >
+    <SquarePen className="w-4 h-4" />
+  </Button>
+  <Button
+    size="icon"
+    variant="ghost"
+    onClick={() => onDeleteCategory(category)}
+    className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+  >
+    <Trash className="w-4 h-4" />
+  </Button>
+</div>
           </div>
         ))}
       </div>
