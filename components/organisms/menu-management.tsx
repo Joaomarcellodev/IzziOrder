@@ -448,13 +448,13 @@ export function MenuManagement({
           <TabsList className="flex-shrink-0 bg-white border border-gray-200 p-1 rounded-xl h-auto gap-1">
 <TabsTrigger 
   value="itens"
-  className="px-4 py-2 text-sm font-medium rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-700 hover:text-gray-900"
+  className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-gray-900 hover:text-gray-900"
 >
   Itens
 </TabsTrigger>
 <TabsTrigger 
   value="categorias"
-  className="px-4 py-2 text-sm font-medium rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-700 hover:text-gray-900"
+  className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-gray-900 hover:text-gray-900"
 >
   Categorias
 </TabsTrigger>
