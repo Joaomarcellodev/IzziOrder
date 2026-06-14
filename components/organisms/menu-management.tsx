@@ -444,7 +444,7 @@ export function MenuManagement({
   <DndProvider backend={HTML5Backend}>
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="itens">
-        <div className="flex items-center justify-between mb-6 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
           <TabsList className="flex-shrink-0 bg-white border border-gray-200 p-1 rounded-xl h-auto gap-1">
 <TabsTrigger 
   value="itens"
@@ -460,7 +460,7 @@ export function MenuManagement({
 </TabsTrigger>
 </TabsList>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <input 
               type="file" 
               accept=".xlsx" 
@@ -487,7 +487,7 @@ export function MenuManagement({
               </Button>
 
               {isActionsOpen && (
-                <div className="absolute right-0 mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
+                <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
                   <div className="p-1 flex flex-col gap-1">
                     <button 
                       className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"

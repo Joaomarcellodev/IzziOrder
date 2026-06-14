@@ -22,8 +22,8 @@ export const CategoryManagement = ({
   onDeleteCategory,
 }: CategoryManagementProps) => {
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-4">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
   <h2 className="text-xl font-bold text-gray-900">Gerenciar Categorias</h2>
   <p className="text-sm text-gray-500 mt-1">{categories.length} categorias cadastradas</p>
@@ -31,10 +31,10 @@ export const CategoryManagement = ({
 
         <Button
           onClick={onAddCategory}
-          className="text-white font-semibold px-3 h-8 text-sm"
+          className="w-full sm:w-auto text-white font-semibold"
           style={{ backgroundColor: "#FD7E14" }}
         >
-          <Plus className="w-4 h-4 mr-1" />
+          <Plus className="w-4 h-4 mr-2" />
           Adicionar Categoria
         </Button>
       </div>
