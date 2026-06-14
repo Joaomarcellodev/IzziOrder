@@ -22,7 +22,7 @@ export const CategoryManagement = ({
   onDeleteCategory,
 }: CategoryManagementProps) => {
   return (
-    <div className="mt-8">
+    <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
   <h2 className="text-xl font-bold text-gray-900">Gerenciar Categorias</h2>
