@@ -444,7 +444,7 @@ export function MenuManagement({
   <DndProvider backend={HTML5Backend}>
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="itens">
-        <div className="flex items-center justify-between mb-6 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
           <TabsList className="flex-shrink-0 bg-white border border-gray-200 p-1 rounded-xl h-auto gap-1">
 <TabsTrigger 
   value="itens"
@@ -460,7 +460,7 @@ export function MenuManagement({
 </TabsTrigger>
 </TabsList>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <input 
               type="file" 
               accept=".xlsx" 
