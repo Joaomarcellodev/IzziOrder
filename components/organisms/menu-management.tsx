@@ -487,7 +487,7 @@ export function MenuManagement({
               </Button>
 
               {isActionsOpen && (
-                <div className="absolute right-0 mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
+                <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
                   <div className="p-1 flex flex-col gap-1">
                     <button 
                       className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
