@@ -52,7 +52,7 @@ export async function createPublicOrder(
     .insert({
       establishment_id: establishmentId,
       total: orderData.cartTotal.toFixed(2),
-      status: "OPEN",
+      status: "PENDING",
       type: orderData.orderType,
       detail: detail,
       delivery_fee: orderData.orderType === "DELIVERY" ? deliveryFee : 0,
