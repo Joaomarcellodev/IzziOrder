@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import { BarChart3, Calendar, Settings, ChefHat, Menu, X } from "lucide-react";
+import { BarChart3, Calendar, Settings, ChefHat, Menu, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import { NavItem } from "../atoms/nav-item";
@@ -82,6 +82,20 @@ export function AppShell({ children, currentPage, breadcrumb, user }: AppShellPr
                 Home <span className="text-gray-300">/</span> {breadcrumb}
               </p>
             </div>
+          </div>
+          <div className="flex items-center">
+            <Button asChild variant="outline" className="hidden sm:flex items-center gap-2">
+              <a href="/cardapio" target="_blank" rel="noopener noreferrer">
+                <ChefHat className="w-4 h-4" />
+                Ver Cardápio Online
+                <ExternalLink className="w-4 h-4 ml-1 opacity-50" />
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="icon" className="sm:hidden ml-4">
+              <a href="/cardapio" target="_blank" rel="noopener noreferrer" aria-label="Ver Cardápio Online">
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </Button>
           </div>
         </header>
 
