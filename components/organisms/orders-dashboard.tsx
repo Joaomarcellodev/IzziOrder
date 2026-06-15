@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../atoms/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "@/lib/entities/order";
+import { createClient } from "@/utils/supabase/client";
 
 import { OrderColumn } from "./order-column";
 import { NewOrderModal } from "../molecules/new-order-modal";
@@ -19,6 +20,9 @@ import {
   updateToClosedOrder,
   updateToOpenOrder,
   getOldPendingOrders,
+  getOrderById,
+  acceptOrder,
+  rejectOrder,
   OrderRequestDTO,
 } from "@/app/actions/order-actions";
 import { MenuItem } from "@/app/actions/menu-item-actions";
@@ -46,7 +50,7 @@ export default function OrdersDashboard({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { toast } = useToast();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchOldOrders = async () => {
       try {
         const oldOrders = await getOldPendingOrders("");
@@ -62,6 +66,48 @@ export default function OrdersDashboard({
       }
     };
     fetchOldOrders();
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("public:orders")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        async (payload) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            try {
+              const newRecord = payload.new as any;
+              // Verificar se o pedido pertence a este dashboard seria ideal (usando user.id), 
+              // mas podemos apenas buscar o pedido e ver se ele vem (o RLS/Backend garante se for buscar).
+              const updatedOrder = await getOrderById(newRecord.id);
+              
+              setOrders((prev) => {
+                const exists = prev.find(o => o.id === updatedOrder.id);
+                if (exists) {
+                  return prev.map(o => o.id === updatedOrder.id ? updatedOrder : o);
+                } else {
+                  if (payload.eventType === "INSERT" && updatedOrder.status === "PENDING") {
+                    toast({
+                      title: "NOVO PEDIDO!",
+                      description: `Pedido ${updatedOrder.code} aguardando aprovação.`,
+                      variant: "default",
+                      className: "bg-orange-500 text-white border-none"
+                    });
+                  }
+                  return [...prev, updatedOrder];
+                }
+              });
+            } catch (err) {
+              console.error("Erro ao processar evento realtime:", err);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleCreateOrder = async (newOrder: OrderRequestDTO) => {
@@ -127,6 +173,36 @@ export default function OrdersDashboard({
     }
   };
 
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      await acceptOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "OPEN" } : o)),
+      );
+      toast({
+        title: "Pedido Aceito",
+        description: "O pedido já pode ser preparado.",
+      });
+    } catch (error: any) {
+      toast({ title: "Erro ao aceitar pedido", description: error.message });
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string) => {
+    try {
+      await rejectOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "REJECTED" } : o)),
+      );
+      toast({
+        title: "Pedido Recusado",
+        description: "O pedido foi marcado como recusado.",
+      });
+    } catch (error: any) {
+      toast({ title: "Erro ao recusar pedido", description: error.message });
+    }
+  };
+
   const handleDeleteClick = (orderId: string) => {
     const order = orders.find((o) => o.id === orderId);
     if (order) {
@@ -180,8 +256,14 @@ export default function OrdersDashboard({
 
       {/* Layout Mobile com Tabs */}
       <div className="lg:hidden">
-        <Tabs defaultValue="OPEN" className="w-full px-0">
-          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
+        <Tabs defaultValue="PENDING" className="w-full px-0">
+          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-3 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
+            <TabsTrigger 
+              value="PENDING" 
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-orange-600"
+            >
+              Novos
+            </TabsTrigger>
             <TabsTrigger 
               value="OPEN" 
               className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
@@ -190,15 +272,27 @@ export default function OrdersDashboard({
             </TabsTrigger>
             <TabsTrigger 
               value="CLOSED" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600"
             >
-              Finalizados
+              Prontos
             </TabsTrigger>
           </TabsList>
           
+          <TabsContent value="PENDING" className="mt-0 outline-none px-2">
+            <OrderColumn
+              title="NOVOS PEDIDOS"
+              orders={orders}
+              status="PENDING"
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+              onAccept={handleAcceptOrder}
+              onReject={handleRejectOrder}
+              serverDate={serverDate}
+            />
+          </TabsContent>
           <TabsContent value="OPEN" className="mt-0 outline-none px-2">
             <OrderColumn
-              title="PEDIDOS ABERTOS"
+              title="EM PREPARO"
               orders={orders}
               status="OPEN"
               onEdit={handleEditClick}
@@ -219,9 +313,19 @@ export default function OrdersDashboard({
         </Tabs>
       </div>
 
-      <div className="hidden lg:grid grid-cols-2 gap-8 h-[calc(100vh-200px)] px-4">
+      <div className="hidden lg:grid grid-cols-3 gap-6 h-[calc(100vh-200px)] px-4">
         <OrderColumn
-          title="PEDIDOS ABERTOS"
+          title="NOVOS PEDIDOS"
+          orders={orders}
+          status="PENDING"
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          onAccept={handleAcceptOrder}
+          onReject={handleRejectOrder}
+          serverDate={serverDate}
+        />
+        <OrderColumn
+          title="EM PREPARO"
           orders={orders}
           status="OPEN"
           onEdit={handleEditClick}
