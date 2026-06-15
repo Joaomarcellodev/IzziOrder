@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2, Copy, MessageCircle } from "lucide-react";
+import { CheckCircle2, Copy, MessageCircle, Clock, XCircle, ChefHat } from "lucide-react";
 import { Button } from "@/components/atoms/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 
 interface OrderConfirmationProps {
   orderId: string;
@@ -21,6 +22,32 @@ export function OrderConfirmation({
   onNewOrder,
 }: OrderConfirmationProps) {
   const [copied, setCopied] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<"PENDING" | "OPEN" | "REJECTED" | "CLOSED">("PENDING");
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`order-status-${orderId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          if (payload.new && payload.new.status) {
+            setOrderStatus(payload.new.status as any);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId]);
 
   const copyOrderId = async () => {
     try {
@@ -37,19 +64,69 @@ export function OrderConfirmation({
   return (
     <div className="fixed inset-0 z-[70] bg-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-500">
       <div className="max-w-md w-full space-y-8">
-        {/* Ícone de Sucesso */}
-        <div className="mx-auto w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-12 h-12" />
-        </div>
+        {orderStatus === "PENDING" && (
+          <>
+            <div className="mx-auto w-24 h-24 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
+              <Clock className="w-12 h-12" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Aguardando Aprovação
+              </h1>
+              <p className="text-lg text-gray-600">
+                O seu pedido foi enviado para <strong className="text-gray-900">{establishmentName}</strong> e está aguardando confirmação.
+              </p>
+            </div>
+          </>
+        )}
 
-        <div className="space-y-3">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Pedido Realizado!
-          </h1>
-          <p className="text-lg text-gray-600">
-            Seu pedido em <strong className="text-gray-900">{establishmentName}</strong> foi recebido com sucesso.
-          </p>
-        </div>
+        {orderStatus === "OPEN" && (
+          <>
+            <div className="mx-auto w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6">
+              <ChefHat className="w-12 h-12" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Pedido Aceito!
+              </h1>
+              <p className="text-lg text-gray-600">
+                Tudo certo! O seu pedido já está sendo preparado.
+              </p>
+            </div>
+          </>
+        )}
+
+        {orderStatus === "REJECTED" && (
+          <>
+            <div className="mx-auto w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
+              <XCircle className="w-12 h-12" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Pedido Recusado
+              </h1>
+              <p className="text-lg text-gray-600">
+                Infelizmente o restaurante não pôde aceitar seu pedido neste momento.
+              </p>
+            </div>
+          </>
+        )}
+
+        {orderStatus === "CLOSED" && (
+          <>
+            <div className="mx-auto w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-12 h-12" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Pedido Finalizado
+              </h1>
+              <p className="text-lg text-gray-600">
+                O seu pedido foi concluído com sucesso.
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Card do Pedido */}
         <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6 space-y-4">
