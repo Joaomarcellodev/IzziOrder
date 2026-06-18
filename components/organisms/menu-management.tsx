@@ -116,16 +116,16 @@ export function MenuManagement({
     startTransition(async () => {
       const formData = new FormData();
       formData.append("file", file);
-      
+
       const result = await importMenuAction(formData);
-      
+
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        window.location.reload(); 
+        window.location.reload();
       } else {
         toast({ title: "Erro na Importação", description: result.error });
       }
-      
+
       if (importInputRef.current) importInputRef.current.value = "";
     });
   };
@@ -135,11 +135,11 @@ export function MenuManagement({
     try {
       const estId = await getEstablishmentId();
       const res = await exportMenuAction(estId as string);
-      
+
       if (res.success && res.base64) {
         const response = await fetch(`data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`);
         const blob = await response.blob();
-        
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -148,7 +148,7 @@ export function MenuManagement({
         a.click();
         a.remove();
         window.URL.revokeObjectURL(url);
-        
+
         toast({ title: "Cardápio exportado com sucesso!" });
       } else {
         toast({ title: "Erro na exportação", description: res.error });
@@ -441,193 +441,191 @@ export function MenuManagement({
   }, [localMenuItems, toast]);
 
   return (
-  <DndProvider backend={HTML5Backend}>
-    <div className="p-4 sm:p-6">
-      <Tabs defaultValue="itens">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-          <TabsList className="flex-shrink-0 bg-white border border-gray-200 p-1 rounded-xl h-auto gap-1">
-<TabsTrigger 
-  value="itens"
-  className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-gray-900 hover:text-gray-900"
->
-  Itens
-</TabsTrigger>
-<TabsTrigger 
-  value="categorias"
-  className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-gray-900 hover:text-gray-900"
->
-  Categorias
-</TabsTrigger>
-</TabsList>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <input 
-              type="file" 
-              accept=".xlsx" 
-              className="hidden" 
-              ref={importInputRef} 
-              onChange={handleFileChange} 
-            />
-            
-            <div className="relative" ref={actionsRef}>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="font-semibold h-9" 
-                onClick={() => setIsActionsOpen(!isActionsOpen)}
-                disabled={isPending || isExporting}
+    <DndProvider backend={HTML5Backend}>
+      <div className="p-4 sm:p-6">
+        <Tabs defaultValue="itens">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+            <TabsList>
+              <TabsTrigger
+                value="itens"
               >
-                {isExporting ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Exportando...</span></>
-                ) : isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Importando...</span></>
-                ) : (
-                  <><span className="inline">Ferramentas</span><ChevronDown className="w-4 h-4 ml-2 opacity-50" /></>
-                )}
-              </Button>
+                Itens
+              </TabsTrigger>
+              <TabsTrigger
+                value="categorias"
+              >
+                Categorias
+              </TabsTrigger>
+            </TabsList>
 
-              {isActionsOpen && (
-                <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
-                  <div className="p-1 flex flex-col gap-1">
-                    <button 
-                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => { setIsActionsOpen(false); handleExport(); }}
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Exportar Cardápio
-                    </button>
-                    <button 
-                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => { setIsActionsOpen(false); handleImportClick(); }}
-                    >
-                      <Upload className="w-4 h-4 mr-2" /> Importar Cardápio
-                    </button>
-                    <button 
-                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => { setIsActionsOpen(false); printMenu({ menuItems: localMenuItems, categories: localCategories }); }}
-                    >
-                      <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
-                    </button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="file"
+                accept=".xlsx"
+                className="hidden"
+                ref={importInputRef}
+                onChange={handleFileChange}
+              />
+
+              <div className="relative" ref={actionsRef}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-semibold h-9"
+                  onClick={() => setIsActionsOpen(!isActionsOpen)}
+                  disabled={isPending || isExporting}
+                >
+                  {isExporting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Exportando...</span></>
+                  ) : isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="inline">Importando...</span></>
+                  ) : (
+                    <><span className="inline">Ferramentas</span><ChevronDown className="w-4 h-4 ml-2 opacity-50" /></>
+                  )}
+                </Button>
+
+                {isActionsOpen && (
+                  <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-1 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50 overflow-hidden">
+                    <div className="p-1 flex flex-col gap-1">
+                      <button
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); handleExport(); }}
+                      >
+                        <Download className="w-4 h-4 mr-2" /> Exportar Cardápio
+                      </button>
+                      <button
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); handleImportClick(); }}
+                      >
+                        <Upload className="w-4 h-4 mr-2" /> Importar Cardápio
+                      </button>
+                      <button
+                        className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 sm:py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => { setIsActionsOpen(false); printMenu({ menuItems: localMenuItems, categories: localCategories }); }}
+                      >
+                        <Printer className="w-4 h-4 mr-2" /> Imprimir Cardápio
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ABA ITENS */}
+          <TabsContent value="itens">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+              <div className="flex-1 min-w-0">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Todas as Categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">Todas as Categorias</SelectItem>
+                    {localCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id!}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 w-full sm:w-auto">
+
+                <Button
+                  onClick={addNewItem}
+                  className="w-full sm:w-auto text-white font-semibold"
+                  style={{ backgroundColor: "#FD7E14" }}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar Item
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {filteredItems.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <div className="space-y-4">
+                    <div className="text-6xl">👨‍🍳</div>
+                    <div className="text-lg text-gray-600">Categoria Vazia.</div>
+                    <Button
+                      onClick={addNewItem}
+                      className="text-white font-semibold"
+                      style={{ backgroundColor: "#FD7E14" }}
+                    >
+                      + Adicionar o primeiro item
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                filteredItems.map((item, index) => (
+                  <MenuItemCard
+                    key={item.id!}
+                    item={item}
+                    index={index}
+                    moveItem={moveItem}
+                    toggleAvailability={toggleAvailability}
+                    openEditModal={openEditModal}
+                    openDeleteModal={openDeleteModal}
+                    onDrop={handleDrop}
+                  />
+                ))
               )}
             </div>
-          </div>
-        </div>
+          </TabsContent>
 
-        {/* ABA ITENS */}
-        <TabsContent value="itens">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <div className="flex-1 min-w-0">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Todas as Categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">Todas as Categorias</SelectItem>
-                  {localCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id!}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* ABA CATEGORIAS */}
+          <TabsContent value="categorias">
+            <CategoryManagement
+              categories={localCategories}
+              onAddCategory={addNewCategory}
+              onEditCategory={openEditCategoryModal}
+              onDeleteCategory={openDeleteCategoryModal}
+            />
+          </TabsContent>
+        </Tabs>
 
-            <div className="flex gap-2 w-full sm:w-auto">
-
-              <Button
-                onClick={addNewItem}
-                className="w-full sm:w-auto text-white font-semibold"
-                style={{ backgroundColor: "#FD7E14" }}
-              >
-                <Plus className="w-4 h-4 mr-2" /> Adicionar Item
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {filteredItems.length === 0 ? (
-              <Card className="p-12 text-center">
-                <div className="space-y-4">
-                  <div className="text-6xl">👨‍🍳</div>
-                  <div className="text-lg text-gray-600">Categoria Vazia.</div>
-                  <Button
-                    onClick={addNewItem}
-                    className="text-white font-semibold"
-                    style={{ backgroundColor: "#FD7E14" }}
-                  >
-                    + Adicionar o primeiro item
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              filteredItems.map((item, index) => (
-                <MenuItemCard
-                  key={item.id!}
-                  item={item}
-                  index={index}
-                  moveItem={moveItem}
-                  toggleAvailability={toggleAvailability}
-                  openEditModal={openEditModal}
-                  openDeleteModal={openDeleteModal}
-                  onDrop={handleDrop}
-                />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        {/* ABA CATEGORIAS */}
-        <TabsContent value="categorias">
-          <CategoryManagement
-            categories={localCategories}
-            onAddCategory={addNewCategory}
-            onEditCategory={openEditCategoryModal}
-            onDeleteCategory={openDeleteCategoryModal}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* --- Modais --- */}
-      <MenuItemModal
-        isOpen={isItemModalOpen}
-        onClose={closeItemModal}
-        editingItem={editingItem}
-        setEditingItem={setEditingItem}
-        categories={localCategories}
-        onSave={saveItem}
-        onImageChange={handleImageChange}
-        onImageDrop={handleImageDrop}
-        fileInputRef={fileInputRef}
-        isSaving={isSaving}
-      />
-      <CategoryModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        categoryName={newCategoryName}
-        setCategoryName={setNewCategoryName}
-        onSave={saveCategory}
-      />
-      <CategoryEditModal
-        isOpen={isEditCategoryModalOpen}
-        onClose={() => setIsEditCategoryModalOpen(false)}
-        categoryName={newCategoryName}
-        setCategoryName={setNewCategoryName}
-        onSave={saveEditedCategory}
-      />
-      <ItemDeleteConfirmationModal
-        isOpen={isDeleteItemModalOpen}
-        onClose={() => setIsDeleteItemModalOpen(false)}
-        itemName={itemToDelete?.name}
-        onConfirm={handleConfirmDeleteItem}
-      />
-      <CategoryDeleteConfirmationModal
-        isOpen={isDeleteCategoryModalOpen}
-        onClose={() => setIsDeleteCategoryModalOpen(false)}
-        categoryName={categoryToDeleteName}
-        onConfirm={handleConfirmDeleteCategory}
-      />
-    </div>
-  </DndProvider>
-);
+        {/* --- Modais --- */}
+        <MenuItemModal
+          isOpen={isItemModalOpen}
+          onClose={closeItemModal}
+          editingItem={editingItem}
+          setEditingItem={setEditingItem}
+          categories={localCategories}
+          onSave={saveItem}
+          onImageChange={handleImageChange}
+          onImageDrop={handleImageDrop}
+          fileInputRef={fileInputRef}
+          isSaving={isSaving}
+        />
+        <CategoryModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          categoryName={newCategoryName}
+          setCategoryName={setNewCategoryName}
+          onSave={saveCategory}
+        />
+        <CategoryEditModal
+          isOpen={isEditCategoryModalOpen}
+          onClose={() => setIsEditCategoryModalOpen(false)}
+          categoryName={newCategoryName}
+          setCategoryName={setNewCategoryName}
+          onSave={saveEditedCategory}
+        />
+        <ItemDeleteConfirmationModal
+          isOpen={isDeleteItemModalOpen}
+          onClose={() => setIsDeleteItemModalOpen(false)}
+          itemName={itemToDelete?.name}
+          onConfirm={handleConfirmDeleteItem}
+        />
+        <CategoryDeleteConfirmationModal
+          isOpen={isDeleteCategoryModalOpen}
+          onClose={() => setIsDeleteCategoryModalOpen(false)}
+          categoryName={categoryToDeleteName}
+          onConfirm={handleConfirmDeleteCategory}
+        />
+      </div>
+    </DndProvider>
+  );
 }

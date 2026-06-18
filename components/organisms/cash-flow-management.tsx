@@ -327,9 +327,9 @@ export function CashFlowManagement({
     <div className="space-y-6">
       {/* Tabs Section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-gray-100 p-1 rounded-lg border border-gray-200 mb-6">
-          <TabsTrigger value="cash-flow" className="px-6 py-2">Fluxo de Caixa</TabsTrigger>
-          <TabsTrigger value="categories" className="px-6 py-2">Categorias</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="cash-flow">Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="categories">Categorias</TabsTrigger>
         </TabsList>
 
         {/* Cash Flow Entries Tab */}
