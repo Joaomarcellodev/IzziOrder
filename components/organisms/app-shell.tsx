@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import { BarChart3, Calendar, Settings, ChefHat, Menu, X } from "lucide-react";
+import { BarChart3, Calendar, Settings, ChefHat, Menu, X, Wallet } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
 import { NavItem } from "../atoms/nav-item";
@@ -22,6 +22,7 @@ interface AppShellProps {
 const navigationItems = [
   { id: "orders", label: "Pedidos", icon: Calendar, href: "/auth/orders" },
   { id: "menu", label: "Cardápio", icon: ChefHat, href: "/auth/menu" },
+  { id: "cash-flow", label: "Fluxo de Caixa", icon: Wallet, href: "/auth/cash-flow" },
   { id: "reports", label: "Relatórios", icon: BarChart3, href: "/auth/reports" },
   { id: "settings", label: "Configurações", icon: Settings, href: "/auth/settings" },
 ];
