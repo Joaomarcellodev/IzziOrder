@@ -155,3 +155,34 @@ export async function getCurrentCashTotal(testEstablishmentId?: string): Promise
   const total = (data || []).reduce((sum, item) => sum + Number(item.amount), 0);
   return parseFloat(total.toFixed(2));
 }
+
+export async function checkOpenOrders(testEstablishmentId?: string): Promise<number> {
+  const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
+  const { getOrders } = await import("./order-actions");
+  const orders = await getOrders(establishment_id);
+  const openOrders = (orders || []).filter((o: any) => o.status === "OPEN");
+  return openOrders.length;
+}
+
+export async function closeCashRegister(testEstablishmentId?: string) {
+  const supabase = await createClient();
+  const establishment_id = testEstablishmentId ? testEstablishmentId : await getEstablishmentId();
+
+  const openCount = await checkOpenOrders(establishment_id);
+  if (openCount > 0) {
+    throw new Error(`Existem ${openCount} pedidos em aberto, finalize eles antes de fechar o caixa.`);
+  }
+
+  console.log("a implementar")
+
+  // if (error) {
+  //   console.error("Erro Supabase (closeCashRegister):", error);
+  //   throw new Error("Erro ao fechar o caixa.");
+  // }
+
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/auth/cash-flow");
+  }
+
+  return { success: true };
+}
