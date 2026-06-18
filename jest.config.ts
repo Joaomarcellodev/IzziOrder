@@ -10,6 +10,10 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
 
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
+  },
+
   // Configuração de Cobertura
   collectCoverage: true,
   coverageDirectory: "coverage",

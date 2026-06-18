@@ -10,11 +10,21 @@ export async function getEstablishmentId(supabaseClient?: any) {
 
     const supabase = supabaseClient ?? await createClient()
     const user = await getUserAuthenticated(supabase)
-    const { data, error } = await supabase.from("establishments").select("id").eq("owner_id", user.id).single();
+    const { data, error } = await supabase.from("establishments").select("id, slug").eq("owner_id", user.id).single();
     if (error) {
         throw new Error(error.message)
     }
 
     establishment_id = data.id
     return data.id;
+}
+
+export async function getEstablishmentSlug(supabaseClient?: any) {
+    const supabase = supabaseClient ?? await createClient()
+    const user = await getUserAuthenticated(supabase)
+    const { data, error } = await supabase.from("establishments").select("slug").eq("owner_id", user.id).single();
+    if (error) {
+        throw new Error(error.message)
+    }
+    return data.slug;
 }
