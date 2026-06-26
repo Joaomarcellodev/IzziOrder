@@ -180,22 +180,20 @@ export default function OrdersDashboard({
 
       {/* Layout Mobile com Tabs */}
       <div className="lg:hidden">
-        <Tabs defaultValue="OPEN" className="w-full px-0">
-          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-2 mb-4 h-11 bg-gray-100 p-1 rounded-xl">
-            <TabsTrigger 
-              value="OPEN" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+        <Tabs defaultValue="OPEN">
+          <TabsList className="grid w-[calc(100%-2rem)] mx-auto grid-cols-2">
+            <TabsTrigger
+              value="OPEN"
             >
               Abertos
             </TabsTrigger>
-            <TabsTrigger 
-              value="CLOSED" 
-              className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600"
+            <TabsTrigger
+              value="CLOSED"
             >
               Finalizados
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="OPEN" className="mt-0 outline-none px-2">
             <OrderColumn
               title="PEDIDOS ABERTOS"
