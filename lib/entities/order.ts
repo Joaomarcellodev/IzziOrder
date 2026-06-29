@@ -1,4 +1,4 @@
-export type OrderStatus = "OPEN" | "CLOSED";
+export type OrderStatus = "PENDING" | "OPEN" | "REJECTED" | "CLOSED";
 export type OrderType = "DELIVERY" | "LOCAL" | "PICKUP";
 export type PaymentMethod = "PIX" | "CREDITO" | 'DEBITO' | "ESPECIE_SEM_TROCO" | "ESPECIE_COM_TROCO";
 

@@ -104,16 +104,16 @@ export function ReportsAnalytics() {
       <div className="space-y-8">
         <Tabs defaultValue="geral" className="w-full">
           <div className="flex flex-col flex-row md:items-center justify-between gap-4 mb-6 print:hidden">
-            <TabsList>
-              <TabsTrigger value="geral" className="group">
+            <TabsList className="bg-white border border-gray-100 p-1 h-12 shadow-sm rounded-xl flex-shrink-0">
+              <TabsTrigger value="geral" className="group gap-2 px-3 h-10 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 rounded-lg transition-all duration-200">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="hidden md:block group-data-[state=active]:block">Geral</span>
               </TabsTrigger>
-              <TabsTrigger value="produtos" className="group">
+              <TabsTrigger value="produtos" className="group gap-2 px-3 h-10 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 rounded-lg transition-all duration-200">
                 <Utensils className="w-4 h-4" />
                 <span className="hidden md:block group-data-[state=active]:block">Produtos</span>
               </TabsTrigger>
-              <TabsTrigger value="pedidos" className="group">
+              <TabsTrigger value="pedidos" className="group gap-2 px-3 h-10 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 rounded-lg transition-all duration-200">
                 <ClipboardList className="w-4 h-4" />
                 <span className="hidden md:block group-data-[state=active]:block">Pedidos</span>
               </TabsTrigger>
@@ -131,7 +131,7 @@ export function ReportsAnalytics() {
                   className={`w-4 h-4 transition-transform duration-200 ${isFiltersOpen ? "rotate-180" : ""}`}
                 />
               </Button>
-
+              
               {isClient && report ? (
                 <PDFDownloadLink
                   document={<SalesReportPDF report={report} filters={filters} />}
@@ -140,8 +140,9 @@ export function ReportsAnalytics() {
                 >
                   {({ loading: pdfLoading }) => (
                     <span
-                      className={`flex items-center gap-2 h-12 px-4 shadow-sm border border-gray-100 rounded-xl bg-white hover:bg-gray-50 text-sm font-medium transition-all duration-200 ${pdfLoading ? "opacity-50 cursor-wait" : "cursor-pointer"
-                        }`}
+                      className={`flex items-center gap-2 h-12 px-4 shadow-sm border border-gray-100 rounded-xl bg-white hover:bg-gray-50 text-sm font-medium transition-all duration-200 ${
+                        pdfLoading ? "opacity-50 cursor-wait" : "cursor-pointer"
+                      }`}
                     >
                       <FileDown className="w-4 h-4 text-gray-600" />
                       <span className="hidden md:block text-gray-700">

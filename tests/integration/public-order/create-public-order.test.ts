@@ -55,7 +55,7 @@ describe("Public Orders CREATE Integration", () => {
 
       expect(dbOrder).toBeDefined();
       expect(dbOrder.type).toBe("PICKUP");
-      expect(dbOrder.status).toBe("OPEN");
+      expect(dbOrder.status).toBe("PENDING");
       expect(dbOrder.detail).toContain("Maria Santos");
       expect(dbOrder.detail).toContain("11988776655");
       expect(dbOrder.payment_method).toBe("PIX");

@@ -290,6 +290,38 @@ export async function updateToOpenOrder(id: string): Promise<any> {
   return order.toJSON();
 }
 
+export async function acceptOrder(id: string): Promise<any> {
+  if (!id) throw new Error("ID do pedido inválido.");
+
+  const order = Order.fromDTO(await getOrderById(id));
+  if (order.status !== "PENDING") throw new Error("Pedido não está pendente.");
+  
+  order.status = "OPEN";
+  await updateOrderStatus(order, id);
+
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+
+  return order.toJSON();
+}
+
+export async function rejectOrder(id: string): Promise<any> {
+  if (!id) throw new Error("ID do pedido inválido.");
+
+  const order = Order.fromDTO(await getOrderById(id));
+  if (order.status !== "PENDING") throw new Error("Pedido não está pendente.");
+  
+  order.status = "REJECTED";
+  await updateOrderStatus(order, id);
+
+  if (process.env.TEST_CONTEXT !== "integration") {
+    revalidatePath("/orders");
+  }
+
+  return order.toJSON();
+}
+
 async function updateOrderStatus(order: Order, id: string) {
   const supabase = await createClient();
   const { error } = await supabase

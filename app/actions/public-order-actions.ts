@@ -22,7 +22,7 @@ export interface PublicOrderRequestDTO extends CheckoutData {
 
 export async function createPublicOrder(
   establishmentId: string,
-  orderData: PublicOrderRequestDTO
+  orderData: PublicOrderRequestDTO,
 ) {
   const errors = validateCheckout(orderData);
   if (errors.length > 0) {
@@ -41,7 +41,8 @@ export async function createPublicOrder(
 
   const detail =
     orderData.orderType === "PICKUP"
-      ? orderData.customerName + (orderData.phone ? ` - ${orderData.phone}` : "")
+      ? orderData.customerName +
+        (orderData.phone ? ` - ${orderData.phone}` : "")
       : orderData.address;
 
   // Usa 0 para delivery fee por enquanto, no futuro pode ser calculado
@@ -52,7 +53,7 @@ export async function createPublicOrder(
     .insert({
       establishment_id: establishmentId,
       total: orderData.cartTotal.toFixed(2),
-      status: "OPEN",
+      status: "PENDING",
       type: orderData.orderType,
       detail: detail,
       delivery_fee: orderData.orderType === "DELIVERY" ? deliveryFee : 0,
