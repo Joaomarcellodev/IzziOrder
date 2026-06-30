@@ -6,11 +6,13 @@ import { History } from "lucide-react";
 interface OrderColumnProps {
   title: string;
   orders: OrderDTO[];
-  status: "OPEN" | "CLOSED";
+  status: "PENDING" | "OPEN" | "CLOSED";
   onEdit?: (order: OrderDTO) => void;
   onDelete?: (id: string) => void;
   onFinish?: (id: string) => void;
   onReopen?: (id: string) => void;
+  onAccept?: (id: string) => void;
+  onReject?: (id: string) => void;
   serverDate: string;
 }
 

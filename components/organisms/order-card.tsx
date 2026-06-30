@@ -2,9 +2,9 @@
 
 import { OrderCardProps, OrderLineDTO } from "@/app/auth/orders/types";
 import { Button } from "../atoms/button";
-import { Pencil, Trash2, CheckCircle, RotateCcw } from "lucide-react";
+import { Pencil, Trash2, CheckCircle, RotateCcw, XCircle } from "lucide-react";
 
-export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: OrderCardProps) {
+export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen, onAccept, onReject }: OrderCardProps) {
   const isClosed = order.status === "CLOSED";
 
   return (
@@ -80,7 +80,27 @@ export function OrderCard({ order, onEdit, onDelete, onFinish, onReopen }: Order
 )}
 
       <div className="flex justify-end gap-2 pt-3 border-t border-gray-50 mt-2">
-        {!isClosed ? (
+        {order.status === "PENDING" ? (
+          <>
+            <Button 
+              size="sm" 
+              onClick={() => onAccept?.(order.id!)} 
+              className="bg-green-600 hover:bg-green-700 h-9 gap-2 text-white px-4 rounded-lg font-bold"
+              data-testid="accept-order-button"
+            >
+              <CheckCircle className="size-4" /> Aceitar
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => onReject?.(order.id!)} 
+              className="text-red-600 border-red-200 hover:bg-red-50 h-9 gap-2 px-4 rounded-lg font-bold"
+              data-testid="reject-order-button"
+            >
+              <XCircle className="size-4" /> Recusar
+            </Button>
+          </>
+        ) : !isClosed ? (
           <>
             <Button 
               size="sm" 

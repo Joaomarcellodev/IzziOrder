@@ -12,7 +12,7 @@ export type OrderDTO = {
   id?: string;
   code: string;
   total: number;
-  status: "OPEN" | "CLOSED";
+  status: "PENDING" | "OPEN" | "REJECTED" | "CLOSED";
   type: "LOCAL" | "PICKUP" | "DELIVERY";
   detail?: string;
   tableNumber?: string;
@@ -28,4 +28,6 @@ export interface OrderCardProps {
   onDelete?: (id: string) => void;
   onFinish?: (id: string) => void;
   onReopen?: (id: string) => void;
+  onAccept?: (id: string) => void;
+  onReject?: (id: string) => void;
 }
